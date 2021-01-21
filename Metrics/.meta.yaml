@@ -1,0 +1,6 @@
+playbooks:
+  dbql_core:
+    tags: [dbql]
+
+  concurrency:
+    tags: [concurrency, performance]

@@ -1,0 +1,74 @@
+version: &version "1.2"
+description: >
+  This a demo tasklist that illustrates some of the features available in a tasklist
+
+tasks:
+- name: Copy static data to the working directory
+  copy:
+    files:
+      - data/demo_dates.csv
+
+- name: Export DBCInfoV to dbcinfo.csv
+  connect: source
+  export:
+    file: dbcinfo.csv
+    sql: |
+      SELECT
+        account as Account_Name
+        , 'siteid' as Site_ID
+        , InfoKey
+        , InfoData
+      FROM dbc.DBCInfoV
+
+- name: Create dates volatile table
+  connect: source
+  execute:
+    sql: |
+      CREATE VOLATILE TABLE valid_dates
+      ( cal_date  DATE
+      , item      VARCHAR(64)
+      ) NO PRIMARY INDEX ON COMMIT PRESERVE ROWS
+
+- name: Load well-known dates into valid_dates table
+  connect: source
+  import:
+    file: data/demo_dates.csv
+    table: valid_dates
+
+- name: Insert birthday into valid_dates table
+  connect: source
+  execute:
+    sql: INSERT INTO valid_dates VALUES(CAST('1974-12-17' AS DATE), 'Me')
+
+- name: Export birthday data for use later
+  connect: source
+  export:
+    file: birthday.csv
+    sql: Select top 1 cast(cal_date AS FORMAT 'YYYY-MM-DD') as cal_date from valid_dates where item='Me'
+
+- name: Export birthday data for use later
+  connect: source
+  export:
+    file: alldates.csv
+    sqlfile: sqls/alldates.sql
+
+- name: Bar chart to compare the birthday
+  chart:
+    command: data/demo_vis.py
+
+- name: Embed data into the presentation
+  ppt:
+    file: ppt/AgeReport.pptx
+
+- name: Import dbcinfo.csv to Transcend staging area
+  connect: transcend
+  import:
+    file: dbcinfo.csv
+    table: adlste_coa_stg.stg_dat_dbcinfo
+
+- name: Merge staged data into the core layer
+  connect: transcend
+  call:
+    proc: adlste_coa.sp_dat_dbcinfo
+    params:
+    - "1.1"

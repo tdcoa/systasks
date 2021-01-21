@@ -1,0 +1,117 @@
+{% from 'sysdb.jinja2' import sysdb_list %}
+{% from 'coltypes.jinja2' import coltype_interval, coltype_period %}
+{% from 'util.jinja2' import date_range %}
+
+description: >
+  Evaluate Teradata features that don't have an equivalent in SnowFlake and thus will likely require application rewrite.
+  The final output is a PowerPoint presentation that summaries such findings.
+
+tasks:
+- name: Look for unsupported table types
+  connect: source
+  export:
+    file: sfus_tables.csv
+    sql: |
+      select SUM(CASE WHEN TableKind = 'I' THEN 1 ELSE 0 END)  AS JICount
+          , SUM(CASE WHEN TableKind = 'Q' THEN 1 ELSE 0 END)   AS QueueCount
+          , SUM(CASE WHEN TableKind IN ('T', 'O') AND CheckOpt <> 'Y' THEN 1 ELSE 0 END)   AS SetTableCount
+          , SUM(CASE WHEN TableKind IN ('T', 'O') AND CommitOpt <> 'N' THEN 1 ELSE 0 END)  AS GTTCount
+          , SUM(CASE WHEN TableKind IN ('T', 'O') THEN 1 ELSE 0 END) as TotalObjectCount
+          , CAST((CAST(100.0 AS FLOAT) *  SetTableCount / NullIfZero(TotalObjectCount)) AS DECIMAL(4,1)) AS SetTablePct
+      from dbc.TablesV
+      where DatabaseName not like all {{ sysdb_list() }}
+
+- name: Look for unsupported column types
+  connect: source
+  export:
+    file: sfus_columns.csv
+    sql: |
+      with col_type_counts as (
+        select CASE WHEN {{ coltype_interval() }}       THEN 1 ELSE 0 END   AS Interval_Col
+            , CASE WHEN {{ coltype_period() }}          THEN 1 ELSE 0 END   AS Period_Col
+            , CASE WHEN ColumnType = 'N '               THEN 1 ELSE 0 END   AS Number_Col
+            , CASE WHEN ColumnType = 'BO' AND ColumnLength > 8 * 1024 * 1024
+                                                        THEN 1 ELSE 0 END   AS Blob8M_Col
+            , CASE WHEN ColumnType = 'CO' AND ColumnLength * (CASE CharType WHEN 1 THEN 1 ELSE 2 END) > 16 * 1024 * 1024
+                                                        THEN 1 ELSE 0 END   AS Clob16M_Col
+            , CASE WHEN ColumnType = 'XM'               THEN 1 ELSE 0 END   AS XML_Col
+            , CASE WHEN ColumnType = 'JN'               THEN 1 ELSE 0 END   AS JSON_Col
+            , CASE WHEN ColumnUDTName = 'ST_GEOMETRY'   THEN 1 ELSE 0 END   AS Geo_Col
+            , CASE WHEN IdColType IS NOT NULL           THEN 1 ELSE 0 END   AS Identity_Col
+            , CASE WHEN ColumnFormat IS NOT NULL        THEN 1 ELSE 0 END   AS Formatted_Col
+        from dbc.ColumnsV
+        where DatabaseName not like all {{ sysdb_list() }}
+      )
+      select SUM(Interval_Col)     AS Interval_Col
+          , SUM(Period_Col)        AS Period_Col
+          , SUM(Number_Col)        AS Number_Col
+          , SUM(Blob8M_Col)        AS Blob8M_Col
+          , SUM(Clob16M_Col)       AS Clob16M_Col
+          , SUM(XML_Col+JSON_Col)  AS XMLJSON_Col
+          , SUM(Geo_Col)           AS Geo_Col
+          , SUM(Identity_Col)      AS Identity_Col
+          , SUM(Formatted_Col)     AS Formatted_Col
+      from col_type_counts
+
+- name: Look for unsupported index types
+  connect: source
+  export:
+    file: sfus_indices.csv
+    sql: |
+      select SUM(CASE WHEN IndexMode IS NULL THEN 1 ELSE 0 END) AS Pri_Index
+          , SUM(CASE WHEN IndexMode IS NOT NULL THEN 1 ELSE 0 END) AS Sec_Index
+          , SUM(CASE WHEN IndexType = 'Q' THEN 1 ELSE 0 END) AS PP_Index
+      from dbc.IndicesV
+      where DatabaseName not like all {{ sysdb_list() }}
+
+- name: Look for unsupported constraints
+  connect: source
+  export:
+    file: sfus_constraints.csv
+    sql: |
+      select (
+            select count(*)
+            from dbc.ColumnsV
+            where ColumnConstraint is not NULL
+              and DatabaseName not like all {{ sysdb_list() }}
+          ) col_c
+          , (
+            select count(*)
+            from dbc.IndicesV
+            where IndexType in ('K', 'U')
+              and DatabaseName not like all {{ sysdb_list() }}
+          ) uniq_c
+          , (
+            select sum(ChildCount)
+            from dbc.TablesV
+            where TableKind in ('O', 'T')
+              and DatabaseName not like all {{ sysdb_list() }}
+          ) ri_c
+
+- name: Usage by object type
+  connect: source
+  export:
+    file: sf_usage.csv
+    sql: |
+      select SUM(CASE WHEN ObjectType = 'Tmp' THEN FreqOfUse ELSE 0 END) AS GTTUsage
+          , SUM(CASE WHEN ObjectType IN ('Idx', 'HIx') THEN 1 ELSE 0 END) AS IndexCount
+          , SUM(CASE WHEN ObjectType IN ('Idx', 'HIx') THEN FreqOfUse ELSE 0 END) AS IndexUsage
+      from {{ dbc.DBQLObjTbl }}
+      where ObjectDatabaseName not like all {{ sysdb_list() }}
+        and {{ dbc.logdt }} {{ date_range() }}
+
+- name: Usage by index
+  connect: source
+  export:
+    file: sf_ixusage.csv
+    sql: |
+      select COUNT(DISTINCT ObjectNum) AS IndexCount
+      from {{ dbc.DBQLObjTbl }}
+      where ObjectDatabaseName not like all {{ sysdb_list() }}
+        and {{ dbc.logdt }} {{ date_range() }}
+        and ObjectType IN ('Idx', 'HIx')
+        and ObjectNum <> 0
+
+- name: create presentation
+  ppt:
+    file: ppt/sf_migration_blockers.pptx

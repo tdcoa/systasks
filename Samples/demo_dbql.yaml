@@ -1,0 +1,28 @@
+description: >
+  This series of tasks collects last 7 full days of DBQL data to capture frequency, CPU and IO
+  grouped by the statement type. It then plots bar charts for each and embeds them in a
+  powerpoint presentation.
+
+tasks:
+- name: Export statement-type metrics
+  connect: source
+  export:
+    file: stmttypes.csv
+    sql: |
+      SELECT RTRIM(StatementType) AS StatementType
+          , COUNT(*)                                      AS Freq
+          , cast(SUM(AMPCPUTime)   AS FORMAT '-9(9).99')  AS TotCPU
+          , cast(SUM(TotalIOCount) AS FORMAT '-9(9)')     AS TotIO
+      FROM {{ dbc.log }}
+      WHERE {{ dbc.logdt }} BETWEEN {{ startdate | d('CURRENT_DATE - 7') }} AND {{ enddate | d('CURRENT_DATE - 1') }}
+      GROUP BY 1
+
+- name: Create bar charts from the exported details
+  chart:
+    command: data/stmt_charts.py
+    params:
+    - stmttypes.csv
+
+- name: Embed graphics into a powerpoint presentation
+  ppt:
+    file: ppt/example.pptx

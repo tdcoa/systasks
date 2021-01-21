@@ -1,0 +1,13 @@
+{% from 'sysdb.jinja2' import sysdb_list %}
+
+{% macro dim_sysdb() -%}
+- name: create a volatile table containing internal teradata system databases
+  connect: source
+  execute:
+    sql: |
+      create volatile table dim_sysdb as (
+        select DatabaseName
+        from dbc.DatabasesV
+        where DatabaseName like {{ sysdb_list() }}
+      ) with data primary index(DatabaseName) on commit preserve rows
+{%- endmacro %}

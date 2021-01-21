@@ -1,0 +1,28 @@
+{% extends "dim_dim.jinja2" %}
+{% block dim %}app{% endblock %}
+{% block data %}{{ dim_app | d("data/dim_app.csv") }}{% endblock %}
+{% block buckets %}
+        App_Bucket     varchar(32)  not null,
+        Use_Bucket     varchar(32),
+{% endblock %}
+{% block join %}
+        select o.AppID
+            , coalesce(p.App_Bucket,'Unknown') as App_Bucket
+            , coalesce(p.Use_Bucket,'Unknown')  as Use_Bucket
+            , coalesce(p.Priority,1e6) as Priority_
+            , coalesce(p.Pattern_Type,'Equal')  as Pattern_Type
+            , coalesce(p.Pattern, o.AppID)      as Pattern
+            , coalesce(p.SiteID, 'None')        as SiteID_
+        from (
+            select distinct AppID
+            from {{ dbc.log }}
+            where {{ dbc.logdt }} {{ date_range() }}
+
+            union
+
+            select distinct AppID
+            from {{ dbc.summary }}
+            where {{ dbc.logdt }} {{ date_range() }}
+        ) as o
+{% endblock %}
+{% block pkey %}AppID{% endblock %}

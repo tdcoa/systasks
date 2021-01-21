@@ -1,0 +1,47 @@
+- name: create dim_{% block dim %}dim{% endblock %}_raw volatile table
+  connect: source
+  execute:
+    sql: |
+      create volatile table dim_{{ self.dim() }}_raw, no log (
+        SiteID         varchar(128) not null,
+        Pattern_Type   varchar(20)  not null,
+        Pattern        varchar(128) not null,
+        {% block buckets %}
+        {% endblock %}
+        Priority       integer      not null
+      ) primary index(Pattern) on commit preserve rows
+
+- name: import metadata into dim_{{ self.dim() }}_raw
+  connect: source
+  import:
+    file: {% block data %}data/dim_{{ self.dim() }}.csv{% endblock %}
+
+    table: dim_{{ self.dim() }}_raw
+
+- name: bucketize dim_{{ self.dim() }}_raw using {{ "pdcr" if pdcr is true else "dbc" }} data
+  connect: source
+  execute:
+    sql: |
+      create volatile table dim_{{ self.dim() }} as (
+      {% block join %}
+      {% endblock %}
+        left join dim_{{ self.dim() }}_raw as p
+          on case when p.Pattern_Type = 'Equal' and lower(o.{% block pkey %}pkey{% endblock %}) = lower(p.Pattern) then 1
+                  when p.Pattern_Type = 'Like'  and lower(o.{{ self.pkey() }}) like lower(p.Pattern) then 1
+                  when p.Pattern_Type = 'RegEx' and character_length(regexp_substr(o.{{ self.pkey() }}, p.Pattern,1,1,'i')) > 0 then 1
+                  else 0
+             end = 1
+        qualify Priority_ = min(Priority_) over(partition by o.{{ self.pkey() }})
+        where (lower(SiteID_) in ('default','none') or lower('{{ siteid }}') like lower(SiteID_))
+      ) with data primary index({{ self.pkey() }}) on commit preserve rows
+
+- name: drop dim_{{ self.dim() }}_raw table
+  connect: source
+  execute:
+    sql: drop table dim_{{ self.dim() }}_raw
+
+- name: collect stats on dim_{{ self.dim() }}
+  connect: source
+  execute:
+    sql: collect stats column({{ self.pkey() }}) on dim_{{ self.dim() }}
+

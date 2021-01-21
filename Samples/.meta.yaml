@@ -1,0 +1,8 @@
+playbooks:
+  demo_dbql:
+    doc: https://github.com/padhia/core_tasks/wiki/coa_example
+    tags: [dbql, demo]
+
+  demo_all:
+    doc: https://github.com/padhia/core_tasks/wiki/coa_demo
+    tags: [demo]

@@ -1,0 +1,7 @@
+{% macro coltype_interval() -%}
+ColumnType IN ('DH', 'DM', 'DS', 'DY', 'HM', 'HR', 'HS', 'MI', 'MO', 'MS', 'SC', 'YM', 'YR')
+{%- endmacro %}
+
+{% macro coltype_period() -%}
+ColumnType IN ('PD','PM','PS','PT','PZ')
+{%- endmacro %}
