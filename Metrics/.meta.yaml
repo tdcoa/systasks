@@ -1,6 +1,11 @@
 playbooks:
-  dbql_core:
+  DBQL Core:
     tags: [dbql]
 
-  concurrency:
+  Concurrency:
     tags: [concurrency, performance]
+    doc: https://github.com/padhia/systasks/wiki/concurrency
+
+  Feature Usage:
+    tags: [features]
+    doc: https://github.com/padhia/systasks/wiki/feature_usage

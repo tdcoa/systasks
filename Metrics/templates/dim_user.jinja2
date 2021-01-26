@@ -1,6 +1,6 @@
 {% extends "dim_dim.jinja2" %}
 {% block dim %}user{% endblock %}
-{% block data %}{{ dim_user | d("data/dim_user.csv") }}{% endblock %}
+{% block data %}{{ dim_user_csv | d(dirs.systasks / "Metrics" / "data" / "dim_user.csv") }}{% endblock %}
 {% block buckets %}
         User_Bucket         varchar(32)  not null,
         User_Department     varchar(32),

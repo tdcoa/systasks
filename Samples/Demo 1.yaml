@@ -1,7 +1,7 @@
 description: >
   This series of tasks collects last 7 full days of DBQL data to capture frequency, CPU and IO
   grouped by the statement type. It then plots bar charts for each and embeds them in a
-  powerpoint presentation.
+  PowerPoint presentation.
 
 tasks:
 - name: Export statement-type metrics
@@ -9,7 +9,7 @@ tasks:
   export:
     file: stmttypes.csv
     sql: |
-      SELECT RTRIM(StatementType) AS StatementType
+      SELECT RTRIM(StatementType)                         AS StatementType
           , COUNT(*)                                      AS Freq
           , cast(SUM(AMPCPUTime)   AS FORMAT '-9(9).99')  AS TotCPU
           , cast(SUM(TotalIOCount) AS FORMAT '-9(9)')     AS TotIO
@@ -25,4 +25,4 @@ tasks:
 
 - name: Embed graphics into a powerpoint presentation
   ppt:
-    file: ppt/example.pptx
+    file: ppt/demo_dbql.pptx
