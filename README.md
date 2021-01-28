@@ -4,11 +4,11 @@ A Tasklist is a YAML document (file name must end with `.yaml`) that resides in 
 
 Attributes:
 
-| Name          | Type  | Required? | Purpose                  |
-|---------------|-------|:---------:|--------------------------|
-| `description` | text  |    No     | Tasklist description     |
-| `version`     | text  |    No     | Tasklist version         |
-| `tasks`       | array |    Yes    | An ordered list of tasks |
+Name          | Type  | Required? | Purpose
+--------------|-------|:---------:|-------------------------
+`description` | text  |    No     | Tasklist description
+`version`     | text  |    No     | Tasklist version
+`tasks`       | array |    Yes    | An ordered list of tasks
 
 Notes:
 - A tasklist must contain at least one task.
@@ -20,11 +20,11 @@ A task is of a *type* and has *name*, an optional *connection target* and a spec
 
 Attributes:
 
-| Name      | Type | Required? | Purpose                                      |
-|-----------|------|:---------:|----------------------------------------------|
-| `name`    | text |    Yes    | A descriptive name. Recommended to be unique |
-| `connect` | enum |    No     | Can be either *source* or *transcend*        |
-| *taskdef* | dict |    Yes    | Any of the supported task types              |
+Name      | Type | Required? | Purpose
+----------|------|:---------:|---------------------------------------------
+`name`    | text |    Yes    | A descriptive name. Recommended to be unique
+`connect` | enum |    No     | Can be either *source* or *transcend*
+*taskdef* | dict |    Yes    | Any of the supported task types
 
 ## execute
 
@@ -32,10 +32,10 @@ Run one SQL statement
 
 Attributes:
 
-| Name      | Type | Required? | Purpose                                     |
-|-----------|------|:---------:|---------------------------------------------|
-| `sql`     | text |   Maybe   | SQL text. Mutually exclusive with `sqlfile` |
-| `sqlfile` | path |   Maybe   | A file name that holds the SQL text         |
+Name      | Type | Required? | Purpose
+----------|------|:---------:|--------------------------------------------
+`sql`     | text |   Maybe   | SQL text. Mutually exclusive with `sqlfile`
+`sqlfile` | path |   Maybe   | A file name that holds the SQL text
 
 ## export
 
@@ -43,11 +43,11 @@ Run one SQL statement, and save data to a file in CSV format
 
 Attributes:
 
-| Name      | Type | Required? | Purpose                                     |
-|-----------|------|:---------:|---------------------------------------------|
-| `sql`     | text |   Maybe   | SQL text. Mutually exclusive with `sqlfile` |
-| `sqlfile` | path |   Maybe   | A file name that holds the SQL text         |
-| `file`    | path |    Yes    | Output file name                            |
+Name      | Type | Required? | Purpose
+----------|------|:---------:|--------------------------------------------
+`sql`     | text |   Maybe   | SQL text. Mutually exclusive with `sqlfile`
+`sqlfile` | path |   Maybe   | A file name that holds the SQL text
+`file`    | path |    Yes    | Output file name
 
 ## import
 
@@ -58,10 +58,10 @@ Notes:
 
 Attributes:
 
-| Name    | Type | Required? | Purpose                      |
-|---------|------|:---------:|------------------------------|
-| `file`  | path |    Yes    | Input file name              |
-| `table` | text |    Yes    | table name to load data into |
+Name    | Type | Required? | Purpose
+--------|------|:---------:|-----------------------------
+`file`  | path |    Yes    | Input file name
+`table` | text |    Yes    | table name to load data into
 
 ## copy
 
@@ -69,9 +69,9 @@ Copy files from the input directory to the output directory
 
 Attributes:
 
-| Name    | Type          | Required? | Purpose                        |
-|---------|---------------|:---------:|--------------------------------|
-| `files` | array of path |    Yes    | name of the files to be copied |
+Name    | Type          | Required? | Purpose
+--------|---------------|:---------:|-------------------------------
+`files` | array of path |    Yes    | name of the files to be copied
 
 ## call
 
@@ -79,10 +79,10 @@ Call a stored procedure
 
 Attributes:
 
-| Name     | Type  | Required? | Purpose                                             |
-|----------|-------|:---------:|-----------------------------------------------------|
-| `proc`   | text  |    Yes    | name of the stored-procedure                        |
-| `params` | array |    No     | optional parameters to pass to the stored-procedure |
+Name     | Type  | Required? | Purpose
+---------|-------|:---------:|----------------------------------------------------
+`proc`   | text  |    Yes    | name of the stored-procedure
+`params` | array |    No     | optional parameters to pass to the stored-procedure
 
 ## chart
 
@@ -90,10 +90,10 @@ Run an application, typically a python script, that creates a chart
 
 Attributes:
 
-| Name      | Type  | Required? | Purpose                                    |
-|-----------|-------|:---------:|--------------------------------------------|
-| `command` | text  |    Yes    | name of the command (Python script name)   |
-| `params`  | array |    No     | optional parameters to pass to the command |
+Name      | Type  | Required? | Purpose
+----------|-------|:---------:|-------------------------------------------
+`command` | text  |    Yes    | name of the command (Python script name)
+`params`  | array |    No     | optional parameters to pass to the command
 
 ## ppt
 
@@ -101,9 +101,9 @@ Build a PowerPoint from a template
 
 Attributes:
 
-| Name   | Type | Required? | Purpose                             |
-|--------|------|:---------:|-------------------------------------|
-| `file` | path |    Yes    | location of the PowerPoint template |
+Name   | Type | Required? | Purpose
+-------|------|:---------:|------------------------------------
+`file` | path |    Yes    | location of the PowerPoint template
 
 # Built-ins
 
@@ -129,28 +129,28 @@ For example, *jinja expression* `{{ dbc.DBQLogTbl }}` evaluates to `PDCRInfo.DBQ
 `dbc` object recognizes the following short-names and expands them to the corresponding long names. For example, `{{ dbc.sql }}` evaluates to either `dbc.DBQLSqlTbl` for `dbc`, or `PDCRInfo.DBQLSqlTbl_Hst` for `pdcr`
 
 
-| Short name | Long name        |
-|------------|------------------|
-| `expl`     | `DBQLExplainTbl` |
-| `obj`      | `DBQLObjTbl`     |
-| `log`      | `DBQLogTbl`      |
-| `param`    | `DBQLParamTbl`   |
-| `sql`      | `DBQLSqlTbl`     |
-| `step`     | `DBQLStepTbl`    |
-| `summary`  | `DBQLSummaryTbl` |
-| `utility`  | `DBQLUtilityTbl` |
-| `xmllock`  | `DBQLXMLLockTbl` |
-| `xml`      | `DBQLXMLTbl`     |
-| `sawt`     | `ResUsageSawt`   |
-| `scpu`     | `ResUsageScpu`   |
-| `shst`     | `ResUsageShst`   |
-| `sldv`     | `ResUsageSldv`   |
-| `smhm`     | `ResUsageSmhm`   |
-| `spdsk`    | `ResUsageSpdsk`  |
-| `spma`     | `ResUsageSpma`   |
-| `sps`      | `ResUsageSps`    |
-| `svdsk`    | `ResUsageSvdsk`  |
-| `svpr`     | `ResUsageSvpr`   |
+Short name | Long name
+-----------|-----------------
+`expl`     | `DBQLExplainTbl`
+`obj`      | `DBQLObjTbl`
+`log`      | `DBQLogTbl`
+`param`    | `DBQLParamTbl`
+`sql`      | `DBQLSqlTbl`
+`step`     | `DBQLStepTbl`
+`summary`  | `DBQLSummaryTbl`
+`utility`  | `DBQLUtilityTbl`
+`xmllock`  | `DBQLXMLLockTbl`
+`xml`      | `DBQLXMLTbl`
+`sawt`     | `ResUsageSawt`
+`scpu`     | `ResUsageScpu`
+`shst`     | `ResUsageShst`
+`sldv`     | `ResUsageSldv`
+`smhm`     | `ResUsageSmhm`
+`spdsk`    | `ResUsageSpdsk`
+`spma`     | `ResUsageSpma`
+`sps`      | `ResUsageSps`
+`svdsk`    | `ResUsageSvdsk`
+`svpr`     | `ResUsageSvpr`
 
 ## pyformat
 

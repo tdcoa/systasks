@@ -1,0 +1,7 @@
+SiteID,db_Pattern_Type,db_Pattern,tbl_Pattern_Type,tbl_Pattern,Subject_Area,Domain_Name,Priority
+Default,equal,dbc,like,%,TD Internal,TD Internal,100
+Default,equal,pdcrdata,like,%,TD Internal,TD Internal,112
+Default,equal,pdcrinfo,like,%,TD Internal,TD Internal,114
+Default,equal,systemfe,like,%,TD Internal,TD Internal,116
+Sample,like,FIN%,like,%vendor%,Finance,Vendor Mgmt,3000
+Sample,like,FIN%,like,%,Finance,FP&A,3100

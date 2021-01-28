@@ -1,0 +1,6 @@
+{% from 'dim_csv.jinja2' import dim_csv with context %}
+{% call dim_csv('tablekind', 'TableKind', dim_tablekind_csv) %}
+        TableKind      CHAR(1)      NOT NULL,
+        Table_Bucket   VARCHAR(50)  NOT NULL,
+        TableKind_Desc VARCHAR(100) NOT NULL
+{%- endcall %}

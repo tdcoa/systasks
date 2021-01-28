@@ -1,9 +1,9 @@
+{% from 'util.jinja2' import date_range %}
+
 {% macro seconds(name) -%}
 ZEROIFNULL(CAST(EXTRACT(HOUR FROM {{ name }}) * 3600 + EXTRACT(MINUTE FROM {{ name }}) * 60 + EXTRACT(SECOND FROM {{ name }}) AS FLOAT))
 {%- endmacro %}
-{% macro date_range() -%}
-BETWEEN {{ startdate | default("CURRENT_DATE - 28") }} AND {{ enddate | default("CURRENT_DATE - 1") }}
-{%- endmacro %}
+
 version: &version "1.0"
 description: >
   DBQL Core data

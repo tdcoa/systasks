@@ -1,0 +1,7 @@
+{% from 'dim_csv.jinja2' import dim_csv with context %}
+{% call dim_csv('datatype', 'DataType', dim_datatype_csv, unique=False) %}
+        DataType         CHAR(2)      NOT NULL,
+        StorageFormat    VARCHAR(20),
+        DataTypeDesc     VARCHAR(50)  NOT NULL,
+        ColumnCategory   VARCHAR(20)
+{%- endcall %}

@@ -1,0 +1,28 @@
+TableKind,Table_Bucket,TableKind_Desc
+1,Other,DataSet Schema Object
+2,Function,Function Alias Object
+A,Function,Aggregate Function
+B,Function,Combined aggregate and ordered analytical function
+C,Function,Table operator parser contract function
+D,Function,JAR
+E,Stored Procedure,External stored procedure
+F,Function,Standard Function
+G,Trigger,Trigger
+H,Other,Instance or constructor method
+I,Index,Join Index
+J,Journal,Journal
+K,Foreign Server,Foreign Server Object
+L,User Defined,User-defined table operator
+M,Macro,Macro
+N,Index,Hash Index
+O,Table,Table with no primary index and no partitioning
+P,Stored Procedure,Stored procedure
+Q,Table,Queue Table
+R,Function,Table function
+S,Function,Ordered Analytic Function
+T,Table,Table
+U,User Defined,User-defined type
+V,View,View
+X,Other,Authorization
+Y,Other,GLOP set
+Z,User Defined,User installed file

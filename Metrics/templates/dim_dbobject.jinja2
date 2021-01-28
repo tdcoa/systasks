@@ -1,0 +1,5 @@
+{% from 'dim_csv.jinja2' import dim_csv with context %}
+{% call dim_csv('dbobject', 'ObjectType', dim_dbobject_csv) %}
+        ObjectType     CHAR(3)      NOT NULL,
+        ObjectTypeDesc VARCHAR(100) NOT NULL
+{%- endcall %}

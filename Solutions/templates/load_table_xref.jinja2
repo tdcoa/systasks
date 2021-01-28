@@ -1,0 +1,26 @@
+{% include "dim_data_domain.jinja2" %}
+
+- name: populate table xref using dim_data_domain
+  connect: source
+  execute:
+    sql: |
+      INSERT INTO ca_table_xref
+      SELECT COALESCE(d.Domain_Name, 'Unknown') AS DataDomain
+          , COALESCE(d.Subject_Area, 'Unknown') AS SubjectArea
+          , t.DatabaseName
+          , t.TableName
+
+      FROM DBC.TablesV t
+      LEFT JOIN dim_data_domain d
+        ON CASE WHEN d.db_Pattern_Type = 'equal' AND t.DatabaseName = db_Pattern then 1
+                WHEN d.db_Pattern_Type = 'like'  AND t.DatabaseName like db_Pattern then 1
+                else 0
+            END = 1
+        AND CASE WHEN d.tbl_Pattern_Type = 'equal' AND t.DatabaseName = tbl_Pattern then 1
+                WHEN d.tbl_Pattern_Type = 'like'  AND t.DatabaseName like tbl_Pattern then 1
+                else 0
+            END = 1
+
+      WHERE t.TableKind in ('T', 'O')
+      QUALIFY d.Priority = MIN(d.Priority) OVER(PARTITION BY t.DatabaseName, t.TableName)
+

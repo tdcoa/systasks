@@ -2,3 +2,7 @@ playbooks:
   Compete SnowFlake:
     doc: https://github.com/padhia/systasks/wiki/snowflake
     tags: [snowflake, competition]
+
+  Business Usage Decoded:
+    doc: https://teradata.sharepoint.com/:w:/r/teams/SalesTechnologyExchangeSTX/Shared%20Documents/@STX_0400_Consumption%20Analytics/Business%20Usage%20Decoded%20(Who%20%26%20What%20Data)/Consumption%20Analytics%20Guide%20v0.1.docx?d=weaeca6a8ce1c4740b59bf752adda5354&csf=1&web=1&e=hswQew
+    tags: [value]

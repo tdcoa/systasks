@@ -1,0 +1,13 @@
+{% from 'dim_csv.jinja2' import dim_csv with context %}
+{% call dim_csv('feature', 'FeatureName', dim_feature_csv, unique=False) %}
+        Account_Name     VARCHAR(20)  NOT NULL,
+        DBS_Version      VARCHAR(20)  NOT NULL,
+        SuperCategory    VARCHAR(50)  NOT NULL,
+        FeatureCategory  VARCHAR(50)  NOT NULL,
+        Usage            VARCHAR(20),
+        MBO              SMALLINT     NOT NULL,
+        Differentiator   SMALLINT     NOT NULL,
+        BitPos           SMALLINT     NOT NULL,
+        FeatureName      VARCHAR(50)  NOT NULL,
+        Notes            VARCHAR(100)
+{%- endcall %}

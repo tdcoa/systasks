@@ -1,0 +1,8 @@
+{% from 'dim_csv.jinja2' import dim_csv with context %}
+{% call dim_csv('indextype', 'IndexType', dim_indextype_csv, unique=False) %}
+        IndexType        CHAR(1)      NOT NULL,
+        UniqueFlag       CHAR(1)      NOT NULL,
+        IndexTypeAbbr    VARCHAR(20)  NOT NULL,
+        IndexTypeDesc    VARCHAR(100) NOT NULL,
+        IndexTypeBucket  VARCHAR(50)  NOT NULL
+{%- endcall %}
