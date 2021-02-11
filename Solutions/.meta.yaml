@@ -1,4 +1,4 @@
-playbooks:
+tasklists:
   Compete SnowFlake:
     doc: https://github.com/padhia/systasks/wiki/snowflake
     tags: [snowflake, competition]

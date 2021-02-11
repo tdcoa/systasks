@@ -1,4 +1,4 @@
-playbooks:
+tasklists:
   DBQL Core:
     tags: [dbql]
 

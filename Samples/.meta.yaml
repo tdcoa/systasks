@@ -1,4 +1,4 @@
-playbooks:
+tasklists:
   Demo 1:
     doc: https://github.com/padhia/systasks/wiki/demo1
     tags: [dbql, demo]

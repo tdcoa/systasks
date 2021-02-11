@@ -3,7 +3,7 @@
   connect: source
   execute:
     sql: |
-      create volatile table dim_{{ dim }}, no log (
+      create multiset volatile table dim_{{ dim }}, no log (
 {{ caller() }}
       ){{' unique' if unique else '' }} primary index({{ pi }}) on commit preserve rows
 
