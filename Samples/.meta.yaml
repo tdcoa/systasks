@@ -1,8 +1,8 @@
 tasklists:
   Demo 1:
-    doc: https://github.com/padhia/systasks/wiki/demo1
+    doc: https://github.com/tdcoa/systasks/wiki/demo1
     tags: [dbql, demo]
 
   Demo 2:
-    doc: https://github.com/padhia/systasks/wiki/demo2
+    doc: https://github.com/tdcoa/systasks/wiki/demo2
     tags: [demo]

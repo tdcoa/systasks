@@ -4,8 +4,8 @@ tasklists:
 
   Concurrency:
     tags: [concurrency, performance]
-    doc: https://github.com/padhia/systasks/wiki/concurrency
+    doc: https://github.com/tdcoa/systasks/wiki/concurrency
 
   Feature Usage:
     tags: [features]
-    doc: https://github.com/padhia/systasks/wiki/feature_usage
+    doc: https://github.com/tdcoa/systasks/wiki/feature_usage
