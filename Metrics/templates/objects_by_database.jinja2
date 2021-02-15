@@ -1,0 +1,196 @@
+{% from 'util.jinja2' import date_range %}
+
+# Pull all databases plus object counts, by type
+# NOT by history, just point-in-time
+#
+# Variables:
+# - siteid:     siteid
+# - spoolpct:   default 0.20
+# - day_of_week: default 1
+
+{% macro objects_by_database(source=True, transcend=True) -%}
+{% if source -%}
+- name: create table db_objects_dates VT
+  connect: source
+  execute:
+    sql: |
+      create volatile table db_objects_dates as (
+        select Calendar_Date as LogDate
+        ,(cast(YearNumber_of_Calendar(calendar_date,'ISO') as int)*1000) +
+        (cast(MonthNumber_of_Year   (calendar_date,'ISO') as int)*10) +
+        (cast(WeekNumber_of_Month   (calendar_date,'ISO') as int)) as Week_ID
+        from sys_calendar.calendar
+        where Week_of_Calendar in
+            (Select week_of_calendar from sys_calendar.calendar
+            where calendar_date {{ date_range() }})  /*  PDCR picks first day of every week */
+          and Day_of_Week = {{ day_of_week | d(1) }}
+      ) with data no primary index on commit preserve rows
+
+- name: collect stats on db_objects_dates VT
+  connect: source
+  execute:
+    sql: collect stats on db_objects_dates column(Week_ID)
+
+- name: create table db_objects VT
+  connect: source
+  execute:
+    sql: |
+      create volatile table db_objects as
+      (
+        SELECT
+        dt.Week_ID
+        ,case when d.DatabaseName is null
+            then '**** Totals ****'
+            else d.DatabaseName end as DBName
+        ,cast( {{ spoolpct | d(0.20) }} as decimal(4,3)) as SpoolPct
+        ,case when d.DatabaseName is null
+              then '** Entire Teradata System (minus '||
+               cast(cast(SpoolPct*100 as decimal(4,1) format'99.9') as char(4)) ||'% spool from MaxPerm) **'
+            else Max(d.CommentString) end as CommentString
+        ,cast(avg(MaxPerm)/1e9 as decimal(18,3))
+          * case when d.DatabaseName is null then (1-SpoolPct) else 1.000 end as MaxPermGB
+        ,ZeroIfNull(cast(NullifZero(avg(CurrentPerm))/1e9 as decimal(18,3))) as CurrentPermGB
+        ,ZeroIfNull(CurrentPermGB/NullIfZero(MaxPermGB)) as FilledPct
+        ,avg(d.TableCount) as TableCount
+        ,avg(d.ViewCount) as ViewCount
+        ,avg(d.IndexCount) as IndexCount
+        ,avg(d.MacroCount) as MacroCount
+        ,avg(d."SP&TrigCount") as "SP&TrigCount"
+        ,avg(d.UDObjectCount) as UDObjectCount
+        ,avg(d.OtherCount) as OtherCount
+        ,rank() over (partition by dt.Week_ID order by dt.Week_ID, CurrentPermGB desc) as CDSRank
+        FROM
+        (
+            Select DatabaseName
+          ,logdate
+            ,sum(MaxPerm) as MaxPerm
+            ,sum(CurrentPerm) as CurrentPerm
+            FROM PDCRInfo.DatabaseSpace_Hst
+          where logdate in (select LogDate from db_objects_dates)
+            Group By 1,2
+        ) s
+        JOIN
+        (
+            Select t.DatabaseName, '' as CommentString
+          ,logdate
+            ,sum( case when t.TableKind in('T','O','J','Q') then 1 else 0 end) as TableCount
+            ,sum( case when t.TableKind in('V') then 1 else 0 end) as ViewCount
+            ,sum( case when t.TableKind in('I','N') then 1 else 0 end) as IndexCount
+            ,sum( case when t.TableKind in('M') then 1 else 0 end) as MacroCount
+            ,sum( case when t.TableKind in('P','E','G') then 1 else 0 end) as "SP&TrigCount"
+            ,sum( case when t.TableKind in('A','B','F','R','S','U','D') then 1 else 0 end) as UDObjectCount
+            ,sum( case when t.TableKind in('H') then 1 else 0 end) as SysConstCount
+            ,sum( case when t.TableKind NOT in('A','B','F','R','S','U','P','E','G','M','I','N','V','T','O','J','Q','D','H') then 1 else 0 end) as OtherCount
+            FROM dbc.Tables t
+          inner join PDCRDATA.TableSpace_Hst h
+          on h.Tablename = t.Tablename
+          and h.DatabaseName = t.DatabaseName
+            where h.logdate in (select LogDate from db_objects_dates)
+            Group By 1,2,3
+        ) d
+        ON s.DatabaseName = d.DatabaseName
+        and s.logdate = d.logdate
+        JOIN db_objects_dates as dt
+          on s.LogDate = dt.LogDate
+        and d.LogDate = dt.LogDate
+        GROUP BY dt.Week_ID, rollup(d.Databasename)
+
+      ) with data no primary index on commit preserve rows
+
+- name: drop table db_objects_dates
+  connect: source
+  execute:
+    sql: drop table db_objects_dates
+
+- name: export to db_objects_all.csv
+  connect: source
+  export:
+    file: db_objects_all.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+        ,Week_ID
+        ,DBName
+        ,rank() over(order by CurrentPermGB desc)-1 as CurrPermGB_Rank
+        ,CommentString
+        , cast(MaxPermGB      as decimal(18,2))  as MaxPermGB
+        , cast(CurrentPermGB  as decimal(18,2))  as CurrentPermGB
+        , cast(case when FilledPct >1 then 101.0 else FilledPct*100 end
+                                  as decimal( 9,3))         as FilledPct
+        , cast(TableCount     as integer       )     as Table_Count
+        , cast(ViewCount      as integer       )     as View_Count
+        , cast(IndexCount     as integer       )     as Index_Count
+        , cast(MacroCount     as integer       )     as Macro_Count
+        , cast("SP&TrigCount" as integer       )     as SPTrig_Count
+        , cast(UDObjectCount  as integer       )     as UDObject_Count
+        , cast(OtherCount     as integer       )     as Other_Count
+      from db_objects
+
+- name: export db_objects_total.csv
+  connect: source
+  export:
+    file: db_objects_total.csv
+    sql: |
+      Select
+      '{{ siteid }}' as Site_ID
+      ,Week_ID
+      ,DBName as "Database Name"
+      ,SpoolPct as "Spool%"
+      ,CommentString as "Comment String"
+      , cast(zeroifnull(MaxPermGB     ) as decimal(18,2))  as "Allocated GB"
+      , cast(zeroifnull(CurrentPermGB ) as decimal(18,2))  as "Used GB"
+      , cast(zeroifnull(case when FilledPct >1 then 101.0 else FilledPct*100 end )
+                                            as decimal( 9,3))         as "Filled Pct"
+      , cast(zeroifnull(TableCount    ) as integer)     as "Table Count"
+      , cast(zeroifnull(ViewCount     ) as integer)     as "View Count"
+      , cast(zeroifnull(IndexCount    ) as integer)     as "Index Count"
+      , cast(zeroifnull(MacroCount    ) as integer)     as "Macro Count"
+      , cast(zeroifnull("SP&TrigCount") as integer)     as "SP&Trig Count"
+      , cast(zeroifnull(UDObjectCount ) as integer)     as "UDObject Count"
+      , cast(zeroifnull(OtherCount    ) as integer)     as "Other Count"
+      ,rank() over(order by Week_ID desc) as "Used GB Rank"
+      from db_objects
+      where DBName = '**** Totals ****'
+
+- name: export db_objects_top10.csv
+  connect: source
+  export:
+    file: db_objects_top10.csv
+    sql: |
+      Select
+      '{{ siteid }}' as Site_ID
+      ,Week_ID
+      ,DBName as "Database Name"
+      ,rank() over(partition by Week_ID order by CurrentPermGB desc) as "Used GB Rank"
+      ,CommentString as "Comment String"
+      , cast(zeroifnull(MaxPermGB     ) as decimal(18,2))  as "Allocated GB"
+      , cast(zeroifnull(CurrentPermGB ) as decimal(18,2))  as "Used GB"
+      , cast(zeroifnull(case when FilledPct >1 then 101.0 else FilledPct*100 end )
+                                            as decimal( 9,3))         as "Filled Pct"
+      , cast(zeroifnull(TableCount    ) as integer)     as "Table Count"
+      , cast(zeroifnull(ViewCount     ) as integer)     as "View Count"
+      , cast(zeroifnull(IndexCount    ) as integer)     as "Index Count"
+      , cast(zeroifnull(MacroCount    ) as integer)     as "Macro Count"
+      , cast(zeroifnull("SP&TrigCount") as integer)     as "SP&Trig Count"
+      , cast(zeroifnull(UDObjectCount ) as integer)     as "UDObject Count"
+      , cast(zeroifnull(OtherCount    ) as integer)     as "Other Count"
+      from db_objects
+      where DBName <> '**** Totals ****'
+      qualify "Used GB Rank" <= 10
+          and max(Week_ID) over()  = Week_ID
+{% endif %}
+
+{% if transcend -%}
+- name: import into {{ db_stg | default('adlste_coa_stg') }}.stg_dat_DB_Objects
+  connect: transcend
+  import:
+    table: {{ db_stg | default('adlste_coa_stg') }}.stg_dat_DB_Objects
+    file: db_objects_all.csv
+
+- name: call {{ db_coa | default('adlste_coa') }}.sp_dat_DB_Objects
+  connect: transcend
+  call:
+    proc: {{ db_coa | default('adlste_coa') }}.sp_dat_DB_Objects
+    params:
+      - 'v1'
+{% endif %}
+{% endmacro %}

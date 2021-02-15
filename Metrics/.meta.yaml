@@ -9,3 +9,11 @@ tasklists:
   Feature Usage:
     tags: [features]
     doc: https://github.com/tdcoa/systasks/wiki/feature_usage
+
+  Database Objects:
+    tags: [dbql, dbobject]
+    doc: https://github.com/tdcoa/systasks/wiki/dbobjects
+
+  Dimensions:
+    tags: [dim]
+    doc: https://github.com/tdcoa/systasks/wiki/dimensions

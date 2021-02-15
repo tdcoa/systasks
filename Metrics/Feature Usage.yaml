@@ -34,7 +34,7 @@ tasks:
     file: feature_usage_summary.csv
     sql: |
       select
-       '{siteid}' as Site_ID
+       '{{ siteid }}' as Site_ID
       ,trim(cast(min(LogDate) as format 'Y4-MM-DD')(CHAR(10))) as StartLogDate
       ,trim(cast(max(LogDate) as format 'Y4-MM-DD')(CHAR(10))) as EndLogDate
       ,featurename as Feature_Name
