@@ -1,0 +1,60 @@
+description: >
+  Demonstrate how to escape multiple CVT calls to avoid 'table exists' error."
+  This is done by creating a list object called 'completed' (see code comment below)
+  at the beginning of your process and adding any vt_name that you may want to test
+  and exclude later. All dim_templates use this approach to disallow repetitive runs
+  IF (and only if) the below string is included.  If you look at the pre-substitution
+  code, you can see that command below.
+
+# include this line to skip duplicitive CVTs: {% set completed = [] %}
+
+# Important: Jinja doesn't understand comments, so template logic embedded into
+# comments is still valid.  It also means you cannot 'comment out' template logic.
+# for example, the logic embedded in the previous paragraph is active.
+
+tasks:
+
+- name: Create vt_dbcinfo the FIRST time
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbcinfo as
+      (Select '{{ siteid }}' as Site_ID, info.*
+      from dbc.dbcinfo as info) with data
+      no primary index on commit preserve rows
+# append tablename to our list of completed items:
+# {{ completed.append('vt_dbcinfo') }}
+
+
+
+# we can now opt-out of the entire below section,
+# depending whether the process was previously completed:
+
+# {% if not 'vt_dbcinfo' in completed %}
+- name: Create vt_dbcinfo the SECOND time
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbcinfo as
+      (Select '{{ siteid }}' as Site_ID, info.*
+      from dbc.dbcinfo as info) with data
+      no primary index on commit preserve rows
+
+# {% endif %}
+
+# If you "explain" this job, you'll note the absence
+# of the above SECOND section... i.e., it was excluded
+
+
+# Here is a real-world example... the statement dimension will
+# maintain it's own state, allowing for repetitive calls,
+# and skipping chunks of code previously run.
+{% include "vt_dim_statement.j2" %}
+{% include "vt_dim_statement.j2" %}
+{% include "vt_dim_statement.j2" %}
+{% include "vt_dim_statement.j2" %}
+{% include "vt_dim_statement.j2" %}
+
+# All the dim_* templates are setup to skip repetitive calls, IF
+# you include this line at the top of every script (in comment is ok):
+# {% set completed = [] %}

@@ -1,0 +1,54 @@
+description: >
+  Demonstrate taking advantage of variables set in the UI. This includes user-
+  defined variables, as well as default values for variables.
+
+
+tasks:
+
+# variables appear in double curly-brackets, and can substitute any part
+# of the configuration.  For example, below we place the variable siteid
+# (aka site_id of the source system) into the SQL, in the filename, and
+# in the description:
+- name: Export contents of dbc.info for {{ siteid }}
+  connect: source
+  export:
+    file: {{ siteid }}_dbcinfo.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,info.*
+      from dbc.dbcinfo as info
+
+# All of these substitutions are completed when you "explain" the process,
+# meaning you'll always see the completed SQL prior to execution.
+
+# if you have parameters that are required, you can supply a default
+# so the sql will always run, even if user doesn't fill in a value
+- name: Export all dates for supplied month_of_calendar
+  connect: source
+  export:
+    file: {{ siteid }}_dates.csv
+    sql: |
+      select
+       calendar_date as LogDate
+      ,month_of_calendar
+      from sys_calendar.calendar
+      where month_of_calendar = {{ demo_month_of_calendar | default('1234') }}
+# user can now supply demo_month_of_calendar, or if omitted, a default will apply
+
+# there are some built-in variables available, with the prefix: "dbc" that will
+# return different values depending on the collection type of the source system,
+# aka pdcr or dbc.   For exmaple, the SQL below will return the first 10 rows
+# from the QueryLog table, auto-selecting either dbc.dbqlogtbl or
+# pdcrinfo.dbqlogtbl_hst.   It will also auto-select the correct column for
+# LogDate, depending on the collection type.
+- name: Export top 10 records from either pdcr or dbc querylog table
+  connect: source
+  export:
+    file: dbql_first10_rows.csv
+    sql: |
+      select top 10 *
+      from {{ dbc.log }} as qrylog
+      where {{ dbc.logdt }} = DATE-1
+# there are 20 translated tables (DBQL, ResUsage), and we can continue to extend
+# as it makes sense.  A full list can be found at the bottom of this page:
+#  https://github.com/tdcoa/systasks

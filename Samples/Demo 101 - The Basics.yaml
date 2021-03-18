@@ -1,0 +1,42 @@
+description: >
+  This is as "hello world" as it comes -- Three basic selects:
+  the first from dbc.info, which will return a .csv, the second from the
+  calendar table with a random number generator, which is saved to both a .csv
+  and a graph.  All save output to the defined "Out" directory.
+
+
+tasks:
+
+# SQL can be placed inline, as shown here:
+- name: Export contents of dbc.info
+  connect: source  # connect to "source system" as specified
+  export:
+    file: dbcinfo.csv   # save output to this file
+    sql:  Select * from dbc.dbcinfo
+
+
+# SQL can be placed inline with newlines, by adding a single pipe up front.
+# This tells yaml to pick up SQL content in the subsequent lines.
+# Note, the indenting from the "sql:" name must be maintained.  The first line
+# that has a lesser indent signifies the next statement.
+- name: Export random number by date
+  connect: source
+  export:
+    file: random1.csv
+    sql: |
+      select
+       calendar_date as LogDate
+      ,random(10,100) as random_value1
+      ,random_value1 + random(-10,30) as random_value2
+      from sys_calendar.calendar
+      where LogDate between {{ startdate }} and {{ enddate }}
+
+
+# SQL can also be placed in a separate file, using the "sqlfile" attribute.
+# also, if you have special characters (as in the name below) you should
+# wrap the entire name in double-quotes:
+- name: "Export contents: sql/random.sql file"
+  connect: source
+  export:
+    file: random2.csv
+    sqlfile:  sql/random.sql

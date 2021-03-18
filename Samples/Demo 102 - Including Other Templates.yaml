@@ -1,0 +1,68 @@
+description: >
+  Demonstrate how to include work from other metrics.  This is done
+  via the popular Jinja Template Engine.  While it is primarily used
+  in python web applications like Django and Flask, or in Networking
+  applications like Ansible, it is generic, and works quite well for
+  advanced parameterizing of SQL within COA.
+
+tasks:
+
+# The Include command points to other files, and plug the content of
+# that file over the top of the Jinja include statement.
+# It can be thought of as "copy/paste that document right here" at
+# runtime.  This means you have to pay attention to details on
+# where it is placed, i.e., how it is indented, etc.
+
+# For COA, all templates are designed to fit on their own lines,
+# with no indenting, for simplicity.
+
+# Let's build several Dimension tables:
+{% include 'vt_dim_statement.j2' %}
+{% include 'vt_dim_app.j2' %}
+{% include 'vt_dim_user.j2' %}
+
+# Let's also calculate concurrency:
+{% include 'vt_concurrency.j2' %}
+
+# at this point, we now have 5 volatile tables created in the session,
+#  - 1 containing Concurrency
+#  - 3 for the Dimensions we asked for
+#  - 1 more Dimension (vt_dim_tdinternal_databases) that was required by vt_dim_user
+
+# The last dimension table was created as a dependency for vt_dim_user
+# and illustrates the ability to nest dependencies.
+
+# These templates only create the volatile table, they don't
+# actually DO anything with that data - that's where the calling
+# solution comes in.  For instance:
+
+- name: Export vt_concurrency for charting
+  connect: source
+  export:
+    file: concurrency.csv
+    sql: |
+      select LogDate
+      ,Avg(Concurrency_Avg) as "Average--#10890A"
+      ,Avg(Concurrency_80Pctl) as "80th Percentile--#9C9700"
+      ,Avg(Concurrency_95Pctl) as "95th Percentile--#7E0606"
+      ,MAX(Concurrency_Peak) as "Absolute Peak--#FF0000"
+      from vt_concurrency
+      group by 1
+      order by 1
+
+# By convension, the vt_TableName and template file name are consistently named
+# for ease of use.  For example, the template: vt_concurrency.j2 above will
+# create a vt_concurrency table.
+
+- name: Chart Concurrency
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:concurrency.csv"
+      - "title:Concurrency - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+
+# If you are running large projects, or have small spool space allocations, you
+# may want to drop vt_ after you are done using them.  They are volatile tables,
+# so this is optional - all will be destroyed at the end of your session.
