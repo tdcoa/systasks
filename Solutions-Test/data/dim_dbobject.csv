@@ -1,0 +1,27 @@
+ObjectType,ObjectTypeDesc
+Agg,User-Defined Aggregate Function
+AgS,User-Defined Aggregate STAT Function
+Aut,Security Authorization
+Col,Column
+DB ,Database
+GLP,GLOP Set
+HIx,Hash Index
+Idx,Index
+JIx,Join Index (JI)
+Jrl,Journal
+Mac,Macro
+SP ,Stored Procedure (SP)
+Sta,User-Defined STAT Function
+SUF,SQL User-Defined Function (SQL UDF)
+Tab,Table
+TbC,Contract Function
+TbF,Table Function
+TbO,Table Operator (TO)
+Tmp,Global Temporary Table
+Trg,Trigger
+UDF,User-Defined Function (UDF)
+UDM,User-Defined Method (UDM)
+UDT,User-Defined Type (UDT)
+Viw,View
+Vol,Volatile Table
+XSP,External Stored Procedure (XSP)

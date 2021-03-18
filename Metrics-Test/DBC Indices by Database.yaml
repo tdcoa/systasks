@@ -1,0 +1,12 @@
+description: Export table vt_dbc_indices_by_database
+version: 0
+tasks:
+
+{% include "vt_dbc_indices_by_database.j2" %}
+
+- name: Export vt_dbc_indices_by_database for reconciliation
+  connect: source
+  export:
+    file: dbc_indices_by_database.csv
+    sql: |
+      Select * from vt_dbc_indices_by_database

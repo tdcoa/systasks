@@ -1,0 +1,57 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_join_frequency' in completed %}
+
+- name: Create map of join frequency to QueryID, for performance
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_queryid_by_joincount as
+      (
+          Select
+          QueryID, {{ dbc.logdt }} as LogDate1, Count(distinct ObjectTableName) as JoinCount
+          from {{ dbc.obj }} -- DBQLObjTbl
+          where ObjectColumnName is null
+            and ObjectTableName is not null
+            and ObjectType in ('Tab', 'Viw')
+            and LogDate1 between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
+          group by 1,2
+      ) with data
+      primary index (QueryID, LogDate1) /* Match PI for DBQL */
+      on commit preserve rows
+
+- name: Collect stats on intermediate table vt_queryid_by_joincount
+  connect: source
+  execute:
+    sql: collect stats on vt_queryid_by_joincount column(QueryID, LogDate1)
+
+- name:  Create vt_join_frequency, final output
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_join_frequency  as
+      (
+        Select
+         CASE WHEN JoinCount <= 5 THEN (JoinCount (FORMAT 'Z9') (CHAR(2))) ELSE ' 6+' END as Join_Label
+        ,cast(cast(count(*) as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as Request_Count
+        ,cast(cast(sum(dbql.ParserCPUTime+dbql.AMPCPUtime) as decimal(32,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as CPU_Sec
+        ,count(distinct {{ dbc.logdt }} ) as DateCount
+        from {{ dbc.log }} as dbql
+        join vt_queryid_by_joincount as j
+          on {{ dbc.logdt }} = j.LogDate1
+         and dbql.QueryID = j.QueryID
+        group by 1
+      ) with data no primary index
+      on commit preserve rows
+
+- name: Collect Stats on vt_join_frequency
+  connect: source
+  execute:
+    sql: collect stats on vt_join_frequency column(Join_Label)
+
+- name: Drop intermediate table vt_queryid_by_joincount
+  connect: source
+  execute:
+    sql: drop table vt_queryid_by_joincount
+
+{% endif %}
+{{ completed.append('vt_join_frequency') or '' }}

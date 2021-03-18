@@ -1,0 +1,43 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_statement' in completed %}
+
+- name: Create vt_dim_statement
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_dim_statement
+      (Statement_Type     varchar(128)  character set LATIN
+      ,Statement_Bucket   varchar(128)  character set LATIN
+      ,Statement_Class    varchar(16)   character set LATIN
+      ) no primary index
+      on commit preserve rows
+
+
+- name: import metadata into vt_dim_statement
+  connect: source
+  import:
+    file: data/dim_statement.csv
+    table: vt_dim_statement
+
+
+- name: ensure vt_dim_statement contains all statementtypes found in dbql
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dim_statement
+      Select a.StatementType, 'Unknown', 'Unknown'
+      from (
+        Select StatementType from {{ dbc.log }} as dbql
+        where {{ dbc.logdt }} between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
+        group by 1
+      ) a
+      where a.StatementType not in(select Statement_Type from vt_dim_statement)
+
+
+- name: Collect Stats vt_dim_statement
+  connect: source
+  execute:
+    sql: collect stats on vt_dim_statement column(Statement_Type)
+
+{% endif %}
+{{ completed.append('vt_dim_statement') or '' }}

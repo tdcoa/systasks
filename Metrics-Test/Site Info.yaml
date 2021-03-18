@@ -1,0 +1,12 @@
+description: Print information about the source system, including Teradata version, user name, spool space, etc.  Also prints out select variables for use in Slideware Titles, such as your name, position, date, etc.
+version: 1
+tasks:
+
+{% include "vt_site_info.j2" %}
+
+- name: Export vt_site_info for reconciliation
+  connect: source
+  export:
+    file: site_info.csv
+    sql: |
+      Select * from vt_site_info

@@ -1,0 +1,70 @@
+tasklists:
+
+  Concurrency:
+    tags: [concurrency, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Concurrency.aspx
+
+  DBC Column Summary:
+    tags: [DBC, Column, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Column_Summary.aspx
+
+  DBC Constraint:
+    tags: [DBC, Constraint, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Constraint.aspx
+
+  DBC Indices by Database:
+    tags: [DBC, Indices, Database, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Indices_by_Database.aspx
+
+
+  DBC Object Count:
+    tags: [DBC, Object, Count, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Object_Count.aspx
+
+  DBQL Core Metrics Daily:
+    tags: [DBQL_Core, DBQL, Core, Metrics, Daily, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBQL_Core_Metrics_Daily.aspx
+
+  Dim App:
+    tags: [Dim, App, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_App.aspx
+
+  Dim IndexType:
+    tags: [Dim, IndexType, Index, Type, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_IndexType.aspx
+
+  Dim Statement:
+    tags: [Dim, Statement, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_Statement.aspx
+
+  Dim TableKind:
+    tags: [Dim, TableKind, Table, Kind, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_TableKind.aspx
+
+  Dim TDInternal Databases:
+    tags: [Dim, TD, Internal, TDInternal, Database, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_TDInternal_Databases.aspx
+
+  Dim User:
+    tags: [Dim, User, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_User.aspx
+
+  Disk Space by Table:
+    tags: [Disk, Space, Table, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Disk_Space_by_Table.aspx
+
+  Join Frequency:
+    tags: [Join, Frequency, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Join_Frequency.aspx
+
+  Site Info:
+    tags: [Site, Info, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Site_Info.aspx
+
+  Statement Count by Table:
+    tags: [Statement, Count, Table, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Statement_Count_by_Table.aspx
+
+  Transfer Bytes In-Out:
+    tags: [System, Transfer, Bytes, in, out, performance, bigquery]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Transfer_Bytes_In_Out.aspx

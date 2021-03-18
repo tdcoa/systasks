@@ -1,0 +1,13 @@
+description: Print out table vt_dbc_constraint, for reconciliation purposes.
+version: 0
+tasks:
+
+{% include "vt_dbc_constraint.j2" %}
+
+- name: Export vt_dbc_constraint for reconciliation
+  connect: source
+  export:
+    file: dbc_constraint.csv
+    sql: |
+      Select * from vt_dbc_constraint
+      order by ConstraintType, DatabaseName, TableName

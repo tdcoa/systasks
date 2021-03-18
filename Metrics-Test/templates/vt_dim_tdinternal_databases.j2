@@ -1,0 +1,49 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_tdinternal_databases' in completed %}
+
+- name:  Create vt_dim_tdinternal_databases_temp to catch initial file
+  connect: source
+  execute:
+    sql: |
+      CREATE MULTISET VOLATILE TABLE vt_dim_tdinternal_databases_temp
+      (DatabaseName     varchar(128) character set latin
+      ,DatabaseUse      varchar(128) character set latin
+      ) NO PRIMARY INDEX
+      ON COMMIT PRESERVE ROWS;
+
+
+- name: import metadata into vt_dim_tdinternal_databases_temp
+  connect: source
+  import:
+    file: data/dim_tdinternal_databases.csv
+    table: vt_dim_tdinternal_databases_temp
+
+
+- name:  Create vt_dim_tdinternal_databases, enriched with system information
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dim_tdinternal_databases
+      as(
+          select
+           v.DatabaseName
+          ,f.DatabaseUse
+          ,v.DBKind as DatabaseKind
+          ,v.CommentString
+          from dbc.DatabasesV v
+          join vt_dim_tdinternal_databases_temp f
+            on v.DatabaseName = f.DatabaseName
+      ) with data no primary index on commit preserve rows
+
+- name: Drop vt_dim_tdinternal_databases_temp
+  connect: source
+  execute:
+    sql: drop table vt_dim_tdinternal_databases_temp
+
+- name: Collect Stats on vt_dim_tdinternal_databases
+  connect: source
+  execute:
+    sql: collect stats on vt_dim_tdinternal_databases column(DatabaseName)
+
+{% endif %}
+{{ completed.append('vt_dim_tdinternal_databases') or '' }}

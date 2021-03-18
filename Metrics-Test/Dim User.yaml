@@ -1,0 +1,11 @@
+description: Print out table vt_dim_user, for reconciliation purposes.
+version: 1
+tasks:
+
+{% include "vt_dim_user.j2" %}
+
+- name: Export vt_dim_user for reconciliation
+  connect: source
+  export:
+    file: dim_user_reconcile.csv
+    sql: Select * from vt_dim_user order by Organization, Department, UserName

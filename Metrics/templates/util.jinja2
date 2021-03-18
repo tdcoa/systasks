@@ -1,3 +1,0 @@
-{% macro date_range() -%}
-BETWEEN {{ startdate | default("CURRENT_DATE - 14") }} AND {{ enddate | default("CURRENT_DATE - 1") }}
-{%- endmacro %}

@@ -1,0 +1,41 @@
+description: Download entire vt_dbql_core_daily output.  One year (365 days) on Transcend Production ran for 5min and generated 56k rows, for a filesize of 18MB.
+version: 1
+tasks:
+
+{% include "vt_dbql_core_daily.j2" %}
+
+
+- name: Export queries per day for graphing in BigQuery pptx
+  connect: source
+  export:
+    file: daily_query_throughput.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
+      ,sum(Query_Cnt) (BigInt) as "Total Queries--#27C1BD"
+      ,sum(Query_SubSecond_Cnt)(BigInt) as "Subsecond Queries--#636363"
+      from vt_dbql_core_daily
+      group by LogDate
+      order by 1
+
+- name: Chart query per day over time
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:daily_query_throughput.csv"
+      - "title:Query Throughtput per Day - {{ siteid }}"
+      - "height:4"
+      - "width:16"
+
+
+- name: Export vt_dbql_core_daily
+  connect: source
+  export:
+    file: dbql_core_daily.csv
+    sql: Select * from vt_dbql_core_daily order by LogDate, UserType, Statement_Bucket
+
+- name: Export vt_dbql_core_user
+  connect: source
+  export:
+    file: dbql_core_user.csv
+    sql: Select * from vt_dbql_core_user order by LogDate, UserName

@@ -1,0 +1,35 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dbc_indices_by_database' in completed %}
+
+{% include 'vt_dim_indextype.j2' %}
+
+- name: Create count of indices by database
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbc_indices_by_database as
+      (
+        select
+           coalesce(Inds.DatabaseName, '') AS DatabaseName
+          ,coalesce(IK.IndexType_Desc, 'Unknown - ' || Inds.IndexType) AS IndexType_Desc
+          ,coalesce(IK.IndexType_Bucket, 'Unknown - ' || Inds.IndexType) AS IndexType_Bucket
+          ,zeroifnull(Inds.IndexCount) AS Index_Count
+        from
+          (
+            select DatabaseName, IndexType, UniqueFlag, COUNT(*) AS IndexCount
+            FROM DBC.IndicesV GROUP BY 1,2,3
+          ) Inds
+        full outer join vt_dim_indextype AS IK
+          on IK.IndexType = Inds.IndexType
+         and IK.UniqueFlag = Inds.UniqueFlag
+      ) with data
+      no primary index on commit preserve rows
+
+
+- name: Collect stats on vt_dbc_indices_by_database
+  connect: source
+  execute:
+    sql: collect stats on vt_dbc_indices_by_database column(DatabaseName)
+
+{% endif %}
+{{ completed.append('vt_dbc_indices_by_database') or '' }}

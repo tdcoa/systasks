@@ -1,0 +1,27 @@
+description: Generates daily CPU numbers, broken out by DBS, OS, Wait, and Idle, as well other platform characteristics such as MaxIOTA and Node Type.
+version: 1
+tasks:
+
+{% include "vt_system_cpu_by_day.j2" %}
+
+- name: Export System CPU for Chart
+  connect: source
+  export:
+    file: system_cpu_by_day.csv
+    sql: |
+      select LogDate
+      ,cast(CPU_Idle   as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU Idle %--#AFAFAF"
+      ,cast(CPU_IOWait as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU IOWait %--#BD9200"
+      ,cast(CPU_OS     as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU OS %--#43A9BD"
+      ,cast(CPU_DBS    as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU DBS %--#142CF6"
+      ,cast(CPU_Total  as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU Total %--#F01D1D"
+      from vt_System_CPU_by_Day
+
+- name: Chart System CPU
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:system_cpu_by_day.csv
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:12

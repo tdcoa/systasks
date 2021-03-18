@@ -1,9 +1,0 @@
-{% include "dim_user.jinja2" %}
-
-- name: populate user xref using dim_user
-  connect: source
-  execute:
-    sql: |
-      INSERT INTO ca_user_xref
-      Select UserName, User_Department, User_SubDepartment, User_Region
-      From dim_user

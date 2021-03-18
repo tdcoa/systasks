@@ -1,0 +1,34 @@
+description: Print out table vt_concurrency, for reconciliation purposes.
+version: 0
+tasks:
+
+{% include "vt_concurrency.j2" %}
+
+- name: Export vt_concurrency for charting
+  connect: source
+  export:
+    file: concurrency.csv
+    sql: |
+      select LogDate
+      ,Avg(Concurrency_Avg) as "Average--#10890A"
+      ,Avg(Concurrency_80Pctl) as "80th Percentile--#9C9700"
+      ,Avg(Concurrency_95Pctl) as "95th Percentile--#7E0606"
+      ,MAX(Concurrency_Peak) as "Absolute Peak--#FF0000"
+      from vt_concurrency
+      group by 1
+      order by 1
+
+- name: Chart Concurrency
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:concurrency.csv"
+      - "title:Concurrency - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+- name: Re-export vt_concurrency entirety
+  connect: source
+  export:
+    file: concurrency.csv
+    sql:  Select * from vt_concurrency

@@ -1,0 +1,49 @@
+description: Print out table vt_statement_count_by_table, for reconciliation purposes.
+version: 0
+tasks:
+
+{% include "vt_statement_count_by_table.j2" %}
+
+- name: Export summary of vt_statement_count_by_table to csv (at 2m row/mth, default select is summary, not detail)
+  connect: source
+  export:
+    file: table_count_by_statement.csv
+    sql:  |
+      select LogDate
+      ,Statement_Bucket
+      ,sum(Request_Count) as Request_Count
+      ,count(TableName) as Table_Count
+      from  vt_statement_count_by_table
+      group by 1,2
+      order by 1,2
+
+- name: Export detail for last day of vt_statement_count_by_table to csv
+  connect: source
+  export:
+    file: table_detail_by_statement_lastday.csv
+    sql:  |
+      select * from  vt_statement_count_by_table
+      qualify LogDate = max(LogDate) over(partition by Statement_Bucket)
+      order by LogDate desc, Statement_Bucket asc
+
+
+- name: "Export number of tables that exceed 1500 DML (ins/del/upd/merge) per day, for charting"
+  connect: source
+  export:
+    file: table_count_over_1500_dml.csv
+    sql: |
+      Select LogDate, Count(TableName) as "Table Count--#27C1BD"
+      from vt_statement_count_by_table
+      where Request_Count > 1500
+        and Statement_Class = 'DML'
+      group by 1
+      order by 1
+
+- name: Chart of tables with over 1500 DML per day, on average
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:table_count_over_1500_dml.csv"
+      - "title:Table Count over 1500 daily Inserts/Updates/Deletes - {{ siteid }}"
+      - "height:4"
+      - "width:10"

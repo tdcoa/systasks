@@ -1,0 +1,31 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_indextype' in completed %}
+
+- name:  Create vt_dim_indextype
+  connect: source
+  execute:
+    sql: |
+      CREATE MULTISET VOLATILE TABLE vt_dim_indextype
+      (IndexType          char(1) character set latin
+      ,UniqueFlag        char(1) character set latin
+      ,IndexType_Abbr     varchar(16) character set latin
+      ,IndexType_Desc     varchar(128) character set latin
+      ,IndexType_Bucket   varchar(128) character set latin
+      ) NO PRIMARY INDEX
+      ON COMMIT PRESERVE ROWS;
+
+
+- name: import metadata into vt_dim_indextype
+  connect: source
+  import:
+    file: data/dim_indextype.csv
+    table: vt_dim_indextype
+
+
+- name: Collect Stats on vt_dim_indextype
+  connect: source
+  execute:
+    sql: collect stats on vt_dim_indextype column(IndexType)
+
+{% endif %}
+{{ completed.append('vt_dim_indextype') or '' }}

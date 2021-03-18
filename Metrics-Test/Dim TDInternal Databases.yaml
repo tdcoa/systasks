@@ -1,0 +1,11 @@
+description: Print out table vt_dim_tdinternal_databases, for reconciliation purposes.
+version: 1
+tasks:
+
+{% include "vt_dim_tdinternal_databases.j2" %}
+
+- name: Export vt_dim_tdinternal_databases for reconciliation
+  connect: source
+  export:
+    file: dim_tdinternal_databases_reconcile.csv
+    sql: Select * from vt_dim_tdinternal_databases order by DatabaseName

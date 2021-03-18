@@ -1,0 +1,34 @@
+description: Run join count volume by query count, with cpu overlay - vt_join_frequency
+version: 0
+tasks:
+
+{% include "vt_join_frequency.j2" %}
+
+- name: Export full vt_join_frequency
+  connect: source
+  export:
+    file: join_frequency.csv
+    sql: |
+      Select * from vt_join_frequency
+
+- name: Export request count and cpu by join frequency
+  connect: source
+  export:
+    file: join_frequency.csv
+    sql: |
+      Select
+       join_label || case when join_label=1 then ' Table' else ' Tables' end  as "Number of Tables" -- xaxis
+      ,Request_Count as "Number of Queries--#27C1BD" -- bars
+      ,cast(cast(CPU_Sec / sum(CPU_Sec)over()*100 as decimal(9,2)) as varchar(16))  as "CPU Consumed %--#636363" -- line
+      from vt_join_frequency
+      order by 1 asc
+
+- name: "Chart join frequency volume, with CPU line overlay"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:join_frequency.csv"
+      - "title:Join Frequency - {{ siteid }}"
+      - "height:4"
+      - "width:9"
+      - "barlogscale:False"

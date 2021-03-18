@@ -1,0 +1,31 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_app' in completed %}
+
+- name:  "Create vt_dim_app"
+  connect: source
+  execute:
+    sql: |
+      create volatile table  vt_dim_app
+      (Pattern_Type       varchar(16)   character set LATIN
+      ,App_ID             varchar(128)  character set LATIN
+      ,App_Bucket         varchar(128)  character set LATIN
+      ,Use_Bucket         varchar(128)  character set LATIN
+      ,Priority           integer
+      )  primary index(Priority)
+      on commit preserve rows
+
+
+- name: import metadata into vt_dim_app
+  connect: source
+  import:
+    file: data/dim_app.csv
+    table: vt_dim_app
+
+
+- name:  "Collect Stats vt_dim_app"
+  connect: source
+  execute:
+    sql: collect stats column App_ID, column Priority on vt_dim_app
+
+{% endif %}
+{{ completed.append('vt_dim_app') or '' }}

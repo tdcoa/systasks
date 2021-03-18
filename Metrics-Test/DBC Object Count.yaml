@@ -1,0 +1,28 @@
+description: Print out table vt_dbc_object_count, for reconciliation purposes.
+version: 0
+tasks:
+
+{% include "vt_dbc_object_count.j2" %}
+
+- name: Export reconciliation file for vt_dbc_object_count
+  connect: source
+  export:
+    file: reconcile_dbc_object_count.csv
+    sql: |
+      select cast('vt_dbc_object_count' as varchar(256)) as dataset
+      ,sum(Object_Count) as Object_Count
+      from vt_dbc_object_count
+         union all
+      select 'dbc.TablesV' as dataset, count(*) as Object_Count
+      from dbc.TablesV
+         union all
+      select 'note: if tables are created between the build of vt_dbc_object_count and the execution of this query, the counts may be off by a small amount.'
+         ,null from (select 0 as stub_for_note) s
+
+- name: Export vt_dbc_object_count
+  connect: source
+  export:
+    file: dbc_object_count.csv
+    sql: |
+      Select * from vt_dbc_object_count
+      order by DatabaseName, Object_Group12

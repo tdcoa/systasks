@@ -1,0 +1,64 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_statement_count_by_table' in completed %}
+
+{% include "vt_dim_statement.j2" %}
+
+- name: Create prework temp table, for performance improvement
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_statement_count_by_table_prework
+      as (
+        Select
+           {{ dbc.logdt }} as LogDate
+          ,o.ObjectDatabaseName as DatabaseName
+          ,o.ObjectTableName as TableName
+          ,l.StatementType
+          ,count(*) as Request_Count
+        from {{ dbc.log }} as l
+        join (Select {{ dbc.logdt }} as LogDate1, QueryID, ObjectDatabaseName, ObjectTableName
+              from   {{ dbc.obj }}
+              where logdate1 between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
+                and ObjectTableName is not null
+             ) as o
+          on l.QueryID = o.QueryID
+         and {{ dbc.logdt }} = o.LogDate1
+         and {{ dbc.logdt }} between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
+        group by 1,2,3,4
+      ) with data
+      no primary index
+      on commit preserve rows
+
+- name: Create vt_statement_count_by_table, final outcome
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_statement_count_by_table
+      as(
+        select
+         LogDate
+        ,DatabaseName
+        ,TableName
+        ,Statement_Bucket
+        ,Statement_Class
+        ,sum(Request_Count) as Request_Count
+        from vt_statement_count_by_table_prework p
+        join vt_dim_statement s
+          on p.StatementType = s.Statement_Type
+        group by 1,2,3,4,5
+      ) with data
+      primary index (LogDate, TableName)
+      on commit preserve rows
+
+- name: Collect Stats on vt_statement_count_by_table
+  connect: source
+  execute:
+    sql: collect stats on vt_statement_count_by_table column(LogDate, TableName)
+
+- name: drop prework table
+  connect: source
+  execute:
+    sql: drop table vt_statement_count_by_table_prework
+
+{% endif %}
+{{ completed.append('vt_statement_count_by_table') or '' }}

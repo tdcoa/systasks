@@ -1,0 +1,44 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dbc_object_count' in completed %}
+
+{% include "vt_dim_tablekind.j2" %}
+
+- name: Create vt_dbc_object_count, listing counts of all objects (aka TableKind) by database, with various group columns
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbc_object_count as
+      (
+        select
+         coalesce(t.DatabaseName,'< Unused >') as DatabaseName
+        ,k.Object_Name
+        ,k.Object_Group12
+        ,k.Object_Group09
+        ,k.Object_Group06
+        ,k.Object_Group04
+        ,sum(coalesce(t.ObjectCount,0)) AS Object_Count
+        ,sum(case when k.Object_Group04 = 'Table' then coalesce(t.MultiSetCount,0) else null end) as MultiSet_Table_Count
+        ,Object_Count - MultiSet_Table_Count as Set_Table_Count
+        from
+            (select DatabaseName, TableKind, CommitOpt
+             ,count(*) as ObjectCount
+             ,count(case when CheckOpt = 'Y' then 1 else null end) as MultiSetCount
+             from dbc.TablesV
+             group by 1,2,3
+             ) t
+        full outer join vt_dim_TableKind k
+         on t.TableKind = k.TableKind
+        and t.CommitOpt = case when k.CommitOpt in ('','all','any') then t.CommitOpt else k.CommitOpt end
+        group by 1,2,3,4,5,6
+      ) with data
+      primary index (DatabaseName)
+      on commit preserve rows
+
+
+- name: Collect Stats on vt_dbc_object_count
+  connect: source
+  execute:
+    sql: collect stats on vt_dbc_object_count column(DatabaseName)
+
+{% endif %}
+{{ completed.append('vt_dbc_object_count') or '' }}

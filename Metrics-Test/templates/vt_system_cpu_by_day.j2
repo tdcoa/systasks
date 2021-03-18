@@ -1,0 +1,37 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_System_CPU_by_Day' in completed %}
+
+- name:  "Create vt_System_CPU_by_Day"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_System_CPU_by_Day as
+      (
+        Select '{{ siteid }}' as Site_ID
+        ,cast(TheDate as format 'Y4-MM-DD') as LogDate
+        ,SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
+        ,cast(max(NodeType) as varchar(10)) as Node_Type
+        ,cast(count(distinct NodeID) as smallint) as Node_Cnt
+        ,cast(max(NCPUs) as smallint) as vCPU_per_Node
+        ,sum(cast(FullPotentialIOTA/1e9 as decimal(18,0))) as MaxIOTA_cntB
+        ,sum(cast(CPUIdle   as decimal(18,0))) as CPU_Idle
+        ,sum(cast(CPUIOWait as decimal(18,0))) as CPU_IOWait
+        ,sum(cast(CPUUServ  as decimal(18,0))) as CPU_OS
+        ,sum(cast(CPUUExec  as decimal(18,0))) as CPU_DBS
+        ,CPU_Idle+CPU_IOWait+CPU_OS+CPU_DBS as CPU_Total
+        ,SUM(HostReadKB) as HostRead_KB
+        ,SUM(HostWriteKB) as HostWrite_KB
+        from {{ dbc.spma }}
+        where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+        Group by LogDate
+      ) with data
+        unique primary index (LogDate)
+        on commit preserve rows
+
+- name:  "Collect Stats"
+  connect: source
+  execute:
+    sql: collect stats on vt_System_CPU_by_Day column(LogDate)
+
+{% endif %}
+{{ completed.append('vt_System_CPU_by_Day') or '' }}

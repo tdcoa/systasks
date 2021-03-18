@@ -1,0 +1,26 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_transfer_bytes_in_out' in completed %}
+
+- name:  Create vt_transfer_bytes_in_out
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_transfer_bytes_in_out
+      as (
+        SELECT TheDate AS LogDate
+        ,cast(SUM(HostReadKB)*1e3 as bigint)  as Inbound_Bytes
+        ,cast(SUM(HostWriteKB)*1e3 as bigint) as Outbound_Bytes
+        FROM  {{ dbc.spma }} -- ResUsageSPMA
+        WHERE TheDate BETWEEN {{ startdate | default('current_date - 91')}} and {{ enddate | default('current_date-1')}}
+        GROUP BY LogDate
+      ) with data
+      no primary index
+      on commit preserve rows
+
+- name: Collect Stats on vt_transfer_bytes_in_out
+  connect: source
+  execute:
+    sql: collect stats on vt_transfer_bytes_in_out column(LogDate)
+
+{% endif %}
+{{ completed.append('vt_transfer_bytes_in_out') or '' }}

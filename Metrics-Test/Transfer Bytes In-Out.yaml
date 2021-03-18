@@ -1,0 +1,33 @@
+description: Print out table vt_transfer_bytes_in_out, for reconciliation purposes.
+version: 0
+tasks:
+
+{% include "vt_transfer_bytes_in_out.j2" %}
+
+- name: "Export transfer bytes in/out of platform, by day, for charting"
+  connect: source
+  export:
+    file: data_transfer.csv
+    sql: |
+      SELECT LogDate
+      ,SUM(Inbound_Bytes)  as "Inbound Bytes--#27C1BD"
+      ,SUM(Outbound_Bytes) as "Outbound Bytes--#636363"
+      FROM vt_transfer_bytes_in_out
+      GROUP BY LogDate
+      ORDER BY LogDate
+
+- name: "Chart transfer bytes in/out of of the platform, by day"
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:data_transfer.csv"
+      - "title:Data Transfer - {{ siteid }}"
+      - "height:4.5"
+      - "width:10"
+
+
+- name: Re-export vt_transfer_bytes_in_out entirety
+  connect: source
+  export:
+    file: transfer_bytes_in_out.csv
+    sql:  Select * from vt_transfer_bytes_in_out order by 1

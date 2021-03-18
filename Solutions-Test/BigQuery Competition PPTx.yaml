@@ -1,0 +1,471 @@
+description: Generates the BigQuery Competitive Powerpoint deck, designed to be customer facing.  Please see the associated training, linked in the HELP section.
+version: 1
+# add this line to skip duplicate CREATE vt_* statements :  {% set completed = [] %}
+
+
+tasks:
+
+{% include "vt_site_info.j2" %}
+
+- name: "Export Site and CSM information (if available) for BigQuery pptx title slide"
+  connect: source
+  export:
+    file: bq--intro.csv
+    sql: Select * from vt_site_info
+
+
+
+
+{% include "vt_dbql_core_daily.j2" %}
+
+
+- name: Export queries per day for graphing in BigQuery pptx
+  connect: source
+  export:
+    file: bq--daily_query_throughput.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
+      ,sum(Query_Cnt) (BigInt) as "Total Queries--#27C1BD"
+      ,sum(Query_SubSecond_Cnt)(BigInt) as "Subsecond Queries--#636363"
+      from vt_dbql_core_daily
+      group by LogDate
+      order by 1
+
+- name: Chart query per day over time
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:bq--daily_query_throughput.csv"
+      - "title:Query Throughtput per Day - {{ siteid }}"
+      - "height:4"
+      - "width:16"
+
+- name: Export User Counts for BigQuery pptx
+  connect: source
+  export:
+    file: bq--user_counts.csv
+    sql: |
+      Select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(count(u.UserName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users"
+      ,cast(cast(count(d.UserName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users"
+      ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users, less Internal DBs"
+      ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then d.UserName end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users, less Internal DBs"
+      From vt_dim_user u
+      left outer join (Select distinct UserName from vt_dbql_core_user) d
+        on d.UserName = u.UserName
+
+
+- name: Export App_ID categorized counts for BigQuery pptx
+  connect: source
+  export:
+    file: bq--appid_counts.csv
+    sql: |
+      select
+      '{{ siteid }}' as Site_ID
+      ,cast(cast(count(distinct App_Bucket) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Applications"
+      ,cast(cast(count(distinct App_Bucket) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total App Buckets"
+      ,cast(cast(count(case when App_Bucket <> 'Unknown' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Recognized Applications"
+      ,cast(cast(average(Request_Cnt)/max(LogDate_Cnt) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Average Requests per Application per Day"
+      from vt_dbql_core_daily
+
+
+- name: Export query count analysis for BigQuery pptx
+  connect: source
+  export:
+    file: bq--query_counts.csv
+    sql: |
+      select Site_ID
+      ,cast(cast(LogDayCnt as format 'ZZZ,ZZ9') as varchar(32)) as "Day Count"
+      ,cast(cast(TotalQryCnt as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Query Count"
+      ,cast(cast(AvgQryPerSecond as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queries per Second"
+      ,cast(cast(AvgQryPerDay as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queries per Day" --5
+      ,cast(cast(AvgMilQryPerDay as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Day (M)" --6
+      ,cast(cast(AvgQryPerMonth as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Month"
+      ,cast(cast(AvgMilQryPerMonth as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Month (M)" --8
+      ,cast(cast(QryCntPerYear as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Query Count per Year"
+      ,cast(cast(MilQryCntPerYear as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Query Count per Year (M)" --10
+      ,cast(cast(BilQryCntPerYear as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Query Count per Year (B)"
+      ,cast(cast(TotalSubSecondCntPerDay as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SubSecond Query Count per Day"
+      ,cast(cast(TotalSubSecondCntPerDayMil as Decimal(18,1) format 'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "SubSecond Query Count Per Day (M)"
+      ,cast(cast(SubSecondPct as Decimal(9,2) format 'ZZ9.9') as varchar(32)) as "SubSecond % of Total Queries" --14
+      ,cast(cast(AvgRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Average Runtime Seconds" --15
+      ,cast(cast(MedianRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Median Runtime Seconds"
+      from
+      (
+      select max(Site_ID) as Site_ID
+      ,count(distinct LogDate) as LogDayCnt
+      ,sum(Query_Cnt) AS TotalQryCnt
+      ,TotalQryCnt / LogDayCnt AS AvgQryPerDay
+      ,AvgQryPerDay  / 1e6 AS AvgMilQryPerDay
+      ,AvgQryPerDay * 30 AS AvgQryPerMonth
+      ,AvgMilQryPerDay * 30 AS AvgMilQryPerMonth
+      ,AvgQryPerDay / (24*60*60) AS AvgQryPerSecond
+      ,TotalQryCnt * 365 / LogDayCnt AS QryCntPerYear
+      ,QryCntPerYear / 1e6 AS MilQryCntPerYear
+      ,QryCntPerYear / 1e9 AS BilQryCntPerYear
+      ,sum(Query_Tactical_Cnt) AS TotalTacticalCnt
+      ,sum(Query_Tactical_Cnt)/ LogDayCnt  AS TotalTacticalCntPerDay
+      ,cast(TotalTacticalCntPerDay as decimal(18,2)) / 1e6  AS TotalTacticalCntPerDayMil
+      ,(cast(TotalTacticalCnt as decimal(18,4)) / TotalQryCnt) * 100 AS TacticalPct
+      ,sum(Query_SubSecond_Cnt) as TotalSubSecondCnt
+      ,sum(Query_SubSecond_Cnt)/ LogDayCnt as TotalSubSecondCntPerDay
+      ,cast(TotalSubSecondCntPerDay as decimal(18,2)) / 1e6  AS TotalSubSecondCntPerDayMil
+      ,(cast(TotalSubSecondCnt as decimal(18,4)) / TotalQryCnt) * 100 AS SubSecondPct
+      ,sum(Runtime_Total_Sec) / TotalQryCnt AS AvgRunTimeSec
+      ,median(Runtime_Total_Sec) as MedianRuntimeSec
+      from vt_dbql_core_daily
+      ) d1
+
+
+- name: Export App_Bucket row/record counts for BigQuery pptx
+  connect: source
+  export:
+    file: bq--appid_detail.csv
+    sql: |
+      select dbql.App_Bucket
+      ,max(dbql.LogDate_Cnt) as DayCount
+      ,cast(cast(sum(dbql.Query_Cnt)/nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Queries"
+      ,cast(cast(sum(dbql.Returned_Row_Cnt)/ nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Fetched Rows"
+      ,cast(cast(zeroifnull("Total Fetched Rows" / nullifzero("Total Queries")) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Rows Per Query"
+      from vt_dbql_core_daily dbql
+      group by 1
+      Order by cast("Rows per Query" as INT) desc
+
+- name: DROP volatile table to save spool - vt_dbql_core_daily
+  connect: source
+  execute:
+    sql: drop table vt_dbql_core_daily
+
+
+{% include "vt_dbc_indices_by_database.j2" %}
+
+- name: Export indicies by database for PPTx
+  connect: source
+  export:
+    file: bq--Index_summary.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,CAST(CAST(SUM(CASE WHEN IndexType_Bucket = 'Primary Index'   THEN Index_Count ELSE 0 END) AS FORMAT 'ZZZ,ZZZ,ZZ9') AS VARCHAR(20)) AS UPINUPI
+      ,CAST(CAST(SUM(CASE WHEN IndexType_Bucket = 'Partition'       THEN Index_Count ELSE 0 END) AS FORMAT 'ZZZ,ZZZ,ZZ9') AS VARCHAR(20)) AS PPI
+      ,CAST(CAST(SUM(CASE WHEN IndexType_Bucket = 'Secondary Index' THEN Index_Count ELSE 0 END) AS FORMAT 'ZZZ,ZZZ,ZZ9') AS VARCHAR(20)) AS SI
+      from vt_dbc_indices_by_database
+      Where DatabaseName NOT IN  (select DatabaseName from vt_dim_tdinternal_databases)
+
+
+{% include "vt_disk_space_by_table.j2" %}
+
+- name: Export disk space summary
+  connect: source
+  export:
+    file: bq--diskspace.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(System_MaxPerm_GB)         as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (GB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1e3     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(sum(CurrentPerm_GB)     as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
+      ,cast(cast(sum(CurrentPerm_GB)/1e3 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
+      ,cast(cast(
+       (cast(sum(CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
+       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+      from(
+          Select DatabaseName, TableName -- Avg away LogDate
+          ,Avg(CurrentPerm_GB) as CurrentPerm_GB
+          ,Avg(Database_MaxPerm_GB) as Database_MaxPerm_GB
+          ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
+          from vt_disk_space_by_table
+          group by DatabaseName, TableName ) a
+
+- name: Export count of tables over 10gb, on average over time period
+  connect: source
+  export:
+    file: bq--10GB_table_count.csv
+    sql: |
+      SELECT '{{ siteid }}' as Site_ID
+      ,cast(cast(coalesce(count(*), 0) as format 'ZZZ,ZZZ,ZZ9') as varchar(32))  AS tbl10GB
+      from (Select DatabaseName, TableName -- get avg size per table
+            ,cast(avg(CurrentPerm_GB) as decimal(32,2)) as CurrentPerm_GB
+            from vt_disk_space_by_table
+            where CurrentPerm_GB >= 10
+            group by 1,2) a
+
+- name: Export list of all tables over 10gb, on average over time period
+  connect: source
+  export:
+    file: bq--10GB_tables.csv
+    sql: |
+      SELECT '{{ siteid }}' as Site_ID
+      ,DataBaseName, TableName
+      ,cast(cast(CurrentPerm_GB as format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) AS "CurrentPerm GB"
+      from (Select DatabaseName, TableName -- get avg size per table
+           ,cast(avg(CurrentPerm_GB) as decimal(32,2)) as CurrentPerm_GB
+           from vt_disk_space_by_table
+           where CurrentPerm_GB >= 10
+           group by 1,2) a
+      ORDER BY CurrentPerm_GB DESC
+
+- name: DROP volatile table to save spool - vt_disk_space_by_table
+  connect: source
+  execute:
+    sql: drop table vt_disk_space_by_table
+
+
+
+{% include "vt_concurrency.j2" %}
+
+- name: Export concurrency for BigQuery pptx
+  connect: source
+  export:
+    file: bq--concurrency.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(Concurrency_Avg) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Average" --2
+      ,cast(cast(avg(Concurrency_80Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 80th Percentile"
+      ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
+      ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
+      from vt_concurrency ;
+
+
+
+{% include "vt_dbc_column_summary.j2" %}
+
+- name: Export Column format from Column Summary
+  connect: source
+  export:
+    file: bq--column_format_state.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(CASE WHEN Column_Formatted = 'Y' THEN Column_Count ELSE 0 END) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "FORMATTED"
+      ,cast(cast(sum(CASE WHEN Column_Formatted = 'N' THEN Column_Count ELSE 0 END) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "UNFORMATTED"
+      from vt_dbc_column_summary
+
+- name: Export Column TYPE information from Column Summary
+  connect: source
+  export:
+    file: bq--column_formats.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(CASE WHEN Column_Formatted = 'Y' THEN Column_Count ELSE 0 END) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "FORMATTED"
+      ,cast(cast(sum(case when Column_Category = 'Interval' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type Interval"
+      ,cast(cast(sum(case when Column_Category = 'Period' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type Period"
+      ,cast(cast(sum(case when Column_Category = 'Number' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type Number"
+      ,cast(cast(sum(case when Column_Category = 'BLOB' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type BLOB"
+      ,cast(cast(sum(case when Column_Category = 'CLOB' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type CLOB"
+      ,cast(cast(sum(case when Column_Category like any('XML%','_SON%','Avro') then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type XML/JSON"
+      ,cast(cast(sum(case when Column_Category like 'Geosp%' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type GeoSpatial"
+      from vt_dbc_column_summary
+
+
+{% include "vt_dbc_object_count.j2" %}
+{% include "vt_dim_tdinternal_databases.j2" %}
+
+- name: Export Object Counts (tables/views/etc.)
+  connect: source
+  export:
+    file: bq--object_counts.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(case when Object_Group04 = 'Table'           then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Count"
+      ,cast(cast(sum(case when Object_Group04 = 'View'            then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "View Count"
+      ,cast(cast(sum(case when Object_Group04 = 'User Procedural' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Program Count"
+      ,cast(cast(sum(case when Object_Group04 = 'Other'           then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Other Count"
+      from vt_dbc_object_count
+      WHERE DatabaseName NOT IN  (select DatabaseName from vt_dim_tdinternal_databases)
+
+- name: Export Object Counts (tables/views/etc.) with tablekind breakouts
+  connect: source
+  export:
+    file: bq--tablekind_by_database.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+       ,cast(cast(sum(case when Object_Group12 = 'Table' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Count"
+       ,cast(cast(sum(case when Object_Name = 'Join Index' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Join Index Count"
+       ,cast(cast(sum(case when Object_Name = 'Queue Table' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queue Table Count"
+       ,cast(cast(sum(Set_Table_Count) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SET Table Count"
+       ,cast(cast(cast(sum(Set_Table_Count) as decimal(18,4)) / "Table Count" * 100 as decimal(9,2) format 'ZZ9.99') as varchar(8))||'%' as "Set Table Pct"
+       ,cast(cast(sum(case when Object_Name like 'Global Temp%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Global Temp Table Count"
+      FROM vt_dbc_object_count
+      WHERE DatabaseName NOT IN  (select DatabaseName from vt_dim_tdinternal_databases)
+
+
+
+{% include "vt_dbc_constraint.j2" %}
+
+- name: Export constraint summary
+  connect: source
+  export:
+    file:  bq--constraints.csv
+    sql: |
+      select top 10
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(case when ConstraintType in('Primary Key','Unique') then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Unique PI Constraint"
+      ,cast(cast(sum(case when ConstraintType = 'Primary Key' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Key Constraint"
+      ,cast(cast(sum(case when ConstraintType = 'Default' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Column Default"
+      ,cast(cast(sum(case when ConstraintType = 'Foreign Key' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Foreign Key Constraint" --5
+      ,cast(cast(sum(case when ConstraintType = 'Column Constraint' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Column Constraint"
+      ,cast(cast(sum(case when ConstraintType = 'Table Constraint' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Constraint"
+      from vt_dbc_constraint
+
+
+{% set vt_dim_statement_done = True %}
+{% include "vt_statement_count_by_table.j2" %}
+
+- name: "Export number of tables that exceed 1500 DML (ins/del/upd/merge) per day, for charting"
+  connect: source
+  export:
+    file: bq--tablecount_over_1500_dml.csv
+    sql: |
+      Select LogDate, Count(TableName) as "Table Count--#27C1BD"
+      from vt_statement_count_by_table
+      where Request_Count > 1500
+        and Statement_Class = 'DML'
+      group by 1
+      order by 1
+
+- name: Chart of tables with over 1500 DML per day, on average
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:bq--tablecount_over_1500_dml.csv"
+      - "title:Table Count over 1500 daily Inserts/Updates/Deletes - {{ siteid }}"
+      - "height:4"
+      - "width:10"
+
+
+- name: "Export overall count of tables that exceed 1500 DML (ins/del/upd/merge) per day"
+  connect: source
+  export:
+    file: bq--tablecount_over_1500_dml_average.csv
+    sql: |
+      Select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(TableCount) as INT format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as TableCount
+      from (
+          Select LogDate, Count(TableName) as TableCount
+          from vt_statement_count_by_table
+          where Request_Count > 1500
+          group by 1
+      ) as a
+
+- name: Export databases with highest average DML request per table per day
+  connect: source
+  export:
+    file: bq--databases_most_dml_tables.csv
+    sql: |
+      Select DatabaseName
+      ,cast(cast(avg(Request_Count) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Avg DML Request Count per Table"
+      from vt_statement_count_by_table
+      group by 1
+      order by avg(Request_Count) desc
+
+- name: DROP volatile table to save spool - vt_statement_count_by_table
+  connect: source
+  execute:
+    sql: drop table vt_statement_count_by_table
+
+
+
+{% include "vt_transfer_bytes_in_out.j2" %}
+
+- name: "Export transfer bytes in/out of platform, by day, for charting"
+  connect: source
+  export:
+    file: bq--data_transfer.csv
+    sql: |
+      SELECT LogDate
+      ,SUM(Inbound_Bytes)  as "Inbound Bytes--#27C1BD"
+      ,SUM(Outbound_Bytes) as "Outbound Bytes--#636363"
+      FROM vt_transfer_bytes_in_out
+      GROUP BY LogDate
+      ORDER BY LogDate
+
+- name: "Chart transfer bytes in/out of of the platform, by day"
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:bq--data_transfer.csv"
+      - "title:Data Transfer - {{ siteid }}"
+      - "height:4"
+      - "width:10"
+
+
+
+{% include "vt_join_frequency.j2" %}
+
+- name: Export request count and cpu by join frequency
+  connect: source
+  export:
+    file: bq--join_frequency.csv
+    sql: |
+      Select
+       join_label || case when join_label=1 then ' Table' else ' Tables' end  as "Number of Tables" -- xaxis
+      ,Request_Count as "Number of Queries--#27C1BD" -- bars
+      ,cast(cast(CPU_Sec / sum(CPU_Sec)over()*100 as decimal(9,2)) as varchar(16))  as "CPU Consumed %--#636363" -- line
+      from vt_join_frequency
+      order by 1 asc
+
+- name: "Chart join frequency volume, with CPU line overlay"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:bq--join_frequency.csv"
+      - "title:Join Frequency - {{ siteid }}"
+      - "height:4"
+      - "width:9"
+      - "barlogscale:False"
+
+- name: Export join frequency horizontally for PPTx values
+  connect: source
+  export:
+    file: bq--join_frequency_horz.csv
+    sql: |
+      Select
+       cast(cast(sum(case when join_label=1 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join1_Mrequest_count --1
+      ,cast(cast(sum(case when join_label=2 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join2_Mrequest_count --2
+      ,cast(cast(sum(case when join_label=3 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join3_Mrequest_count --3
+      ,cast(cast(sum(case when join_label=4 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join4_Mrequest_count --4
+      ,cast(cast(sum(case when join_label=5 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join5_Mrequest_count --5
+      ,cast(cast(sum(case when join_label=6 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join6_Mrequest_count --6
+      ,cast(cast(sum(request_count)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as total_Mrequest_count --7
+      ,cast(cast(cast(sum(case when join_label=1 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join1_request_pct --8
+      ,cast(cast(cast(sum(case when join_label=2 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join2_request_pct --9
+      ,cast(cast(cast(sum(case when join_label=3 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join3_request_pct --10
+      ,cast(cast(cast(sum(case when join_label=4 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join4_request_pct --11
+      ,cast(cast(cast(sum(case when join_label=5 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join5_request_pct --12
+      ,cast(cast(cast(sum(case when join_label=6 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join6_request_pct --13
+      ,cast(cast(sum(case when join_label=1 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join1_Mcpu_sec --14
+      ,cast(cast(sum(case when join_label=2 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join2_Mcpu_sec --15
+      ,cast(cast(sum(case when join_label=3 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join3_Mcpu_sec --16
+      ,cast(cast(sum(case when join_label=4 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join4_Mcpu_sec --17
+      ,cast(cast(sum(case when join_label=5 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join5_Mcpu_sec --18
+      ,cast(cast(sum(case when join_label=6 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join6_Mcpu_sec --19
+      ,cast(cast(sum(cpu_sec)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as total_Mcpu_sec --20
+      ,cast(cast(cast(sum(case when join_label=1 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join1_cpu_pct --21
+      ,cast(cast(cast(sum(case when join_label=2 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join2_cpu_pct --22
+      ,cast(cast(cast(sum(case when join_label=3 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join3_cpu_pct --23
+      ,cast(cast(cast(sum(case when join_label=4 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join4_cpu_pct --24
+      ,cast(cast(cast(sum(case when join_label=5 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join5_cpu_pct --25
+      ,cast(cast(cast(sum(case when join_label=6 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join6_cpu_pct --26
+      ,max(DateCount)(INT) as DateCount -- 27
+      from vt_join_frequency
+
+- name: PPTx final build for BigQuery_Migration.pptx
+  ppt:
+    file: ppt/BigQuery_Migration.pptx

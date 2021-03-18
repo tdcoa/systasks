@@ -1,0 +1,32 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_site_info' in completed %}
+
+- name:  "Create vt_site_info"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_site_info as
+      (
+      select '{{ siteid }}' as Site_ID
+        ,'{{ customer_name | default('add variable: customer_name') }}' as Customer_Name
+        ,case when InfoKey='VERSION' then infodata end as Database_Version
+        ,USER as "User"
+        ,Spool_GB
+        ,current_timestamp(0) as RunTS
+        ,cast(cast(RunTS as DATE format 'mmmmbddbyyyy')as varchar(20)) as FullDate
+        ,'{{ your_name | default('add variable: your_name')}}' as Your_Name
+        ,'{{ your_title | default('add variable: your_title')}}' as Your_Title
+      from dbc.dbcinfo
+      cross join (select trim(cast(SpoolSpace/1e9 as INT)(varchar(64))) as Spool_GB from dbc.users where username = USER) sp
+      where Database_Version is not null
+      ) with data
+        No primary index
+        on commit preserve rows
+
+- name:  "Collect Stats"
+  connect: source
+  execute:
+    sql: collect stats on vt_site_info column(Site_ID)
+
+{% endif %}
+{{ completed.append('vt_site_info') or '' }}

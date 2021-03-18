@@ -1,0 +1,387 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dbql_core_daily' in completed %}
+
+{% include "vt_dim_app.j2" %}
+{% include "vt_dim_user.j2" %}
+{% include "vt_dim_statement.j2" %}
+
+- name:  Create vt_dbql_core_daily_temp to minimize spool-outs
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbql_core_daily_temp as
+      (
+      SELECT
+         {{ dbc.logdt }} as LogDate
+        ,cast(HashAmp()+1 as Integer) as Total_AMPs
+        ,username
+        ,appid
+        ,StatementType
+
+        /* ====== Query Metrics ======= */
+        ,zeroifnull(cast(count(1) as BigInt)) as Request_Cnt
+        ,zeroifnull(sum(cast( dbql.Statements as BigInt))) as Query_Cnt
+        ,zeroifnull(sum(cast(case when dbql.StatementGroup like '%=%' then 1 else 0 end as SmallInt))) as Query_MultiStatement_Cnt
+        /* ErrorCode 3158 == TASM Demotion, aka warning, not real error */
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not in(0,3158)      then dbql.Statements else 0 end as int))) as Query_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'               then dbql.Statements else 0 end as int))) as Query_Abort_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount = 0                   then dbql.Statements else 0 end as int))) as Query_NoIO_cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO = 0 then dbql.Statements else 0 end as int))) as Query_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO > 0 then dbql.Statements else 0 end as int))) as Query_PhysIO_Cnt
+        {% if tdver | int <= 15  %}
+        ,sum(case when
+            zeroifnull(cast( /* Runtime_AMP_Sec */
+            ((extract(hour  FROM (FirstRespTime - StartTime hour(3) TO second(6))) * 3600) +
+            (extract(minute FROM (FirstRespTime - StartTime hour(3) TO second(6))) *   60) +
+            (extract(second FROM (FirstRespTime - StartTime hour(3) TO second(6))) *    1)) as FLOAT)) <= 1.000
+          then dbql.Statements else 0 end) as Query_SubSecond_Cnt
+        {% else %}
+          ,sum(cast(case when zeroifnull(TotalFirstRespTime) <= 1.000
+                         then dbql.Statements else 0 end as integer)) as Query_SubSecond_Cnt
+        {% endif %}
+        ,zeroifnull(sum(cast(case
+                 when dbql.StatementType = 'Select'
+                  and dbql.NumOfActiveAMPs < (Total_AMPs * 0.10)
+                  and zeroifnull(cast( /* Runtime_AMP_Sec */
+                      ((extract(hour  FROM (FirstRespTime - StartTime hour(3) TO second(6))) * 3600) +
+                      (extract(minute FROM (FirstRespTime - StartTime hour(3) TO second(6))) *   60) +
+                      (extract(second FROM (FirstRespTime - StartTime hour(3) TO second(6))) *    1)) as FLOAT)) <= 1.000
+                 then dbql.Statements else 0 end as Integer))) as Query_Tactical_Cnt
+        ,cast(avg(dbql.NumSteps) as decimal(15,4)) as Query_Complexity_Score_Avg
+        ,zeroifnull(sum(cast(dbql.NumResultRows as BigInt) )) as Returned_Row_Cnt
+
+        /* ====== Metrics: RunTimes ====== */
+        ,sum(cast(zeroifnull(dbql.DelayTime) as decimal(18,2))) as DelayTime_Sec
+        ,sum(ZEROIFNULL(CAST(
+           (EXTRACT(HOUR   FROM ((FirstStepTime - StartTime) HOUR(3) TO SECOND(6)) ) * 3600) +
+           (EXTRACT(MINUTE FROM ((FirstStepTime - StartTime) HOUR(3) TO SECOND(6)) ) *   60) +
+           (EXTRACT(SECOND FROM ((FirstStepTime - StartTime) HOUR(3) TO SECOND(6)) ) *    1)
+           as FLOAT))) as RunTime_Parse_Sec
+        ,sum(ZEROIFNULL(CAST(
+           (EXTRACT(HOUR   FROM ((FirstRespTime - FirstStepTime) HOUR(3) TO SECOND(6)) ) * 3600) +
+           (EXTRACT(MINUTE FROM ((FirstRespTime - FirstStepTime) HOUR(3) TO SECOND(6)) ) *   60) +
+           (EXTRACT(SECOND FROM ((FirstRespTime - FirstStepTime) HOUR(3) TO SECOND(6)) ) *    1)
+           as FLOAT))) as Runtime_AMP_Sec
+        ,sum(ZEROIFNULL(CAST(
+           (EXTRACT(HOUR   FROM ((FirstRespTime - StartTime) HOUR(3) TO SECOND(6)) ) * 3600) +
+           (EXTRACT(MINUTE FROM ((FirstRespTime - StartTime) HOUR(3) TO SECOND(6)) ) *   60) +
+           (EXTRACT(SECOND FROM ((FirstRespTime - StartTime) HOUR(3) TO SECOND(6)) ) *    1)
+           as FLOAT))) as RunTime_Total_Sec
+        ,sum(ZEROIFNULL(CAST(
+           case when LastRespTime is not null then
+           (EXTRACT(HOUR   FROM ((LastRespTime - FirstRespTime) HOUR(3) TO SECOND(6)) ) * 3600) +
+           (EXTRACT(MINUTE FROM ((LastRespTime - FirstRespTime) HOUR(3) TO SECOND(6)) ) *   60) +
+           (EXTRACT(SECOND FROM ((LastRespTime - FirstRespTime) HOUR(3) TO SECOND(6)) ) *    1)
+          else 0 end as FLOAT))) AS TransferTime_Sec
+
+        /* ====== Metrics: CPU & IO ====== */
+        ,zeroifnull(sum( cast(dbql.ParserCPUTime    as decimal(18,2)))) as CPU_Parse_Sec
+        ,zeroifnull(sum( cast(dbql.AMPCPUtime       as decimal(18,2)))) as CPU_AMP_Sec
+        ,zeroifnull(sum( cast(ReqPhysIO/1e6         as decimal(18,2)))) as IOCntM_Physical
+        ,zeroifnull(sum( cast(TotalIOCount/1e6      as decimal(18,2)))) as IOCntM_Total
+        ,zeroifnull(sum( cast(ReqPhysIOKB/1e6       as decimal(18,2)))) as IOGB_Physical
+        ,zeroifnull(sum( cast(ReqIOKB/1e6           as decimal(18,2)))) as IOGB_Total
+        {% if tdver | int <= 15 %}
+        ,null as IOTA_Used_cntB
+        {% else %}
+        ,zeroifnull(sum( cast(dbql.UsedIOTA/1e9     as decimal(18,2)))) as IOTA_Used_cntB
+        {% endif %}
+
+        /* ====== Metrics: Other ====== */
+        ,zeroifnull(cast(avg(NumOfActiveAMPs) as decimal(18,4))) as NumOfActiveAMPs_Avg
+        ,zeroifnull(sum(SpoolUsage/1e9))  as Spool_GB
+        ,zeroifnull(avg( cast(1-(ReqPhysIO/nullifzero(TotalIOCount)) as decimal(32,6)) )) as CacheHit_Pct
+        ,zeroifnull(avg((AMPCPUTime / nullifzero(MaxAmpCPUTime*NumOfActiveAMPs))-1)) as CPUSec_Skew_AvgPCt
+        ,zeroifnull(avg((TotalIOCount / nullifzero(MaxAmpIO*NumOfActiveAMPs))-1) )   as IOCnt_Skew_AvgPct
+
+        From {{ dbc.log }} as dbql
+        where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+        Group by
+         {{ dbc.logdt }}
+        ,username
+        ,appid
+        ,StatementType
+
+      union all
+
+      SELECT
+         {{ dbc.logdt }} as LogDate
+        ,HashAmp() + 1 as Total_AMPs
+        ,username
+        ,appid
+        ,'Summary' as StatementType
+        ,zeroifnull(sum(cast(smry.QueryCount as decimal(18,2)))) as Request_Cnt
+        ,zeroifnull(sum(cast(smry.QueryCount as decimal(18,2)))) as Query_Cnt
+        ,null as Query_MultiStatement_Cnt
+        ,null as Query_Error_Cnt
+        ,null as Query_Abort_Cnt
+        ,null as Query_NoIO_cnt
+        ,null as Query_InMem_Cnt
+        ,null as Query_PhysIO_Cnt
+        ,sum(zeroifnull(case
+          when cast(smry.QuerySeconds / nullifzero(smry.QueryCount) as float) <= 1.000
+          then smry.QueryCount else 0 end)) as Query_SubSecond_Cnt
+        ,null as Query_Tactical_Cnt
+        ,cast(null as float) as Query_Complexity_Score_Avg
+        ,null as Returned_Row_Cnt
+        ,null as DelayTime_Sec
+        ,null as RunTime_Parse_Sec
+        ,null as Runtime_AMP_Sec
+        ,zeroifnull(sum(cast(smry.QuerySeconds as decimal(18,2)))) as RunTime_Total_Sec
+        ,null as TransferTime_Sec
+        ,zeroifnull(sum(cast(smry.ParserCPUTime as decimal(18,2)))) as CPU_Parse_Sec
+        ,zeroifnull(sum(cast(smry.AMPCPUTime as decimal(18,2)))) as CPU_AMP_Sec
+
+        {% if tdver | int <= 15  %}
+          ,null as IOCntM_Physical
+          ,zeroifnull(sum(cast(smry.TotalIOCount/1e6 as decimal(18,2)))) as IOCntM_Total
+          ,null as IOGB_Physical
+          ,null as IOGB_Total
+          ,null as IOTA_Used_cntB
+          ,cast(null as float) as NumOfActiveAMPs_Avg
+          ,null as Spool_GB
+          ,null as CacheHit_Pct
+        {% else %}
+          ,zeroifnull(sum(cast(smry.ReqPhysIO/1e6 as decimal(18,2)))) as IOCntM_Physical
+          ,zeroifnull(sum(cast(smry.TotalIOCount/1e6 as decimal(18,2)))) as IOCntM_Total
+          ,zeroifnull(sum(cast(smry.ReqPhysIOKB/1e6 as decimal(18,2)))) as IOGB_Physical
+          ,null as IOGB_Total
+          ,zeroifnull(sum(cast(smry.UsedIota/1e9 as decimal(18,2)))) as IOTA_Used_cntB
+          ,cast(null as float) as NumOfActiveAMPs_Avg
+          ,null as Spool_GB
+          ,zeroifnull(avg( cast(1-(ReqPhysIO/nullifzero(TotalIOCount)) as decimal(32,6)) )) as CacheHit_Pct
+        {% endif %}
+
+        ,null as CPUSec_Skew_AvgPCt
+        ,null as IOCnt_Skew_AvgPct
+
+        From {{ dbc.summary }} smry
+        {% if tdver | int <= 15  %}
+        join (Select DatabaseName as UserName, DatabaseId as UserID from dbc.dbase) dbid
+          on smry.UserID = dbid.UserID
+        {% endif %}
+
+        where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+        Group by
+         {{ dbc.logdt }}
+        ,username
+        ,appid
+        ,StatementType
+      ) with data
+      no primary index on commit preserve rows
+
+
+
+- name: Create vt_dbql_core_daily
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbql_core_daily
+      as (
+        SELECT
+           '{{ siteid }}'  as Site_ID
+          ,LogDate
+          ,cast({{ enddate }} as DATE) - cast({{ startdate }} as DATE) as LogDate_Cnt
+          ,max(Total_AMPs) as Total_AMPs
+          ,coalesce(App_Bucket,       'unknown') as App_Bucket
+          ,coalesce(Use_Bucket,       'unknown') as Use_Bucket
+          ,coalesce(Statement_Bucket, 'unknown') as Statement_Bucket
+          ,coalesce(UserType,         'unknown') as UserType
+          ,coalesce(Organization,     'unknown') as Organization
+          ,coalesce(Department,       'unknown') as Department
+          ,cast(sum(Request_Cnt                ) as bigint) as Request_Cnt
+          ,cast(sum(Query_Cnt                  ) as bigint) as Query_Cnt
+          ,cast(sum(Query_MultiStatement_Cnt   ) as bigint) as Query_MultiStatement_Cnt
+          ,cast(sum(Query_Error_Cnt            ) as bigint) as Query_Error_Cnt
+          ,cast(sum(Query_Abort_Cnt            ) as bigint) as Query_Abort_Cnt
+          ,cast(sum(Query_NoIO_cnt             ) as bigint) as Query_NoIO_cnt
+          ,cast(sum(Query_InMem_Cnt            ) as bigint) as Query_InMem_Cnt
+          ,cast(sum(Query_PhysIO_Cnt           ) as bigint) as Query_PhysIO_Cnt
+          ,cast(sum(Query_SubSecond_Cnt        ) as bigint) as Query_SubSecond_Cnt
+          ,cast(sum(Query_Tactical_Cnt         ) as bigint) as Query_Tactical_Cnt
+          ,cast(avg(Query_Complexity_Score_Avg ) as decimal(18,4)) as Query_Complexity_Score_Avg
+          ,cast(sum(Returned_Row_Cnt           ) as bigint) as Returned_Row_Cnt
+          ,cast(sum(DelayTime_Sec              ) as decimal(18,4)) as DelayTime_Sec
+          ,cast(sum(RunTime_Parse_Sec          ) as decimal(18,4)) as RunTime_Parse_Sec
+          ,cast(sum(Runtime_AMP_Sec            ) as decimal(18,4)) as Runtime_AMP_Sec
+          ,cast(sum(RunTime_Total_Sec          ) as decimal(18,4)) as RunTime_Total_Sec
+          ,cast(sum(TransferTime_Sec           ) as decimal(18,4)) as TransferTime_Sec
+          ,cast(sum(CPU_Parse_Sec              ) as decimal(18,4)) as CPU_Parse_Sec
+          ,cast(sum(CPU_AMP_Sec                ) as decimal(18,4)) as CPU_AMP_Sec
+          ,cast(sum(IOCntM_Physical            ) as bigint) as IOCntM_Physical
+          ,cast(sum(IOCntM_Total               ) as bigint) as IOCntM_Total
+          ,cast(sum(IOGB_Physical              ) as decimal(18,4)) as IOGB_Physical
+          ,cast(sum(IOGB_Total                 ) as decimal(18,4)) as IOGB_Total
+          ,cast(sum(IOTA_Used_cntB             ) as bigint) as IOTA_Used_cntB
+          ,cast(avg(NumOfActiveAMPs_Avg        ) as decimal(18,4)) as NumOfActiveAMPs_Avg
+          ,cast(sum(Spool_GB                   ) as decimal(32,4)) as Spool_GB
+          ,cast(avg(CacheHit_Pct               ) as decimal(32,4)) as CacheHit_Pct
+          ,cast(avg(CPUSec_Skew_AvgPCt         ) as decimal(32,4)) as CPUSec_Skew_AvgPCt
+          ,cast(avg(IOCnt_Skew_AvgPct          ) as decimal(32,4)) as IOCnt_Skew_AvgPct
+        from (
+          select dbql.*
+           ,app.App_Bucket
+           ,app.Use_Bucket
+           ,stm.Statement_Bucket
+           ,usr.UserType
+           ,usr.Organization
+           ,usr.Department
+          from vt_dbql_core_daily_temp dbql
+          left outer join vt_dim_user usr
+            on dbql.UserName = usr.UserName
+          left outer join vt_dim_statement stm
+            on dbql.StatementType = stm.Statement_Type
+          left outer join vt_dim_app app
+          on (case
+              when app.Pattern_Type = 'Equal' and lower(dbql.AppID) = lower(app.App_ID) then 1
+              when app.Pattern_Type = 'Like'  and lower(dbql.AppID) like lower(app.App_ID) then 1
+              when app.Pattern_Type = 'RegEx'
+               and character_length(regexp_substr(dbql.AppID, app.App_ID,1,1,'i'))>0 then 1
+              else 0 end) = 1
+          qualify coalesce(app.Priority,1e9) = min(coalesce(app.Priority,1e9))over(partition by dbql.AppID)
+        ) as dbql
+        group by
+          LogDate
+         ,App_Bucket
+         ,Use_Bucket
+         ,Statement_Bucket
+         ,UserType
+         ,Organization
+         ,Department
+      ) with data
+        primary index (LogDate, Organization, App_Bucket, Statement_Bucket)
+        on commit preserve rows
+
+
+- name: Collect Stats on vt_dbql_core_daily
+  connect: source
+  execute:
+    sql: |
+      collect stats
+        column (LogDate, Department, App_Bucket, Statement_Bucket),
+        column (LogDate),
+        column (UserType),
+        column (Organization),
+        column (Department),
+        column (App_Bucket),
+        column (Use_Bucket),
+        column (Statement_Bucket)
+      on vt_dbql_core_daily
+
+
+
+- name: Create vt_dbql_core_user, while we have detail compiled
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbql_core_user
+      as (
+        select
+         '{{ siteid }}' as Site_ID
+        ,LogDate
+        ,cast({{ enddate }} as DATE) - cast({{ startdate }} as DATE) as LogDate_Cnt
+        ,coalesce(u.UserName, 'Unknown') as UserName
+        ,u.FullName
+        ,u.UserType
+        ,u.Organization
+        ,u.Department
+        ,cast(sum(Request_Cnt                ) as bigint) as Request_Cnt
+        ,cast(sum(Query_Cnt                  ) as bigint) as Query_Cnt
+        ,cast(sum(Query_MultiStatement_Cnt   ) as bigint) as Query_MultiStatement_Cnt
+        ,cast(sum(Query_Error_Cnt            ) as bigint) as Query_Error_Cnt
+        ,cast(sum(Query_Abort_Cnt            ) as bigint) as Query_Abort_Cnt
+        ,cast(sum(Query_NoIO_cnt             ) as bigint) as Query_NoIO_cnt
+        ,cast(sum(Query_InMem_Cnt            ) as bigint) as Query_InMem_Cnt
+        ,cast(sum(Query_PhysIO_Cnt           ) as bigint) as Query_PhysIO_Cnt
+        ,cast(sum(Query_SubSecond_Cnt        ) as bigint) as Query_SubSecond_Cnt
+        ,cast(sum(Query_Tactical_Cnt         ) as bigint) as Query_Tactical_Cnt
+        ,cast(avg(Query_Complexity_Score_Avg ) as decimal(18,4)) as Query_Complexity_Score_Avg
+        ,cast(sum(Returned_Row_Cnt           ) as bigint) as Returned_Row_Cnt
+        ,cast(sum(DelayTime_Sec              ) as decimal(18,4)) as DelayTime_Sec
+        ,cast(sum(RunTime_Parse_Sec          ) as decimal(18,4)) as RunTime_Parse_Sec
+        ,cast(sum(Runtime_AMP_Sec            ) as decimal(18,4)) as Runtime_AMP_Sec
+        ,cast(sum(RunTime_Total_Sec          ) as decimal(18,4)) as RunTime_Total_Sec
+        ,cast(sum(TransferTime_Sec           ) as decimal(18,4)) as TransferTime_Sec
+        ,cast(sum(CPU_Parse_Sec              ) as decimal(18,4)) as CPU_Parse_Sec
+        ,cast(sum(CPU_AMP_Sec                ) as decimal(18,4)) as CPU_AMP_Sec
+        ,cast(sum(IOCntM_Physical            ) as bigint) as IOCntM_Physical
+        ,cast(sum(IOCntM_Total               ) as bigint) as IOCntM_Total
+        ,cast(sum(IOGB_Physical              ) as decimal(18,4)) as IOGB_Physical
+        ,cast(sum(IOGB_Total                 ) as decimal(18,4)) as IOGB_Total
+        ,cast(sum(IOTA_Used_cntB             ) as bigint) as IOTA_Used_cntB
+        ,cast(avg(NumOfActiveAMPs_Avg        ) as decimal(18,4)) as NumOfActiveAMPs_Avg
+        ,cast(sum(Spool_GB                   ) as decimal(32,4)) as Spool_GB
+        ,cast(avg(CacheHit_Pct               ) as decimal(32,4)) as CacheHit_Pct
+        ,cast(avg(CPUSec_Skew_AvgPCt         ) as decimal(32,4)) as CPUSec_Skew_AvgPCt
+        ,cast(avg(IOCnt_Skew_AvgPct          ) as decimal(32,4)) as IOCnt_Skew_AvgPct
+        from vt_dbql_core_daily_temp d
+        left outer join vt_dim_user u
+          on d.UserName = u.UserName
+        group by
+         u.UserName
+        ,u.FullName
+        ,u.UserType
+        ,u.Organization
+        ,u.Department
+        ,LogDate
+      ) with data
+        primary index (UserName, LogDate)
+        on commit preserve rows
+
+
+- name: Collect Stats on vt_dbql_core_user
+  connect: source
+  execute:
+    sql: |
+      collect stats
+        column (UserName, LogDate),
+        column (LogDate),
+        column (UserName),
+        column (Organization),
+        column (Department)
+      on vt_dbql_core_user
+
+
+
+- name: Reconcile vt_dbql_core_daily to ensure equal row-count to original
+  connect: source
+  export:
+    file: reconcile_vt_dbql_core_daily.csv
+    sql: |
+      Select
+       'vt_dbql_core_daily_temp' as vt_Name
+      ,cast('Original DBQL Extract' as varchar(256)) as vt_Purpose
+      ,count(distinct LogDate) as LogDate_Count
+      ,cast(count(*) as BigInt) as Row_Cnt
+      ,cast(sum(Request_Cnt) as BigInt) as Request_Cnt
+      ,cast(sum(Query_Cnt) as BigInt) as Query_Cnt
+      ,sum(CPU_AMP_Sec) as CPU_AMP_Sec
+      from vt_dbql_core_daily_temp
+        union all
+      Select
+       'vt_dbql_core_daily'
+      ,'Enriched vt_dbql_core_daily'
+      ,count(distinct LogDate) as LogDate_Count
+      ,cast(count(*) as BigInt) as Row_Cnt
+      ,cast(sum(Request_Cnt) as BigInt) as Request_Cnt
+      ,cast(sum(Query_Cnt) as BigInt) as Query_Cnt
+      ,sum(CPU_AMP_Sec) as CPU_AMP_Sec
+      from vt_dbql_core_daily
+        union all
+      Select
+       'vt_dbql_core_user'
+      ,'Enriched vt_dbql_core_user'
+      ,count(distinct LogDate) as LogDate_Count
+      ,cast(count(*) as BigInt) as Row_Cnt
+      ,cast(sum(Request_Cnt) as BigInt) as Request_Cnt
+      ,cast(sum(Query_Cnt) as BigInt) as Query_Cnt
+      ,sum(CPU_AMP_Sec) as CPU_AMP_Sec
+      from vt_dbql_core_user
+
+- name: Drop table vt_dbql_core_daily_temp
+  connect: source
+  execute:
+    sql: Drop table vt_dbql_core_daily_temp
+
+{% endif %}
+{{ completed.append('vt_dbql_core_daily') or '' }}

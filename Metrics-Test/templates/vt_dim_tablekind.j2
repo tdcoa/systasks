@@ -1,0 +1,37 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_tablekind' in completed %}
+
+- name: Create vt_dim_tablekind
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dim_tablekind
+      (TableKind         varchar(1)   character set latin
+      ,CommitOpt         varchar(8)   character set latin
+      ,Object_Name       varchar(128) character set latin
+      ,Object_Group12    varchar(32)  character set latin
+      ,Object_Group09    varchar(32)  character set latin
+      ,Object_Group06    varchar(32)  character set latin
+      ,Object_Group04    varchar(32)  character set latin
+      ) unique primary index (TableKind, CommitOpt)
+      on commit preserve rows
+
+
+- name: import metadata into vt_dim_tablekind
+  connect: source
+  import:
+    file: data/dim_tablekind.csv
+    table: vt_dim_tablekind
+
+- name: Update to remove any NULLS from CommitOpt
+  connect: source
+  execute:
+    sql: update vt_dim_tablekind set CommitOpt = '' where CommitOpt is null
+
+- name: Collect Stats vt_dim_tablekind
+  connect: source
+  execute:
+    sql: collect stats on vt_dim_tablekind column(TableKind, CommitOpt)
+
+{% endif %}
+{{ completed.append('vt_dim_tablekind') or '' }}

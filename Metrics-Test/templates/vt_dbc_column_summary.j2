@@ -1,0 +1,108 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dbc_column_summary' in completed %}
+
+{% include "vt_dim_datatype.j2" %}
+
+- name:  Create vt_dbc_column_summary
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbc_column_summary as
+      ( SELECT
+         COALESCE(DT.DataTypeDesc, 'Unknown - ' || C.ColumnType) AS Data_Type
+        ,COALESCE(DT.ColumnCategory || C.Column_Type_Ext, DT.DataTypeDesc, 'Unknown - ' || C.ColumnType) AS Column_Type
+        ,C.IdColType AS Identity_Column_Type
+        ,COALESCE(DT.ColumnCategory || C.Column_Category_Ext, DT.ColumnCategory , 'Unknown - ' || C.ColumnType) AS Column_Category
+        ,C.ColumnFormatted as Column_Formatted
+        ,ZEROIFNULL(C.ColumnCount) AS Column_Count
+       FROM (
+             SELECT
+               ColumnType
+              ,IdColType
+              ,COALESCE(StorageFormat, '') AS StorageFormat
+              ,CASE WHEN ColumnFormat IS NOT NULL THEN 'Y' ELSE 'N' END AS ColumnFormatted
+              ,CASE ColumnType
+                 WHEN 'BF' THEN       '(' || TRIM(ColumnLength (FORMAT '-(9)9')) || ')'
+                 WHEN 'BV' THEN       '(' || TRIM(ColumnLength (FORMAT 'Z(9)9')) || ')'
+                 WHEN 'CF' THEN       '(' || TRIM(ColumnLength (FORMAT 'Z(9)9')) || ')'
+                 WHEN 'CV' THEN       '(' || TRIM(ColumnLength (FORMAT 'Z(9)9')) || ')'
+                 WHEN 'D'  THEN       '(' || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ','
+                                          || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'AT' THEN       '(' || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'TS' THEN       '(' || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'TZ' THEN       '(' || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')' || ' WITH TIME ZONE'
+                 WHEN 'SZ' THEN       '(' || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')' || ' WITH TIME ZONE'
+                 WHEN 'YR' THEN ' YEAR('  || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'YM' THEN ' YEAR('  || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')' || ' TO MONTH'
+                 WHEN 'MO' THEN ' MONTH(' || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'DY' THEN ' DAY('   || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'DH' THEN ' DAY('   || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')' || ' TO HOUR'
+                 WHEN 'DM' THEN ' DAY('   || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')' || ' TO MINUTE'
+                 WHEN 'DS' THEN ' DAY('   || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')' || ' TO SECOND('
+                                          || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'HR' THEN ' HOUR('  || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'HM' THEN ' HOUR('  || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')' || ' TO MINUTE'
+                 WHEN 'HS' THEN ' HOUR('  || TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')' || ' TO SECOND('
+                                          || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'MI' THEN ' MINUTE('|| TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'MS' THEN ' MINUTE('|| TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ')'
+                                          || ' TO SECOND(' || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'SC' THEN ' SECOND('|| TRIM(DecimalTotalDigits (FORMAT '-(9)9')) || ','
+                                          || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')'
+                 WHEN 'BO' THEN '(' || TRIM(ColumnLength (FORMAT 'Z(9)9')) || ')'
+                 WHEN 'CO' THEN '(' || TRIM(ColumnLength (FORMAT 'Z(9)9')) || ')'
+                 WHEN 'PD' THEN '(DATE)'
+                 WHEN 'PM' THEN '(TIMESTAMP('|| TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')' || ' WITH TIME ZONE)'
+                 WHEN 'PS' THEN '(TIMESTAMP('|| TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || '))'
+                 WHEN 'PT' THEN '(TIME('     || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || '))'
+                 WHEN 'PZ' THEN '(TIME('     || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) || ')' || ' WITH TIME ZONE)'
+                 WHEN 'UT' THEN COALESCE(ColumnUDTName,  '<Unknown> ' || ColumnType)
+                 WHEN 'N'  THEN '(' || CASE WHEN DecimalTotalDigits = -128 THEN '*' ELSE TRIM(DecimalTotalDigits (FORMAT '-(9)9')) END
+                                    || CASE WHEN DecimalFractionalDigits IN (0, -128) THEN '' ELSE ',' || TRIM(DecimalFractionalDigits (FORMAT '-(9)9')) END
+                                    || ')'
+                WHEN 'A1' THEN COALESCE('SYSUDTLIB.' || ColumnUDTName,  '<Unknown> ' || ColumnType)
+                WHEN 'AN' THEN COALESCE('SYSUDTLIB.' || ColumnUDTName,  '<Unknown> ' || ColumnType)
+                WHEN 'JN' THEN '(' || TRIM(ColumnLength (FORMAT 'Z(9)9')) || ')'
+                ELSE ''
+                END
+                ||
+                CASE
+                WHEN ColumnType IN ('CV', 'CF', 'CO') THEN
+                    CASE CharType WHEN 1 THEN ' CHARACTER SET LATIN'
+                                  WHEN 2 THEN ' CHARACTER SET UNICODE'
+                                  WHEN 3 THEN ' CHARACTER SET KANJISJIS'
+                                  WHEN 4 THEN ' CHARACTER SET GRAPHIC'
+                                  WHEN 5 THEN ' CHARACTER SET KANJI1'
+                                  ELSE '' END
+                ELSE ''
+              END as Column_Type_Ext
+              ,CASE WHEN ColumnType = 'UT' THEN COALESCE(ColumnUDTName, '<Unknown> ' || ColumnType)
+                    WHEN ColumnType = 'A1' THEN COALESCE('SYSUDTLIB.' || ColumnUDTName,  '<Unknown> ' || ColumnType)
+                    WHEN ColumnType = 'AN' THEN COALESCE('SYSUDTLIB.' || ColumnUDTName,  '<Unknown> ' || ColumnType)
+                    WHEN ColumnType = 'JN' AND CharType =1 AND cast(ColumnLength as INT)<64000 THEN '(Small)'
+                    WHEN ColumnType = 'JN' AND CharType<>1 AND cast(ColumnLength as INT)<32000 THEN '(Small)'
+                    WHEN ColumnType = 'JN' THEN '(Large)'
+                END as Column_Category_Ext
+              ,COUNT(*) as ColumnCount
+          FROM dbc.ColumnsV
+          WHERE ColumnType IS NOT NULL
+          GROUP BY 1,2,3,4,5,6
+       ) C
+        FULL OUTER JOIN vt_dim_datatype DT
+         ON DT.DataType = C.ColumnType
+        AND DT.StorageFormat = C.StorageFormat
+      )with data
+      no primary index on commit preserve rows
+
+- name: Collect Stats on vt_dbc_column_summary
+  connect: source
+  execute:
+    sql: collect stats on vt_dbc_column_summary column(Data_Type)
+
+- name: drop vt_dim_datatype
+  connect: source
+  execute:
+    sql: drop table vt_dim_datatype
+
+{% endif %}
+{{ completed.append('vt_dbc_column_summary') or '' }}

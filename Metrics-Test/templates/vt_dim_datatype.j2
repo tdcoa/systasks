@@ -1,0 +1,30 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_datatype' in completed %}
+
+- name:  "Create vt_dim_datatype"
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_dim_datatype
+      (DataType       char(2)      character set latin
+      ,StorageFormat  varchar(8)   character set latin
+      ,DataTypeDesc   varchar(128) character set latin
+      ,ColumnCategory varchar(32)  character set latin
+      ) no primary index
+      on commit preserve rows
+
+
+- name: import metadata into vt_dim_datatype
+  connect: source
+  import:
+    file: data/dim_datatype.csv
+    table: vt_dim_datatype
+
+
+- name:  "Collect Stats vt_dim_datatype"
+  connect: source
+  execute:
+    sql: collect stats on vt_dim_datatype column(DataType, StorageFormat)
+
+{% endif %}
+{{ completed.append('vt_dim_datatype') or '' }}

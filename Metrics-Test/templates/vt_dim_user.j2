@@ -1,0 +1,91 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dim_user' in completed %}
+
+{% include "vt_dim_tdinternal_databases.j2" %}
+
+- name: Create vt_dim_user
+  connect: source
+  execute:
+    sql: |
+      CREATE SET Volatile TABLE vt_dim_user
+      (
+           UserName      VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC NOT NULL
+          ,FullName      VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,UserType      VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,Organization  VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,Department    VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+      )
+      UNIQUE PRIMARY INDEX ( UserName ) on commit preserve rows
+
+
+- name: "Import metadata dim_user.csv (user mappings) into vt_dim_user"
+  connect: source
+  import:
+    file: data/dim_user.csv
+    table: vt_dim_user
+
+
+{% if pdcr %}
+- name: If PDCR, insert PDCRInfo.UserInfo information into vt_dim_user, if missing
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dim_user
+      select UserName, FullName, UserType, Organization, Department
+      from pdcrinfo.UserInfo
+      where
+        (RecordStartDate between {{ startdate }} and {{ enddate }}  or
+         RecordEndDate   between {{ startdate }} and {{ enddate }}  or
+         coalesce(RecordEndDate, DATE+1) >= {{ enddate }})
+      and UserName not in (Select UserName from vt_dim_user)
+      qualify coalesce(RecordEndDate,DATE+1) = max(coalesce(RecordEndDate,DATE+1)) over(partition by UserName)
+{% endif %}
+
+
+- name: Insert any TD Internal Databases we may have defined
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dim_user
+      select DatabaseName as UserName
+      ,coalesce(CommentString,DatabaseUse,'Unknown') as FullName
+      ,'Teradata Internal' as UserType
+      ,'Teradata Internal' as Organization
+      ,'Teradata Internal' as Department
+      from vt_dim_tdinternal_databases
+      where DatabaseName not in (Select UserName from vt_dim_user)
+        and DatabaseUse = 'U'
+
+
+- name: Insert any missing UserNames into vt_dim_user from dbc.Databases
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dim_user
+      Select DatabaseName as UserName
+      ,'Unknown' as FullName
+      ,'Unknown' as UserType
+      ,'Unknown' as Organization
+      ,'Unknown' as Department
+      from dbc.DatabasesV
+      where DBKind = 'U'
+      and UserName not in (Select UserName from vt_dim_user)
+
+
+- name: Update TDInternal Databases to a consistent UserType
+  connect: source
+  execute:
+    sql: |
+      update vt_dim_user set UserType = 'Teradata Internal'
+      where UserName in (Select DatabaseName
+                         from vt_dim_tdinternal_databases
+                         where databasekind='U')
+
+
+- name:  "Collect Stats vt_dim_user"
+  connect: source
+  execute:
+    sql: collect stats on vt_dim_user column(UserName)
+
+{% endif %}
+{{ completed.append('vt_dim_user') or '' }}
