@@ -186,6 +186,7 @@
           ,coalesce(App_Bucket,       'unknown') as App_Bucket
           ,coalesce(Use_Bucket,       'unknown') as Use_Bucket
           ,coalesce(Statement_Bucket, 'unknown') as Statement_Bucket
+          ,coalesce(Statement_Outcome,'unknown') as Statement_Outcome
           ,coalesce(UserType,         'unknown') as UserType
           ,coalesce(Organization,     'unknown') as Organization
           ,coalesce(Department,       'unknown') as Department
@@ -223,6 +224,7 @@
            ,app.App_Bucket
            ,app.Use_Bucket
            ,stm.Statement_Bucket
+           ,stm.Statement_Outcome
            ,usr.UserType
            ,usr.Organization
            ,usr.Department
@@ -245,6 +247,7 @@
          ,App_Bucket
          ,Use_Bucket
          ,Statement_Bucket
+         ,Statement_Outcome
          ,UserType
          ,Organization
          ,Department
@@ -265,7 +268,8 @@
         column (Department),
         column (App_Bucket),
         column (Use_Bucket),
-        column (Statement_Bucket)
+        column (Statement_Bucket),
+        column (Statement_Outcome)
       on vt_dbql_core_daily
 
 

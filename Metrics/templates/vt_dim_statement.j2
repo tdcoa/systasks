@@ -8,6 +8,7 @@
       create multiset volatile table  vt_dim_statement
       (Statement_Type     varchar(128)  character set LATIN
       ,Statement_Bucket   varchar(128)  character set LATIN
+      ,Statement_Outcome  varchar(128)  character set LATIN
       ,Statement_Class    varchar(16)   character set LATIN
       ) no primary index
       on commit preserve rows
@@ -25,7 +26,7 @@
   execute:
     sql: |
       insert into vt_dim_statement
-      Select a.StatementType, 'Unknown', 'Unknown'
+      Select a.StatementType, 'Unknown', 'Unknown', 'Unknown'
       from (
         Select StatementType from {{ dbc.log }} as dbql
         where {{ dbc.logdt }} between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
