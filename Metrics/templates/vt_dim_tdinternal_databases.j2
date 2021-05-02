@@ -6,18 +6,21 @@
   execute:
     sql: |
       CREATE MULTISET VOLATILE TABLE vt_dim_tdinternal_databases_temp
-      (DatabaseName     varchar(128) character set latin
-      ,DatabaseUse      varchar(128) character set latin
+      (DatabaseName              varchar(128)  character set latin
+      ,DatabaseUse               varchar(128)  character set latin
+      ,Exclude_VantageUnit_Flag  byteint
+      ,Exclude_Performance_Flag  byteint
+      ,Notes            varchar(1024) character set latin
       ) NO PRIMARY INDEX
       ON COMMIT PRESERVE ROWS;
 
-
+{% if not skip_dim_load %}
 - name: import metadata into vt_dim_tdinternal_databases_temp
   connect: source
   import:
     file: data/dim_tdinternal_databases.csv
     table: vt_dim_tdinternal_databases_temp
-
+{% endif %}
 
 - name:  Create vt_dim_tdinternal_databases, enriched with system information
   connect: source
@@ -28,8 +31,11 @@
           select
            v.DatabaseName
           ,f.DatabaseUse
+          ,f.Exclude_VantageUnit_Flag
+          ,f.Exclude_Performance_Flag
           ,v.DBKind as DatabaseKind
           ,v.CommentString
+          ,f.Notes as Dimension_Notes
           from dbc.DatabasesV v
           join vt_dim_tdinternal_databases_temp f
             on v.DatabaseName = f.DatabaseName

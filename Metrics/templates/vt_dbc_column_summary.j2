@@ -9,7 +9,7 @@
     sql: |
       create volatile table vt_dbc_column_summary as
       ( SELECT
-         COALESCE(DT.DataTypeDesc, 'Unknown - ' || C.ColumnType) AS Data_Type
+         COALESCE(DT.DataTypeDesc, 'Unknown') AS Data_Type
         ,COALESCE(DT.ColumnCategory || C.Column_Type_Ext, DT.DataTypeDesc, 'Unknown - ' || C.ColumnType) AS Column_Type
         ,C.IdColType AS Identity_Column_Type
         ,COALESCE(DT.ColumnCategory || C.Column_Category_Ext, DT.ColumnCategory , 'Unknown - ' || C.ColumnType) AS Column_Category
@@ -90,7 +90,7 @@
        ) C
         FULL OUTER JOIN vt_dim_datatype DT
          ON DT.DataType = C.ColumnType
-        AND DT.StorageFormat = C.StorageFormat
+        AND coalesce(DT.StorageFormat,'') = coalesce(C.StorageFormat,'')
       )with data
       no primary index on commit preserve rows
 

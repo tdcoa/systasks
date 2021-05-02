@@ -8,5 +8,39 @@ tasks:
   connect: source
   export:
     file: dbc_indices_by_database.csv
+    sql: Select * from vt_dbc_indices_by_database order by 1
+
+- name: Export aggregate vt_dbc_indices_by_database for charting
+  connect: source
+  export:
+    file: dbc_indices_by_database_summary.csv
     sql: |
-      Select * from vt_dbc_indices_by_database
+      select IndexType_Desc as "Index Type"
+      ,sum(index_Count) as "Index Count"
+      ,sum(Distinct_Column_Count) as "Distinct Column Count"
+      from vt_dbc_indices_by_database
+      group by 1  order by 2 desc
+
+- name: Chart index counts by data type
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:dbc_indices_by_database_summary.csv"
+      - "title:Index Count - {{ siteid }}"
+      - "height:6"
+      - "width:18"
+      - "xrotate:90"
+      - "legendy:1.00"
+
+- name: Chart index counts by data type
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:dbc_indices_by_database_summary.csv"
+      - "title:Index Count - {{ siteid }}"
+      - "height:6"
+      - "width:18"
+      - "xrotate:90"
+      - "legendy:1.00"
+      - "barlogscale:True"
+      - "pngfile:dbc_indices_by_database_summary_log.png"

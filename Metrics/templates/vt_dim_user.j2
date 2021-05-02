@@ -14,15 +14,18 @@
           ,UserType      VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
           ,Organization  VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
           ,Department    VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,Exclude_VantageUnit_Flag  BYTEINT
+          ,Exclude_Performance_Flag  BYTEINT
       )
       UNIQUE PRIMARY INDEX ( UserName ) on commit preserve rows
 
-
+{% if not skip_dim_load %}
 - name: "Import metadata dim_user.csv (user mappings) into vt_dim_user"
   connect: source
   import:
     file: data/dim_user.csv
     table: vt_dim_user
+{% endif %}
 
 
 {% if pdcr %}
@@ -31,7 +34,7 @@
   execute:
     sql: |
       insert into vt_dim_user
-      select UserName, FullName, UserType, Organization, Department
+      select UserName, FullName, UserType, Organization, Department, 0, 0
       from pdcrinfo.UserInfo
       where
         (RecordStartDate between {{ startdate }} and {{ enddate }}  or
@@ -52,6 +55,7 @@
       ,'Teradata Internal' as UserType
       ,'Teradata Internal' as Organization
       ,'Teradata Internal' as Department
+      ,0,0 --EXCLUDE flags
       from vt_dim_tdinternal_databases
       where DatabaseName not in (Select UserName from vt_dim_user)
         and DatabaseUse = 'U'
@@ -67,6 +71,7 @@
       ,'Unknown' as UserType
       ,'Unknown' as Organization
       ,'Unknown' as Department
+      ,0,0 --EXCLUDE flags
       from dbc.DatabasesV
       where DBKind = 'U'
       and UserName not in (Select UserName from vt_dim_user)
@@ -76,10 +81,12 @@
   connect: source
   execute:
     sql: |
-      update vt_dim_user set UserType = 'Teradata Internal'
-      where UserName in (Select DatabaseName
-                         from vt_dim_tdinternal_databases
-                         where databasekind='U')
+      update A
+      from vt_dim_user A,  vt_dim_tdinternal_databases B
+      SET Exclude_VantageUnit_Flag = B.Exclude_VantageUnit_Flag
+         ,Exclude_Performance_Flag = B.Exclude_Performance_Flag
+         ,UserType = 'Teradata Internal'
+      where A.UserName = B.DatabaseName
 
 
 - name:  "Collect Stats vt_dim_user"

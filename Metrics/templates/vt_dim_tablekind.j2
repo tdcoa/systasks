@@ -16,12 +16,14 @@
       ) unique primary index (TableKind, CommitOpt)
       on commit preserve rows
 
-
+{% if not skip_dim_load %}
 - name: import metadata into vt_dim_tablekind
   connect: source
   import:
     file: data/dim_tablekind.csv
     table: vt_dim_tablekind
+{% endif %}
+
 
 - name: Update to remove any NULLS from CommitOpt
   connect: source

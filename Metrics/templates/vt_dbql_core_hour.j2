@@ -1,0 +1,12 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_dbql_core_hour' in completed %}
+
+{% set dbql_core_daily = False  %}
+{% set dbql_core_hour  = True %}
+{% set dbql_core_user  = False %}
+
+{% include "vt_dbql_core.j2" %}
+
+
+{% endif %}
+{{ completed.append('vt_dbql_core_hour') or '' }}

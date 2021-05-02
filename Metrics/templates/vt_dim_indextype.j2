@@ -14,13 +14,13 @@
       ) NO PRIMARY INDEX
       ON COMMIT PRESERVE ROWS;
 
-
+{% if not skip_dim_load %}
 - name: import metadata into vt_dim_indextype
   connect: source
   import:
     file: data/dim_indextype.csv
     table: vt_dim_indextype
-
+{% endif %}
 
 - name: Collect Stats on vt_dim_indextype
   connect: source

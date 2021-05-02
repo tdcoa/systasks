@@ -1,0 +1,34 @@
+description: Download vt_dbql_core_hour output.
+version: 1
+tasks:
+
+{% include "vt_dbql_core_hour.j2" %}
+
+
+- name: Export queries per day for graphing in BigQuery pptx
+  connect: source
+  export:
+    file: statement_throughput_hour.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
+      ,sum(Statement_Total_Cnt) (BigInt) as "Total Statements--#27C1BD"
+      ,sum(Statement_SubSecond_Cnt)(BigInt) as "Subsecond Statements--#636363"
+      from vt_dbql_core_hour
+      group by LogDate
+      order by 1
+
+- name: Chart query per day over time
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:statement_throughput_hour.csv"
+      - "title:Query Throughtput per Day - {{ siteid }}"
+      - "height:4"
+      - "width:16"
+
+- name: Export vt_dbql_core_hour
+  connect: source
+  export:
+    file: dbql_core_hour.csv
+    sql: Select * from vt_dbql_core_hour order by LogDate, Application_Use, Statement_Bucket

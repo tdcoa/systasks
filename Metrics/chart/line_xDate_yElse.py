@@ -60,10 +60,13 @@ def line_xDate_yElse(**kwargs):
     if 'width' in kwargs: width = float(kwargs['width'])
     elif not errorcondition: width = 12
 
-    if 'save' in kwargs: width = bool(kwargs['save'])
+    if 'save' in kwargs: save = bool(kwargs['save'])
     elif not errorcondition: save = True
 
-    if 'yintercept' in kwargs: width = int(kwargs['yintercept'])
+    if 'sort' in kwargs: sort = int(kwargs['sort'])
+    elif not errorcondition: sort = 1 # default to 1st column (date)
+
+    if 'yintercept' in kwargs: yintercept = int(kwargs['yintercept'])
     elif not errorcondition: ylim = 0
 
     if 'dateadjust' in kwargs: dateadjust = float(kwargs['dateadjust'])
@@ -78,7 +81,7 @@ def line_xDate_yElse(**kwargs):
     # BUILD OUT X-AXIS (always first column // index 0)
     df = pd.read_csv(csvfile)
     df[df.columns[0]] = pd.to_datetime(df[df.columns[0]])
-    df = df.sort_values(by=df.columns[0])
+    if sort !=0: df = df.sort_values(by=df.columns[sort-1])
     x = df[df.columns[0]]
     if title=='': title = csvfile.split('.')[0].split('--')[-1].replace('_',' ').upper()
     coaprint('x axis column: ', title)

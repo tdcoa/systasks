@@ -43,7 +43,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     from matplotlib.ticker import FuncFormatter
     import matplotlib.patches as mpatches
     from datetime import date
-    default_colors = ['black','blue','yellow','orange','purple']
+    default_colors = ['#27C1BD','black','blue','yellow','orange','purple']
     formatter = FuncFormatter(human_format)
 
     # define all variables, with defaults
@@ -61,8 +61,11 @@ def barline_xLabels_yBar_yLine(**kwargs):
     if 'width' in kwargs: width = float(kwargs['width'])
     elif not errorcondition: width = 12
 
-    if 'save' in kwargs: width = bool(kwargs['save'])
+    if 'save' in kwargs: save = bool(kwargs['save'])
     elif not errorcondition: save = True
+
+    if 'sort' in kwargs: sort = int(kwargs['sort'])
+    elif not errorcondition: sort = 0
 
     if 'barlogscale' in kwargs: barlogscale = bool(str(kwargs['barlogscale']).strip().lower()=='true')
     elif not errorcondition: barlogscale = False
@@ -77,7 +80,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     # BUILD OUT X-AXIS (always first column // index 0)
     df = pd.read_csv(csvfile, thousands=',')
     df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-    df = df.sort_values(by=df.columns[0])
+    if sort !=0: df = df.sort_values(by=df.columns[sort-1])
     x = df[df.columns[0]]
     coaprint('x axis column: ', title)
 

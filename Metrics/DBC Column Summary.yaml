@@ -7,5 +7,38 @@ tasks:
 - name: Export vt_dbc_column_summary for reconciliation
   connect: source
   export:
-    file: column_summary.csv
+    file: dbc_column_summary.csv
     sql: Select * from vt_dbc_column_summary
+
+- name: Export vt_dbc_column_summary for charting
+  connect: source
+  export:
+    file: dbc_column_count_by_datatype.csv
+    sql: |
+      Select Column_Category as "Column Category"
+      ,sum(Column_Count) as "Column Count"
+      from vt_dbc_column_summary
+      where Column_Count <>0
+      group by 1 order by 2 desc
+
+- name: Chart column counts by data type
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:dbc_column_count_by_datatype.csv"
+      - "title:Column Counts by DataType - {{ siteid }}"
+      - "height:6"
+      - "width:18"
+      - "xrotate:90"
+
+- name: Chart column counts by data type, logscale
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:dbc_column_count_by_datatype.csv"
+      - "title:Column Counts by DataType - {{ siteid }}"
+      - "height:6"
+      - "width:18"
+      - "xrotate:90"
+      - "barlogscale:True"
+      - "pngfile:dbc_column_count_by_datatype_log.png"

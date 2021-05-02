@@ -15,8 +15,10 @@ tasks:
 
 
 
-
-{% include "vt_dbql_core_daily.j2" %}
+{% set dbql_core_daily = True %}
+{% set dbql_core_hour  = False %}
+{% set dbql_core_user  = True %}
+{% include "vt_dbql_core.j2" %}
 
 
 - name: Export queries per day for graphing in BigQuery pptx
@@ -26,8 +28,8 @@ tasks:
     sql: |
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
-      ,sum(Query_Cnt) (BigInt) as "Total Queries--#27C1BD"
-      ,sum(Query_SubSecond_Cnt)(BigInt) as "Subsecond Queries--#636363"
+      ,sum(Statement_Total_Cnt) (BigInt) as "Total Queries--#27C1BD"
+      ,sum(Statement_SubSecond_Cnt)(BigInt) as "Subsecond Queries--#636363"
       from vt_dbql_core_daily
       group by LogDate
       order by 1
@@ -64,10 +66,10 @@ tasks:
     sql: |
       select
       '{{ siteid }}' as Site_ID
-      ,cast(cast(count(distinct App_Bucket) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Applications"
-      ,cast(cast(count(distinct App_Bucket) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total App Buckets"
-      ,cast(cast(count(case when App_Bucket <> 'Unknown' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Recognized Applications"
-      ,cast(cast(average(Request_Cnt)/max(LogDate_Cnt) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Average Requests per Application per Day"
+      ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Applications"
+      ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total App Buckets"
+      ,cast(cast(count(case when Application <> 'Unknown' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Recognized Applications"
+      ,cast(cast(average(Request_Total_Cnt)/max(LogDate_Cnt) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Average Requests per Application per Day"
       from vt_dbql_core_daily
 
 
@@ -96,7 +98,7 @@ tasks:
       (
       select max(Site_ID) as Site_ID
       ,count(distinct LogDate) as LogDayCnt
-      ,sum(Query_Cnt) AS TotalQryCnt
+      ,sum(Statement_Total_Cnt) AS TotalQryCnt
       ,TotalQryCnt / LogDayCnt AS AvgQryPerDay
       ,AvgQryPerDay  / 1e6 AS AvgMilQryPerDay
       ,AvgQryPerDay * 30 AS AvgQryPerMonth
@@ -105,12 +107,12 @@ tasks:
       ,TotalQryCnt * 365 / LogDayCnt AS QryCntPerYear
       ,QryCntPerYear / 1e6 AS MilQryCntPerYear
       ,QryCntPerYear / 1e9 AS BilQryCntPerYear
-      ,sum(Query_Tactical_Cnt) AS TotalTacticalCnt
-      ,sum(Query_Tactical_Cnt)/ LogDayCnt  AS TotalTacticalCntPerDay
+      ,sum(Statement_Tactical_Cnt) AS TotalTacticalCnt
+      ,sum(Statement_Tactical_Cnt)/ LogDayCnt  AS TotalTacticalCntPerDay
       ,cast(TotalTacticalCntPerDay as decimal(18,2)) / 1e6  AS TotalTacticalCntPerDayMil
       ,(cast(TotalTacticalCnt as decimal(18,4)) / TotalQryCnt) * 100 AS TacticalPct
-      ,sum(Query_SubSecond_Cnt) as TotalSubSecondCnt
-      ,sum(Query_SubSecond_Cnt)/ LogDayCnt as TotalSubSecondCntPerDay
+      ,sum(Statement_SubSecond_Cnt) as TotalSubSecondCnt
+      ,sum(Statement_SubSecond_Cnt)/ LogDayCnt as TotalSubSecondCntPerDay
       ,cast(TotalSubSecondCntPerDay as decimal(18,2)) / 1e6  AS TotalSubSecondCntPerDayMil
       ,(cast(TotalSubSecondCnt as decimal(18,4)) / TotalQryCnt) * 100 AS SubSecondPct
       ,sum(Runtime_Total_Sec) / TotalQryCnt AS AvgRunTimeSec
@@ -124,9 +126,9 @@ tasks:
   export:
     file: bq--appid_detail.csv
     sql: |
-      select dbql.App_Bucket
+      select dbql.Application
       ,max(dbql.LogDate_Cnt) as DayCount
-      ,cast(cast(sum(dbql.Query_Cnt)/nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Queries"
+      ,cast(cast(sum(dbql.Statement_Total_Cnt)/nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Queries"
       ,cast(cast(sum(dbql.Returned_Row_Cnt)/ nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Fetched Rows"
       ,cast(cast(zeroifnull("Total Fetched Rows" / nullifzero("Total Queries")) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Rows Per Query"
       from vt_dbql_core_daily dbql

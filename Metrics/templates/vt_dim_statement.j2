@@ -13,27 +13,13 @@
       ) no primary index
       on commit preserve rows
 
-
+{% if not skip_dim_load %}
 - name: import metadata into vt_dim_statement
   connect: source
   import:
     file: data/dim_statement.csv
     table: vt_dim_statement
-
-
-- name: ensure vt_dim_statement contains all statementtypes found in dbql
-  connect: source
-  execute:
-    sql: |
-      insert into vt_dim_statement
-      Select a.StatementType, 'Unknown', 'Unknown', 'Unknown'
-      from (
-        Select StatementType from {{ dbc.log }} as dbql
-        where {{ dbc.logdt }} between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
-        group by 1
-      ) a
-      where a.StatementType not in(select Statement_Type from vt_dim_statement)
-
+{% endif %}
 
 - name: Collect Stats vt_dim_statement
   connect: source

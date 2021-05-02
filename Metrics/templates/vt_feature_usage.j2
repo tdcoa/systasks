@@ -1,0 +1,73 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_feature_usage' in completed %}
+
+{% include "vt_dim_user.j2" %}
+
+
+- name: Create map of join frequency to QueryID, for performance
+  connect: source
+  execute:
+    sql: |
+      create volatile table Feature_Usage as
+      (
+          with dbql as (
+            select
+             dbq.LogDate
+            ,dbq.featureusage
+            ,usr.UserName
+            ,usr.UserHash
+            ,usr.UserType
+            ,usr.Organization
+            ,usr.Department
+            ,rec_count
+            ,ampcputime
+            from (
+                  select UserName
+                  ,{logdate}  /* LogDate or CAST(Starttime as Date) as LogDate */
+                  ,featureusage
+                  ,count(*) as rec_count
+                  ,sum(ampcputime) as ampcputime
+                  from {dbqlogtbl} /* pdcrinfo.dbqlogtbl_hst or  dbc.dbqlogtbl */
+                  where LogDate between {startdate} and {enddate}
+                    and featureusage is not null
+                  group by UserName
+                  ,LogDate
+                  ,featureusage
+                  ) dbq
+            join dim_user as usr
+              on usr.UserName = dbq.UserName
+          )
+          select
+           dbql.LogDate
+          ,feat.featurename
+          ,feat.featurebitpos as BitPos
+          ,dbql.UserName
+          ,dbql.UserHash
+          ,dbql.User_Bucket
+          ,dbql.User_Department
+          ,dbql.User_SubDepartment
+          ,dbql.User_Region
+          ,sum(zeroifnull(dbql.rec_count)) as Query_Cnt
+          ,sum(zeroifnull(dbql.ampcputime)) as AMPCPUTime
+          from dbc.qrylogfeaturelistv feat
+          join dbql
+            on bytes(dbql.featureusage) = 256
+           and getbit(dbql.featureusage,(2047-feat.featurebitpos)) = 1
+          group by
+          dbql.LogDate
+         ,feat.featurename
+         ,feat.featurebitpos
+         ,dbql.UserName
+         ,dbql.UserHash
+         ,dbql.User_Bucket
+         ,dbql.User_Department
+         ,dbql.User_SubDepartment
+         ,dbql.User_Region
+      ) with data
+        No Primary Index
+        on commit preserve rows
+
+
+
+{% endif %}
+{{ completed.append('vt_feature_usage') or '' }}

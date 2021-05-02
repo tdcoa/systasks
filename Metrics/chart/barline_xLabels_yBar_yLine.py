@@ -43,7 +43,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     from matplotlib.ticker import FuncFormatter
     import matplotlib.patches as mpatches
     from datetime import date
-    default_colors = ['black','blue','yellow','orange','purple']
+    default_colors = ['#27C1BD','black','blue','yellow','orange','purple']
     formatter = FuncFormatter(human_format)
 
     # define all variables, with defaults
@@ -52,8 +52,11 @@ def barline_xLabels_yBar_yLine(**kwargs):
     if 'csvfile' not in kwargs: errorcondition = True
     else: csvfile = kwargs['csvfile']
 
+    if 'pngfile' in kwargs: pngfile = kwargs['pngfile']
+    elif not errorcondition: pngfile = csvfile.replace('.csv','.png')
+
     if 'title' in kwargs: title = kwargs['title']
-    elif not(errorcondition): title = csvfile.split('.')[0].split('--')[-1].replace('_',' ').upper()
+    elif not errorcondition: title = csvfile.split('.')[0].split('--')[-1].replace('_',' ').upper()
 
     if 'height' in kwargs: height = float(kwargs['height'])
     elif not errorcondition: height = 6
@@ -61,8 +64,20 @@ def barline_xLabels_yBar_yLine(**kwargs):
     if 'width' in kwargs: width = float(kwargs['width'])
     elif not errorcondition: width = 12
 
-    if 'save' in kwargs: width = bool(kwargs['save'])
+    if 'save' in kwargs: save = bool(kwargs['save'])
     elif not errorcondition: save = True
+
+    if 'xrotate' in kwargs: xrotate = int(kwargs['xrotate'])
+    elif not errorcondition: xrotate = 0
+
+    if 'sort' in kwargs: sort = int(kwargs['sort'])
+    elif not errorcondition: sort = 0
+
+    if 'legendy' in kwargs: legendy = float(kwargs['legendy'])
+    elif not errorcondition: legendy = -0.2
+
+    if 'legendx' in kwargs: legendx = float(kwargs['legendx'])
+    elif not errorcondition: legendx = 0.5
 
     if 'barlogscale' in kwargs: barlogscale = bool(str(kwargs['barlogscale']).strip().lower()=='true')
     elif not errorcondition: barlogscale = False
@@ -77,7 +92,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     # BUILD OUT X-AXIS (always first column // index 0)
     df = pd.read_csv(csvfile, thousands=',')
     df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-    df = df.sort_values(by=df.columns[0])
+    if sort !=0: df = df.sort_values(by=df.columns[sort-1])
     x = df[df.columns[0]]
     coaprint('x axis column: ', title)
 
@@ -100,7 +115,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     fig = plt.figure(figsize=(width, height))
     ax = fig.add_subplot(1,1,1)
     ax.margins(0.01)
-    ax.yaxis.grid(True) # turn on yaxis vertical lines
+    ax.yaxis.grid(True) # turn on yaxis horizontal lines
 
     firstline = True
     for y in ys:
@@ -109,7 +124,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
             ax.tick_params(axis='y', color=y['color'])
             if barlogscale:
                 ax.set_yscale('log')
-                ax.set_ylim(ymin=1)
+                ax.set_ylim(ymin=0.1)
             else:
                 ax.set_ylim(ymin=0)
             plt.ylabel(y['name'], color=y['color'])
@@ -121,7 +136,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
             ax.plot(x, y['series'], label=y['name'], color=y['color'], linewidth=2)
             if barlogscale:
                 ax.set_yscale('linear')
-                ax.set_ylim(ymin=1)
+                ax.set_ylim(ymin=0)
 
 
         y['handle'] = ax
@@ -130,7 +145,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
         ax.spines['left'].set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_color('gray')
-        plt.xticks(fontsize=10, rotation=0)
+        plt.xticks(fontsize=10, rotation=xrotate)
         if not barlogscale:
             ax.set_ylim(ymin=0)
             ax.set_yticks(np.linspace(ax.get_yticks()[0], ax.get_yticks()[-1], len(axbar.get_yticks())))
@@ -143,7 +158,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     lgnd = []
     for y in ys:
         lgnd.append( mpatches.Patch(color=y['color'],label=y['name']))
-    lgd = ax.legend(handles=lgnd, loc='upper center', bbox_to_anchor=(0.5, -0.2), shadow=True, ncol=5)
+    lgd = ax.legend(handles=lgnd, loc='upper center', bbox_to_anchor=(legendx, legendy), shadow=True, ncol=5)
 
     plt.xticks(x)  # forces all values to be displayed
     plt.title(title, fontsize=14, y=1.0, pad=30, color='grey')
@@ -153,7 +168,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
         item.patch.set_visible(False)
 
     if save:
-        plt.savefig(csvfile.replace('.csv','.png'), bbox_extra_artist=lgd, bbox_inches='tight')
+        plt.savefig(pngfile, bbox_extra_artist=lgd, bbox_inches='tight', transparent=True)
     else:
         plt.show()
 

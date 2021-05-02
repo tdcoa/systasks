@@ -1,31 +1,65 @@
 {% set completed = [] if completed is not defined else completed %}
 {% if not 'vt_dim_app' in completed %}
 
-- name:  "Create vt_dim_app"
+- name:  "Create vt_dim_app_load to catch file"
   connect: source
   execute:
     sql: |
-      create volatile table  vt_dim_app
-      (Pattern_Type       varchar(16)   character set LATIN
-      ,App_ID             varchar(128)  character set LATIN
-      ,App_Bucket         varchar(128)  character set LATIN
-      ,Use_Bucket         varchar(128)  character set LATIN
+      create volatile table vt_dim_app_load
+      (
+       Pattern_Type       varchar(32)
+      ,AppID_Pattern      varchar(128)
+      ,Application        varchar(128)
+      ,Usage              varchar(128)
+      ,Company            varchar(128)
       ,Priority           integer
-      )  primary index(Priority)
+      ,Data_Source        varchar(32)
+      )
+      no primary index
       on commit preserve rows
 
-
+{% if not skip_dim_load %}
 - name: import metadata into vt_dim_app
   connect: source
   import:
     file: data/dim_app.csv
-    table: vt_dim_app
+    table: vt_dim_app_load
+{% endif %}
 
-
-- name:  "Collect Stats vt_dim_app"
+- name: Create vt_dim_app, using Row_Number to ensure priority uniqueness
   connect: source
   execute:
-    sql: collect stats column App_ID, column Priority on vt_dim_app
+    sql: |
+      create volatile table vt_dim_app as
+      (
+        select
+         Pattern_Type
+        ,AppID_Pattern
+        ,Application
+        ,Usage
+        ,Company
+        ,ROW_NUMBER() over(order by Priority asc, AppID_Pattern, Usage, Company) as Priority
+        ,Data_Source
+        from vt_dim_app_load
+      ) with data
+      unique primary index (Priority)
+      on commit preserve rows
+
+
+- name:  "Drop vt_dim_app_load, as not needed any longer"
+  connect: source
+  execute:
+    sql: drop table vt_dim_app_load
+
+
+- name: Collect Stats vt_dim_app
+  connect: source
+  execute:
+    sql: |
+      collect stats
+          column AppID_Pattern
+         ,column Priority
+      on vt_dim_app
 
 {% endif %}
 {{ completed.append('vt_dim_app') or '' }}

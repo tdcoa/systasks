@@ -11,3 +11,25 @@ tasks:
     sql: |
       Select * from vt_dbc_constraint
       order by ConstraintType, DatabaseName, TableName
+
+
+- name: Export constraint summary for charting
+  connect: source
+  export:
+    file: dbc_constraint_summary.csv
+    sql: |
+      Select ConstraintType as "Constraint Type"
+      ,count(*) as "Constraint Count"
+      ,count(distinct TableName) as "Number of Tables with Constraints"
+      From vt_dbc_constraint
+      group by 1  order by 2 desc
+
+
+- name: Chart constraint summary volume, with CPU line overlay
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:dbc_constraint_summary.csv"
+      - "title:Constraints - {{ siteid }}"
+      - "height:6"
+      - "width:12"

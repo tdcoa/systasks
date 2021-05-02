@@ -13,13 +13,13 @@
       ) no primary index
       on commit preserve rows
 
-
+{% if not skip_dim_load %}
 - name: import metadata into vt_dim_datatype
   connect: source
   import:
     file: data/dim_datatype.csv
     table: vt_dim_datatype
-
+{% endif %}
 
 - name:  "Collect Stats vt_dim_datatype"
   connect: source

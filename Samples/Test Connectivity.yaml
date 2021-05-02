@@ -1,0 +1,13 @@
+description: >
+  This simple process connects to a system and exports the dbc.dbcinfo table.
+  It is intended only as a connectivity check.
+
+
+tasks:
+
+# SQL can be placed inline, as shown here:
+- name: Export contents of dbc.info
+  connect: source  # connect to "source system" as specified
+  export:
+    file: dbcinfo.csv   # save output to this file
+    sql:  Select * from dbc.dbcinfo
