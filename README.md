@@ -95,6 +95,17 @@ Name      | Type  | Required? | Purpose
 `command` | text  |    Yes    | name of the command (Python script name)
 `params`  | array |    No     | optional parameters to pass to the command
 
+## script
+
+Run an application, typically a python script
+
+Attributes:
+
+Name      | Type  | Required? | Purpose
+----------|-------|:---------:|-------------------------------------------
+`command` | text  |    Yes    | name of the command (Python script name)
+`params`  | array |    No     | optional parameters to pass to the command
+
 ## ppt
 
 Build a PowerPoint from a template
