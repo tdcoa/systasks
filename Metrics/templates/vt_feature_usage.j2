@@ -3,71 +3,297 @@
 
 {% include "vt_dim_user.j2" %}
 
-
-- name: Create map of join frequency to QueryID, for performance
+- name: Create vt_dim_feature for later aggregations
   connect: source
   execute:
     sql: |
-      create volatile table Feature_Usage as
+      create volatile table vt_dim_feature
       (
-          with dbql as (
-            select
-             dbq.LogDate
-            ,dbq.featureusage
-            ,usr.UserName
-            ,usr.UserHash
-            ,usr.UserType
-            ,usr.Organization
-            ,usr.Department
-            ,rec_count
-            ,ampcputime
-            from (
-                  select UserName
-                  ,{logdate}  /* LogDate or CAST(Starttime as Date) as LogDate */
+       Feature_Name                varchar(128)
+      ,Feature_Category            varchar(128)
+      ,Feature_SubCategory         varchar(128)
+      ,Product_Name                varchar(128)
+      ,Product_Category            varchar(128)
+      ,Solution_Type               varchar(128)
+      ,User_Experience_Level_Name  varchar(128)
+      ,Initiator_Role_Category     varchar(128)
+      ,Objective_Name              varchar(128)
+      ,Feature_Weight              smallint
+      ,Max_Threshold_LOW           integer
+      ,Max_Threshold_MED           bigint
+      ,Feature_CPU_Weight          smallint
+      ,Feature_IO_Weight           smallint
+      ,Feature_Time_Weight         smallint
+      ,Feature_Cnt_Weight          smallint
+      ) unique primary index (Feature_Name)
+        on commit preserve rows
+
+{% if not skip_dim_load %}
+- name: import metadata into vt_dim_feature
+  connect: source
+  import:
+    file: data/dim_feature.csv
+    table: vt_dim_feature
+{% endif %}
+
+
+- name: Update vt_dim_feature to turn '' into null
+  connect: source
+  execute:
+    sql: |
+      update vt_dim_feature
+      set
+       Feature_Name               = case when Feature_Name               ='' then null else Feature_Name               end
+      ,Feature_Category           = case when Feature_Category           ='' then null else Feature_Category           end
+      ,Feature_SubCategory        = case when Feature_SubCategory        ='' then null else Feature_SubCategory        end
+      ,Product_Name               = case when Product_Name               ='' then null else Product_Name               end
+      ,Product_Category           = case when Product_Category           ='' then null else Product_Category           end
+      ,Solution_Type              = case when Solution_Type              ='' then null else Solution_Type              end
+      ,User_Experience_Level_Name = case when User_Experience_Level_Name ='' then null else User_Experience_Level_Name end
+      ,Initiator_Role_Category    = case when Initiator_Role_Category    ='' then null else Initiator_Role_Category    end
+      ,Objective_Name             = case when Objective_Name             ='' then null else Objective_Name             end
+
+
+- name: Create vt_feature_usage_prework by date, user, and feature
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_feature_usage_prework  as(
+      with dbql as
+        (
+          select
+           dbq.LogDate
+          ,dbq.featureusage
+          ,dbq.UserName
+          ,usr.UserType
+          ,usr.Organization
+          ,usr.Department
+          ,dbq.Request_Total_Cnt  -- as cnt_query
+          ,dbq.Statement_Total_Cnt
+          ,dbq.Request_Error_Cnt
+          ,dbq.Statement_Error_Cnt
+          ,dbq.Request_Abort_Cnt  -- as cnt_abort_query
+          ,dbq.Statement_Abort_Cnt
+          ,dbq.distinct_cnt_username
+          ,dbq.sum_parsercputime
+          ,dbq.sum_ampcputime
+          ,dbq.sum_totaliocount
+          ,dbq.sum_reqiokb
+          ,dbq.sum_reqphysio
+          ,dbq.sum_reqphysiokb
+          ,dbq.sum_usediota
+          ,dbq.sum_impactcpu
+          ,dbq.sum_impactio
+          ,dbq.sum_lockdelay
+          ,dbq.sum_delaytime
+          ,dbq.sum_minrespholdtime
+          ,dbq.sum_totalfirstresptime
+          ,dbq.cnt_allmapamp_query
+          ,dbq.avg_allmapamp_pe
+          ,dbq.sum_numsteps
+          ,dbq.sum_spoolusage
+          ,dbq.sum_numresultrows
+          from (
+                  select
+                   UserName
+                  ,{{ dbc.logdt }} as LogDate
                   ,featureusage
-                  ,count(*) as rec_count
-                  ,sum(ampcputime) as ampcputime
-                  from {dbqlogtbl} /* pdcrinfo.dbqlogtbl_hst or  dbc.dbqlogtbl */
-                  where LogDate between {startdate} and {enddate}
-                    and featureusage is not null
+                  /* ====== Request and Statement Counts ======= */
+                  ,zeroifnull(cast(count(*) as BigInt)) as Request_Total_Cnt  --<<--- cnt_query in TCA Pull
+                  ,zeroifnull(sum(cast(dbql.Statements as BigInt))) as Statement_Total_Cnt
+                  ,zeroifnull(sum(cast(case when dbql.ErrorCode not in(0,3158)  then 1               else 0 end as bigint))) as   Request_Error_Cnt
+                  ,zeroifnull(sum(cast(case when dbql.ErrorCode not in(0,3158)  then dbql.Statements else 0 end as bigint))) as Statement_Error_Cnt
+                  ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'           then 1               else 0 end as bigint))) as   Request_Abort_Cnt
+                  ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'           then dbql.Statements else 0 end as bigint))) as Statement_Abort_Cnt
+                  ,count(distinct username) as distinct_cnt_username
+                  --consumption metrics
+                  ,sum(ParserCPUTime) as sum_parsercputime
+                  ,sum(ampcputime)    as sum_ampcputime
+                  ,sum(totaliocount)  as sum_totaliocount
+                  ,sum(ReqIOKB)       as sum_reqiokb
+                  ,sum(ReqPhysIO)     as sum_reqphysio
+                  ,sum(ReqPhysIOKB)   as sum_reqphysiokb
+                  ,sum(usediota)      as sum_usediota
+                  --impact
+                  ,sum(case when maxampcputime = 0 then ampcputime else maxampcputime * numofactiveamps end) as sum_impactcpu
+                  ,sum(case when maxampio = 0 then totaliocount else maxampio * numofactiveamps end)         as sum_impactio
+                  --duration metrics
+                  ,(sum(LockDelay*100))      as sum_lockdelay
+                  ,(sum(DelayTime))          as sum_delaytime
+                  ,(sum(MinRespHoldTime))    as sum_minrespholdtime
+                  ,(sum(TotalFirstRespTime)) as sum_totalfirstresptime --delay+exec+minresp
+                  --complexity metrics
+                  -- ,sum(case when abortflag = 'T' then 1 else 0 end) as cnt_abort_query  --<<--- replaced by Request_Abort_Cnt, above
+                  ,sum(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then 1 else 0 end) cnt_allmapamp_query
+                  ,avg(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then
+                    AmpCpuTime/nullifzero(NumOfActiveAmps*MaxAmpCpuTime) else null end) as avg_allmapamp_pe
+                  ,sum(numsteps) as sum_numsteps
+                  ,sum(spoolusage) as sum_spoolusage
+                  ,sum(NumResultRows) as sum_numresultrows
+
+                  From {{ dbc.log }} as dbql
+                  where LogDate between {{ startdate | default('DATE-31') }} and {{ enddate | default('DATE-1') }}
+                  and featureusage is not null
                   group by UserName
                   ,LogDate
                   ,featureusage
-                  ) dbq
-            join dim_user as usr
-              on usr.UserName = dbq.UserName
+               ) as dbq
+          join vt_dim_user as usr
+            on usr.UserName = dbq.UserName
           )
-          select
-           dbql.LogDate
-          ,feat.featurename
+        select
+           '{{ siteid }}' as Site_ID
+          ,{{ dbc.logdt }} as LogDate
+          ,feat.FeatureName as Feature_Name
           ,feat.featurebitpos as BitPos
           ,dbql.UserName
-          ,dbql.UserHash
-          ,dbql.User_Bucket
-          ,dbql.User_Department
-          ,dbql.User_SubDepartment
-          ,dbql.User_Region
-          ,sum(zeroifnull(dbql.rec_count)) as Query_Cnt
-          ,sum(zeroifnull(dbql.ampcputime)) as AMPCPUTime
-          from dbc.qrylogfeaturelistv feat
-          join dbql
-            on bytes(dbql.featureusage) = 256
-           and getbit(dbql.featureusage,(2047-feat.featurebitpos)) = 1
-          group by
-          dbql.LogDate
-         ,feat.featurename
-         ,feat.featurebitpos
-         ,dbql.UserName
-         ,dbql.UserHash
-         ,dbql.User_Bucket
-         ,dbql.User_Department
-         ,dbql.User_SubDepartment
-         ,dbql.User_Region
+          ,dbql.UserType
+          ,dbql.Organization
+          ,dbql.Department
+          ,count(cast(dbql.Request_Total_Cnt       as bigint))        as Request_Total_Cnt
+          ,count(cast(dbql.Statement_Total_Cnt     as bigint))        as Statement_Total_Cnt
+          ,count(cast(dbql.Request_Error_Cnt       as bigint))        as Request_Error_Cnt
+          ,count(cast(dbql.Statement_Error_Cnt     as bigint))        as Statement_Error_Cnt
+          ,count(cast(dbql.Request_Abort_Cnt       as bigint))        as Request_Abort_Cnt
+          ,count(cast(dbql.Statement_Abort_Cnt     as bigint))        as Statement_Abort_Cnt
+          ,count(cast(dbql.distinct_cnt_username   as bigint))        as distinct_cnt_username
+          ,sum(  cast(dbql.sum_parsercputime       as decimal(38,4))) as sum_parsercputime
+          ,sum(  cast(dbql.sum_ampcputime          as decimal(38,4))) as sum_ampcputime
+          ,sum(  cast(dbql.sum_totaliocount        as bigint))        as sum_totaliocount
+          ,sum(  cast(dbql.sum_reqiokb             as bigint))        as sum_reqiokb
+          ,sum(  cast(dbql.sum_reqphysio           as bigint))        as sum_reqphysio
+          ,sum(  cast(dbql.sum_reqphysiokb         as bigint))        as sum_reqphysiokb
+          ,sum(  cast(dbql.sum_usediota            as bigint))        as sum_usediota
+          ,sum(  cast(dbql.sum_impactcpu           as decimal(38,4))) as sum_impactcpu
+          ,sum(  cast(dbql.sum_impactio            as bigint))        as sum_impactio
+          ,sum(  cast(dbql.sum_lockdelay           as decimal(38,4))) as sum_lockdelay
+          ,sum(  cast(dbql.sum_delaytime           as decimal(38,4))) as sum_delaytime
+          ,sum(  cast(dbql.sum_minrespholdtime     as decimal(38,4))) as sum_minrespholdtime
+          ,sum(  cast(dbql.sum_totalfirstresptime  as decimal(38,4))) as sum_totalfirstresptime
+          ,count(cast(dbql.cnt_allmapamp_query     as bigint))        as cnt_allmapamp_query
+          ,avg(  cast(dbql.avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
+          ,sum(  cast(dbql.sum_numsteps            as bigint))        as sum_numsteps
+          ,sum(  cast(dbql.sum_spoolusage          as bigint))        as sum_spoolusage
+          ,sum(  cast(dbql.sum_numresultrows       as bigint))        as sum_numresultrows
+        from dbc.qrylogfeaturelistv feat
+        join dbql
+          on bytes(dbql.featureusage) = 256
+         and getbit(dbql.featureusage,(2047-feat.featurebitpos)) = 1
+        group by
+           LogDate
+          ,feat.featurename
+          ,feat.featurebitpos
+          ,dbql.UserName
+          ,dbql.UserType
+          ,dbql.Organization
+          ,dbql.Department
       ) with data
-        No Primary Index
+      primary index (LogDate, Feature_Name, UserName)
+      on commit preserve rows
+
+
+- name: Collect Stats on vt_feature_usage_prework
+  connect: source
+  execute:
+    sql: |
+      collect stats
+           column (LogDate, Feature_Name, UserName)
+      on vt_feature_usage_prework
+
+
+- name: Create final vt_feature_usage by date, user, feature
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_feature_usage  as(
+        Select
+        dat.Site_ID
+        ,dat.LogDate
+        ,dat.UserName
+        ,dat.UserType
+        ,dat.Organization
+        ,dat.Department
+        ,dat.Feature_Name as FeatureName
+        ,dat.BitPos
+        ,coalesce(dim.Feature_Category,           'Unknown') as Feature_Category
+        ,coalesce(dim.Feature_SubCategory,        'Unknown') as Feature_SubCategory
+        ,coalesce(dim.Product_Name,               'Unknown') as Product_Name
+        ,coalesce(dim.Product_Category,           'Unknown') as Product_Category
+        ,coalesce(dim.Solution_Type,              'Unknown') as Solution_Type
+        ,coalesce(dim.User_Experience_Level_Name, 'Unknown') as User_Experience_Level_Name
+        ,coalesce(dim.Initiator_Role_Category,    'Unknown') as Initiator_Role_Category
+        ,coalesce(dim.Objective_Name,             'Unknown') as Objective_Name
+        ,dat.Request_Total_Cnt
+        ,dat.Statement_Total_Cnt
+        ,dat.Request_Error_Cnt
+        ,dat.Statement_Error_Cnt
+        ,dat.Request_Abort_Cnt
+        ,dat.Statement_Abort_Cnt
+        ,dat.distinct_cnt_username
+        ,dat.sum_parsercputime
+        ,dat.sum_ampcputime
+        ,dat.sum_totaliocount
+        ,dat.sum_reqiokb
+        ,dat.sum_reqphysio
+        ,dat.sum_reqphysiokb
+        ,dat.sum_usediota
+        ,dat.sum_impactcpu
+        ,dat.sum_impactio
+        ,dat.sum_lockdelay
+        ,dat.sum_delaytime
+        ,dat.sum_minrespholdtime
+        ,dat.sum_totalfirstresptime
+        ,dat.cnt_allmapamp_query
+        ,dat.avg_allmapamp_pe
+        ,dat.sum_numsteps
+        ,dat.sum_spoolusage
+        ,dat.sum_numresultrows
+        ,coalesce(dim.Feature_Weight,       0) as Feature_Weight
+        ,coalesce(dim.Max_Threshold_LOW,   10) as Max_Threshold_LOW
+        ,coalesce(dim.Max_Threshold_MED, 1000) as Max_Threshold_MED
+        ,coalesce(dim.Feature_CPU_Weight,   1) as Feature_CPU_Weight
+        ,coalesce(dim.Feature_IO_Weight,    1) as Feature_IO_Weight
+        ,coalesce(dim.Feature_Time_Weight,  1) as Feature_Time_Weight
+        ,coalesce(dim.Feature_Cnt_Weight,   1) as Feature_Cnt_Weight
+        from vt_feature_usage_prework dat
+        left outer join vt_dim_feature dim
+        on dat.Feature_Name = dim.Feature_Name
+      ) with data
+        primary index(LogDate, UserName, FeatureName)
         on commit preserve rows
 
 
+- name: Collect Stats on vt_feature_usage
+  connect: source
+  execute:
+    sql: |
+      collect stats
+           column (LogDate, FeatureName, UserName)
+          ,column (LogDate)
+          ,column (FeatureName)
+          ,column (UserName)
+          ,column (UserType)
+          ,column (Organization)
+          ,column (Department)
+      on vt_feature_usage
+
+
+- name: Reconcile vt_feature_usage_prework and vt_feature_usage
+  connect: source
+  export:
+    file: reconcile_feature_usage.csv
+    sql: |
+      Select 'vt_feature_usage_prework' as tbl, count(*) as RecCount
+      from vt_feature_usage_prework
+        union all
+      Select 'vt_feature_usage', count(*)
+      from vt_feature_usage
+
+
+- name: Drop temp vt_feature_usage_prework
+  connect: source
+  execute:
+    sql: drop table vt_feature_usage_prework
 
 {% endif %}
 {{ completed.append('vt_feature_usage') or '' }}

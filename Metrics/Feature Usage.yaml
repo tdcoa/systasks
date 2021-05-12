@@ -1,0 +1,133 @@
+description: "Generate and export Feature Usage metrics, aggregated by date and by User"
+version: 1
+tasks:
+
+{% set chart = True if chart is not defined else chart %}
+{% set upload = False if upload is not defined else upload %}
+{% set export_all = False if chart is not defined else export_all %}
+
+{% include "vt_feature_usage.j2" %}
+
+# Let's just blast out the graphs via a loop:
+{% if chart %}
+{% set feature_columns = ['Feature_Category','Feature_SubCategory','Product_Name','Product_Category','Solution_Type','User_Experience_Level_Name','Initiator_Role_Category','Objective_Name','Department','UserType','Organization'] %}
+{% for feature_column in feature_columns %}
+
+- name: "Export for charting: {{ feature_column }}"
+  connect: source
+  export:
+    file: feature_usage_x_{{ feature_column }}.csv
+    sql: |
+      select {{ feature_column }}
+      ,sum(Request_Total_Cnt) as "Feature Count"
+      ,sum(sum_parsercputime+sum_ampcputime)/nullifzero(sum(Request_Total_Cnt)) as "Average CPU Seconds"
+      from vt_Feature_Usage
+      group by 1
+      order by 2 desc
+
+- name: "Chart (linear): {{ feature_column }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:feature_usage_x_{{ feature_column }}.csv"
+      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
+      - "height:5"
+      - "width:9"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:feature_usage_x_{{ feature_column }}_linear.png"
+
+- name: "Chart (log): {{ feature_column }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:feature_usage_x_{{ feature_column }}.csv"
+      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
+      - "height:5"
+      - "width:9"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:feature_usage_x_{{ feature_column }}_log.png"
+      - "logscale:true"
+
+{% endfor %}
+{% endif %}
+
+
+
+{% if export_all %}
+- name: Export Full Detail of Feature Usage, upon request
+  connect: source
+  export:
+    file: feature_usage_all.csv
+    sql: |
+      select * from vt_Feature_Usage as f
+      order by LogDate, Request_Total_Cnt desc
+{% endif %}
+
+
+
+{% if upload %}
+- name: Export Feature Usage for Transcend Upload
+  connect: source
+  export:
+    file: feature_usage_upload.csv
+    sql: |
+      select
+           Site_ID
+          ,LogDate
+          ,FeatureName
+          ,BitPos
+          ,UserType
+          ,Organization
+          ,Department
+          ,count(cast(Request_Total_Cnt       as bigint))        as Request_Total_Cnt
+          ,count(cast(Statement_Total_Cnt     as bigint))        as Statement_Total_Cnt
+          ,count(cast(Request_Error_Cnt       as bigint))        as Request_Error_Cnt
+          ,count(cast(Statement_Error_Cnt     as bigint))        as Statement_Error_Cnt
+          ,count(cast(Request_Abort_Cnt       as bigint))        as Request_Abort_Cnt
+          ,count(cast(Statement_Abort_Cnt     as bigint))        as Statement_Abort_Cnt
+          ,count(cast(distinct_cnt_username   as bigint))        as distinct_cnt_username
+          ,sum(  cast(sum_parsercputime       as decimal(38,4))) as sum_parsercputime
+          ,sum(  cast(sum_ampcputime          as decimal(38,4))) as sum_ampcputime
+          ,sum(  cast(sum_totaliocount        as bigint))        as sum_totaliocount
+          ,sum(  cast(sum_reqiokb             as bigint))        as sum_reqiokb
+          ,sum(  cast(sum_reqphysio           as bigint))        as sum_reqphysio
+          ,sum(  cast(sum_reqphysiokb         as bigint))        as sum_reqphysiokb
+          ,sum(  cast(sum_usediota            as bigint))        as sum_usediota
+          ,sum(  cast(sum_impactcpu           as decimal(38,4))) as sum_impactcpu
+          ,sum(  cast(sum_impactio            as bigint))        as sum_impactio
+          ,sum(  cast(sum_lockdelay           as decimal(38,4))) as sum_lockdelay
+          ,sum(  cast(sum_delaytime           as decimal(38,4))) as sum_delaytime
+          ,sum(  cast(sum_minrespholdtime     as decimal(38,4))) as sum_minrespholdtime
+          ,sum(  cast(sum_totalfirstresptime  as decimal(38,4))) as sum_totalfirstresptime
+          ,count(cast(cnt_allmapamp_query     as bigint))        as cnt_allmapamp_query
+          ,avg(  cast(avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
+          ,sum(  cast(sum_numsteps            as bigint))        as sum_numsteps
+          ,sum(  cast(sum_spoolusage          as bigint))        as sum_spoolusage
+          ,sum(  cast(sum_numresultrows       as bigint))        as sum_numresultrows
+      from vt_feature_usage
+      group by
+           Site_ID
+          ,LogDate
+          ,FeatureName
+          ,BitPos
+          ,UserType
+          ,Organization
+          ,Department
+
+
+- name: Import feature_usage_upload.csv into Transcend staging area
+  connect: transcend
+  import:
+    file: feature_usage_upload.csv
+    table: DEV_APP_TCA_TMP.stg_dat_feature
+
+- name: Merge staged data into the core layer
+  connect: transcend
+  call:
+    proc: DEV_APP_TCA_TBL.sp1_coa_dat_feature
+    params:
+    - Null
+
+{% endif %}

@@ -26,3 +26,8 @@ tasks:
     sql: |
       Select * from vt_dbc_object_count
       order by DatabaseName, Object_Group12
+
+
+- name: Copy dim_tablekind to Output
+  copy:
+    files: [data/dim_tablekind.csv]
