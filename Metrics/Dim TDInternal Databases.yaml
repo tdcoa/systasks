@@ -19,7 +19,7 @@ tasks:
        case when i.DatabaseName is not null then i.DatabaseName else 'Customer' end as DatabaseName
       ,case when i.DatabaseName is not null then i.DatabaseUse else 'Customer' end as DatabaseUse
       ,count(Exclude_VantageUnit_Flag) as Exclude_VantageUnit_Flag
-      ,count(Exclude_QueryCount_Flag) as Exclude_QueryCount_Flag
+      ,count(Exclude_Performance_Flag) as Exclude_Performance_Flag
       ,count(distinct d.DatabaseName) as DatabaseCount
       ,count(distinct t.DatabaseName||'.'||t.TableName) as ObjectCount
       from dbc.TablesV t
