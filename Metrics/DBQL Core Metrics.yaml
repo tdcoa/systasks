@@ -1,0 +1,42 @@
+description: Download vt_dbql_core_daily output.  One year (365 days) on Transcend Production ran for 5min and generated 56k rows, for a filesize of 18MB.
+version: 1
+tasks:
+
+{% include "vt_dbql_core.j2" %}
+
+# save_prework   - boolean flag variable to drop prework table (default=true)
+# include_hour   - boolean flag variable to include hour   dimension in vt_dbql_core (default=false)
+# include_user   - boolean flag variable to include user   dimension in vt_dbql_core (default=false)
+# include_wdname - boolean flag variable to include wdname dimension in vt_dbql_core (default=false)
+{% set export_all = False if export_all is not defined else export_all %}
+
+
+- name: Export Statement Counts per day for graphing
+  connect: source
+  export:
+    file: statement_throughput_daily.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
+      ,sum(Statement_Total_Cnt) (BigInt) as "Total Statements--#27C1BD"
+      ,sum(Statement_SubSecond_Cnt)(BigInt) as "Subsecond Statements--#636363"
+      from vt_dbql_core
+      group by LogDate
+      order by 1
+
+- name: Chart query per day over time
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:statement_throughput_daily.csv"
+      - "title:Statement Throughtput per Day - {{ siteid }}"
+      - "height:4"
+      - "width:16"
+
+{% if export_all %}
+- name: "Export entire vt_dbql_core (export_all=true)"
+  connect: source
+  export:
+    file: dbql_core.csv
+    sql: Select * from vt_dbql_core order by LogDate, Application_Use, Statement_Bucket
+{% endif %}
