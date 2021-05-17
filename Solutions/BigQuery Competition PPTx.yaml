@@ -2,6 +2,10 @@ description: Generates the BigQuery Competitive Powerpoint deck, designed to be 
 version: 1
 # add this line to skip duplicate CREATE vt_* statements :  {% set completed = [] %}
 
+# set master default for start/end date in this solution to 6wks, unless otherwise defined
+{% set startdate   = 'DATE-43' if startdate is not defined else startdate %}
+{% set enddate = 'DATE-1' if enddate is not defined else enddate %}
+
 
 tasks:
 
@@ -14,12 +18,11 @@ tasks:
     sql: Select * from vt_site_info
 
 
-
-{% set dbql_core_daily = True %}
-{% set dbql_core_hour  = False %}
-{% set dbql_core_user  = True %}
+{% set save_prework   = False %}
+{% set include_hour   = False %}
+{% set include_wdname = False %}
+{% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
-
 
 - name: Export queries per day for graphing in BigQuery pptx
   connect: source
@@ -30,7 +33,7 @@ tasks:
        cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
       ,sum(Statement_Total_Cnt) (BigInt) as "Total Queries--#27C1BD"
       ,sum(Statement_SubSecond_Cnt)(BigInt) as "Subsecond Queries--#636363"
-      from vt_dbql_core_daily
+      from vt_dbql_core
       group by LogDate
       order by 1
 
@@ -55,7 +58,7 @@ tasks:
       ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users, less Internal DBs"
       ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then d.UserName end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users, less Internal DBs"
       From vt_dim_user u
-      left outer join (Select distinct UserName from vt_dbql_core_user) d
+      left outer join (Select distinct UserName from vt_dbql_core) d
         on d.UserName = u.UserName
 
 
@@ -70,7 +73,7 @@ tasks:
       ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total App Buckets"
       ,cast(cast(count(case when Application <> 'Unknown' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Recognized Applications"
       ,cast(cast(average(Request_Total_Cnt)/max(LogDate_Cnt) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Average Requests per Application per Day"
-      from vt_dbql_core_daily
+      from vt_dbql_core
 
 
 - name: Export query count analysis for BigQuery pptx
@@ -117,7 +120,7 @@ tasks:
       ,(cast(TotalSubSecondCnt as decimal(18,4)) / TotalQryCnt) * 100 AS SubSecondPct
       ,sum(Runtime_Total_Sec) / TotalQryCnt AS AvgRunTimeSec
       ,median(Runtime_Total_Sec) as MedianRuntimeSec
-      from vt_dbql_core_daily
+      from vt_dbql_core
       ) d1
 
 
@@ -131,14 +134,14 @@ tasks:
       ,cast(cast(sum(dbql.Statement_Total_Cnt)/nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Queries"
       ,cast(cast(sum(dbql.Returned_Row_Cnt)/ nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Fetched Rows"
       ,cast(cast(zeroifnull("Total Fetched Rows" / nullifzero("Total Queries")) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Rows Per Query"
-      from vt_dbql_core_daily dbql
+      from vt_dbql_core dbql
       group by 1
       Order by cast("Rows per Query" as INT) desc
 
-- name: DROP volatile table to save spool - vt_dbql_core_daily
+- name: DROP volatile table to save spool - vt_dbql_core
   connect: source
   execute:
-    sql: drop table vt_dbql_core_daily
+    sql: drop table vt_dbql_core
 
 
 {% include "vt_dbc_indices_by_database.j2" %}
