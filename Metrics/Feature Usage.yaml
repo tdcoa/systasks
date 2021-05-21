@@ -4,6 +4,7 @@ tasks:
 
 {% set chart = True if chart is not defined else chart %}
 {% set upload = False if upload is not defined else upload %}
+{% set dev = False if dev is not defined else dev %}
 {% set export_all = False if export_all is not defined else export_all %}
 
 {% include "vt_feature_usage.j2" %}
@@ -117,16 +118,18 @@ tasks:
           ,Department
 
 
+{% set dbprefix = 'DEV_' if dev else '' %}
+
 - name: Import feature_usage_upload.csv into Transcend staging area
   connect: transcend
   import:
     file: feature_usage_upload.csv
-    table: DEV_APP_TCA_TMP.stg_dat_feature
+    table: {{ dbprefix }}APP_TCA_TMP.stg_dat_feature
 
 - name: Merge staged data into the core layer
   connect: transcend
   call:
-    proc: DEV_APP_TCA_TBL.sp1_coa_dat_feature
+    proc: {{ dbprefix }}APP_TCA_TBL.sp1_coa_dat_feature
     params:
     - Null
 
