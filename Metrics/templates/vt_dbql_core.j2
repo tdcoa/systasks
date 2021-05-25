@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dbql_core' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbql_core' in run.completed %}
 
 # option switches and defaults:
 {% set save_prework   = False if save_prework   is not defined else save_prework %}
@@ -430,4 +430,4 @@
 {% endif %}
 
 {% endif %}
-{{ completed.append('vt_dbql_core') or '' }}
+{{ run.completed.append('vt_dbql_core') or '' }}

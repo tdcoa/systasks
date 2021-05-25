@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_System_CPU_by_Day' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_System_CPU_by_Day' in run.completed %}
 
 - name:  "Create vt_System_CPU_by_Day"
   connect: source
@@ -34,4 +34,4 @@
     sql: collect stats on vt_System_CPU_by_Day column(LogDate)
 
 {% endif %}
-{{ completed.append('vt_System_CPU_by_Day') or '' }}
+{{ run.completed.append('vt_System_CPU_by_Day') or '' }}

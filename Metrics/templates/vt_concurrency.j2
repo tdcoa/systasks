@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_concurrency' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_concurrency' in run.completed %}
 
 
 - name:  Create vt_concurrency
@@ -53,4 +53,4 @@
     sql: collect stats on vt_concurrency column(LogTS)
 
 {% endif %}
-{{ completed.append('vt_concurrency') or '' }}
+{{ run.completed.append('vt_concurrency') or '' }}

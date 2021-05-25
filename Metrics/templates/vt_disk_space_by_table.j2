@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_disk_space_by_table' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_disk_space_by_table' in run.completed %}
 
 - name:  Create vt_disk_space_by_table
   connect: source
@@ -65,4 +65,4 @@
     sql: collect stats on vt_disk_space_by_table column(LogDate, TableName)
 
 {% endif %}
-{{ completed.append('vt_disk_space_by_table') or '' }}
+{{ run.completed.append('vt_disk_space_by_table') or '' }}

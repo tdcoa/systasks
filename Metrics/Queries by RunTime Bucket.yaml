@@ -1,0 +1,98 @@
+description: Generates the Vantage Health Check deck, designed to be customer facing.
+version: 1
+# add this line to skip duplicate CREATE vt_* statements :  {% set completed = [] %}
+
+tasks:
+
+{% include 'vt_queries_by_runtime_bucket.j2' %}
+
+- name: "export Queries by Runtime for Line Chart"
+  connect: source
+  export:
+    file: queries_by_runtime_history.csv
+    sql: |
+      Select
+       LogDate as "Log Date"
+      ,sum("RT < 1 sec"   ) as "RT < 1 sec"
+      ,sum("RT 1-5 sec"   ) as "RT 1-5 sec"
+      ,sum("RT 5-10 sec"  ) as "RT 5-10 sec"
+      ,sum("RT 10-30 sec" ) as "RT 10-30 sec"
+      ,sum("RT 30-60 sec" ) as "RT 30-60 sec"
+      ,sum("RT 1-5 min"   ) as "RT 1-5 min"
+      ,sum("RT 5-10 min"  ) as "RT 5-10 min"
+      ,sum("RT 10-30 min" ) as "RT 10-30 min"
+      ,sum("RT 30-60 min" ) as "RT 30-60 min"
+      ,sum("RT > 1 hour"  ) as "RT > 1 hour"
+      from vt_queries_by_runtime_bucket
+      group by 1
+      order by 1
+
+- name: Chart Queries by Runtime Bucket by Date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:queries_by_runtime_history.csv"
+      - "title:Queries by Runtime Bucket - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+{% if tdver | int >= 16  %}
+- name: "export Queries by Runtime by Bucket"
+  connect: source
+  export:
+    file: queries_by_runtime_unpivot.csv
+    sql: |
+      Select
+       Runtime_Bucket
+      ,sum(Request_Count) as Request_Count
+      from vt_queries_by_runtime_bucket
+      unpivot (Request_Count for Runtime_Bucket in
+      (("RT < 1 sec"  ) as 'RT < 1 sec'
+      ,("RT 1-5 sec"  ) as 'RT 1-5 sec'
+      ,("RT 5-10 sec" ) as 'RT 5-10 sec'
+      ,("RT 10-30 sec") as 'RT 10-30 sec'
+      ,("RT 30-60 sec") as 'RT 30-60 sec'
+      ,("RT 1-5 min"  ) as 'RT 1-5 min'
+      ,("RT 5-10 min" ) as 'RT 5-10 min'
+      ,("RT 10-30 min") as 'RT 10-30 min'
+      ,("RT 30-60 min") as 'RT 30-60 min'
+      ,("RT > 1 hour" ) as 'RT > 1 hour')) tmp
+      group by 1
+      order by case
+               when Runtime_Bucket = 'RT < 1 sec'   then 1
+               when Runtime_Bucket = 'RT 1-5 sec'   then 2
+               when Runtime_Bucket = 'RT 5-10 sec'  then 3
+               when Runtime_Bucket = 'RT 10-30 sec' then 4
+               when Runtime_Bucket = 'RT 30-60 sec' then 5
+               when Runtime_Bucket = 'RT 1-5 min'   then 6
+               when Runtime_Bucket = 'RT 5-10 min'  then 7
+               when Runtime_Bucket = 'RT 10-30 min' then 8
+               when Runtime_Bucket = 'RT 30-60 min' then 9
+               when Runtime_Bucket = 'RT > 1 hour'  then 10 end
+
+
+
+- name: Chart Queries by Runtime by Bucket
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:queries_by_runtime_unpivot.csv"
+      - "title:Queries by Runtime Bucket - {{ siteid }}"
+      - "height:6"
+      - "width:16"
+      - "xrotate:90"
+
+- name: Chart Queries by Runtime by Bucket, LogScale
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:queries_by_runtime_unpivot.csv"
+      - "title:Queries by Runtime Bucket - {{ siteid }}"
+      - "height:6"
+      - "width:16"
+      - "xrotate:90"
+      - "barlogscale:True"
+      - "pngfile:queries_by_runtime_unpivot_log.png"
+
+{% endif %}

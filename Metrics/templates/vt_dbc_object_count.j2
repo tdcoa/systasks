@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dbc_object_count' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbc_object_count' in run.completed %}
 
 {% include "vt_dim_tablekind.j2" %}
 
@@ -41,4 +41,4 @@
     sql: collect stats on vt_dbc_object_count column(DatabaseName)
 
 {% endif %}
-{{ completed.append('vt_dbc_object_count') or '' }}
+{{ run.completed.append('vt_dbc_object_count') or '' }}

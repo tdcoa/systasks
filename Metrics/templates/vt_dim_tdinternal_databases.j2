@@ -1,5 +1,6 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_tdinternal_databases' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_tdinternal_databases' in run.completed %}
+
 
 - name:  Create vt_dim_tdinternal_databases_temp to catch initial file
   connect: source
@@ -18,7 +19,7 @@
 - name: import metadata into vt_dim_tdinternal_databases_temp
   connect: source
   import:
-    file: data/dim_tdinternal_databases.csv
+    file: {{ dim_tdinternal_databases | default (dirs.systasks / "Metrics" / "data" / "dim_tdinternal_databases.csv") }}
     table: vt_dim_tdinternal_databases_temp
 {% endif %}
 
@@ -52,4 +53,4 @@
     sql: collect stats on vt_dim_tdinternal_databases column(DatabaseName)
 
 {% endif %}
-{{ completed.append('vt_dim_tdinternal_databases') or '' }}
+{{ run.completed.append('vt_dim_tdinternal_databases') or '' }}

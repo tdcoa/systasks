@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_site_info' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_site_info' in run.completed %}
 
 - name:  "Create vt_site_info"
   connect: source
@@ -29,4 +29,4 @@
     sql: collect stats on vt_site_info column(Site_ID)
 
 {% endif %}
-{{ completed.append('vt_site_info') or '' }}
+{{ run.completed.append('vt_site_info') or '' }}

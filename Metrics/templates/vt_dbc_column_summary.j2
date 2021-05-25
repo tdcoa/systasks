@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dbc_column_summary' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbc_column_summary' in run.completed %}
 
 {% include "vt_dim_datatype.j2" %}
 
@@ -99,10 +99,6 @@
   execute:
     sql: collect stats on vt_dbc_column_summary column(Data_Type)
 
-- name: drop vt_dim_datatype
-  connect: source
-  execute:
-    sql: drop table vt_dim_datatype
 
 {% endif %}
-{{ completed.append('vt_dbc_column_summary') or '' }}
+{{ run.completed.append('vt_dbc_column_summary') or '' }}

@@ -1,5 +1,6 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_datatype' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_datatype' in run.completed %}
+
 
 - name:  "Create vt_dim_datatype"
   connect: source
@@ -17,7 +18,7 @@
 - name: import metadata into vt_dim_datatype
   connect: source
   import:
-    file: data/dim_datatype.csv
+    file: {{ dim_datatype | default (dirs.systasks / "Metrics" / "data" / "dim_datatype.csv") }}
     table: vt_dim_datatype
 {% endif %}
 
@@ -27,4 +28,4 @@
     sql: collect stats on vt_dim_datatype column(DataType, StorageFormat)
 
 {% endif %}
-{{ completed.append('vt_dim_datatype') or '' }}
+{{ run.completed.append('vt_dim_datatype') or '' }}

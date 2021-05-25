@@ -1,5 +1,6 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_statement' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_statement' in run.completed %}
+
 
 - name: Create vt_dim_statement
   connect: source
@@ -17,7 +18,7 @@
 - name: import metadata into vt_dim_statement
   connect: source
   import:
-    file: data/dim_statement.csv
+    file: {{ dim_statement | default (dirs.systasks / "Metrics" / "data" / "dim_statement.csv") }}
     table: vt_dim_statement
 {% endif %}
 
@@ -27,4 +28,4 @@
     sql: collect stats on vt_dim_statement column(Statement_Type)
 
 {% endif %}
-{{ completed.append('vt_dim_statement') or '' }}
+{{ run.completed.append('vt_dim_statement') or '' }}

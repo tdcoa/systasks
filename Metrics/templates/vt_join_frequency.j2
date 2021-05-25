@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_join_frequency' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_join_frequency' in run.completed %}
 
 - name: Create map of join frequency to QueryID, for performance
   connect: source
@@ -8,7 +8,13 @@
       create volatile table vt_queryid_by_joincount as
       (
           Select
-          QueryID, {{ dbc.logdt }} as LogDate1, Count(distinct ObjectTableName) as JoinCount
+           QueryID
+          {% if pdcr %}
+          ,LogDate as LogDate1
+          {% else %}
+          ,cast(CollectTimeStamp as date) as LogDate1
+          {% endif %}
+          ,Count(distinct ObjectTableName) as JoinCount
           from {{ dbc.obj }} -- DBQLObjTbl
           where ObjectColumnName is null
             and ObjectTableName is not null
@@ -54,4 +60,4 @@
     sql: drop table vt_queryid_by_joincount
 
 {% endif %}
-{{ completed.append('vt_join_frequency') or '' }}
+{{ run.completed.append('vt_join_frequency') or '' }}

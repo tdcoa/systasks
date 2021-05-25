@@ -1,10 +1,26 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbc_constraint' in run.completed %}
+
 
 - name: Create vt_dbc_constraint, showing all constraints by table
   connect: source
   execute:
     sql: |
-      create volatile table vt_dbc_constraint as
+      CREATE MULTISET VOLATILE TABLE vt_dbc_constraint
       (
+       DatabaseName   VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC,
+       TableName      VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC,
+       ConstraintType VARCHAR(30)  CHARACTER SET UNICODE NOT CASESPECIFIC,
+       Details        VARCHAR(255) CHARACTER SET UNICODE NOT CASESPECIFIC
+      )
+      primary index (TableName)
+      ON COMMIT PRESERVE ROWS;
+
+- name: Create vt_dbc_constraint, showing all constraints by table
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbc_constraint
           SELECT
                 DatabaseName,
                 TableName,
@@ -48,12 +64,12 @@
           AND     TAB.TableName = COL.TableName
           AND     TAB.TableKind = 'T'
           WHERE   COL.DefaultValue IS NOT NULL
-      ) with data
-        primary index (TableName)
-        on commit preserve rows
 
 
 - name: Collect Stats on vt_dbc_constraint
   connect: source
   execute:
     sql: collect stats on vt_dbc_constraint column(TableName)
+
+{% endif %}
+{{ run.completed.append('vt_dbc_constraint') or '' }}

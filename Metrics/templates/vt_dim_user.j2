@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_user' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_user' in run.completed %}
 
 {% include "vt_dim_tdinternal_databases.j2" %}
 
@@ -23,7 +23,7 @@
 - name: "Import metadata dim_user.csv (user mappings) into vt_dim_user"
   connect: source
   import:
-    file: data/dim_user.csv
+    file: {{ dim_user | default (dirs.systasks / "Metrics" / "data" / "dim_user.csv") }}
     table: vt_dim_user
 {% endif %}
 
@@ -95,4 +95,4 @@
     sql: collect stats on vt_dim_user column(UserName)
 
 {% endif %}
-{{ completed.append('vt_dim_user') or '' }}
+{{ run.completed.append('vt_dim_user') or '' }}

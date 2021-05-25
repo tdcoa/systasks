@@ -1,0 +1,44 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_queries_by_runtime_bucket' in run.completed %}
+
+- name: "Create vt_queries_by_runtime_bucket"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_queries_by_runtime_bucket as
+      (
+        Select
+         LogDate
+        ,UserName
+        ,Count(*) as Total_Request_Count
+        ,Count(CASE WHEN RT_Sec  <    1                   THEN 1 END) AS "RT < 1 sec"
+        ,Count(CASE WHEN RT_Sec >=    1 AND RT_Sec <    5 THEN 1 END) AS "RT 1-5 sec"
+        ,Count(CASE WHEN RT_Sec >=    5 AND RT_Sec <   10 THEN 1 END) AS "RT 5-10 sec"
+        ,Count(CASE WHEN RT_Sec >=   10 AND RT_Sec <   30 THEN 1 END) AS "RT 10-30 sec"
+        ,Count(CASE WHEN RT_Sec >=   30 AND RT_Sec <   60 THEN 1 END) AS "RT 30-60 sec"
+        ,Count(CASE WHEN RT_Sec >=   60 AND RT_Sec <  300 THEN 1 END) AS "RT 1-5 min"
+        ,Count(CASE WHEN RT_Sec >=  300 AND RT_Sec <  600 THEN 1 END) AS "RT 5-10 min"
+        ,Count(CASE WHEN RT_Sec >=  600 AND RT_Sec < 1800 THEN 1 END) AS "RT 10-30 min"
+        ,Count(CASE WHEN RT_Sec >= 1800 AND RT_Sec < 3600 THEN 1 END) AS "RT 30-60 min"
+        ,Count(CASE WHEN RT_Sec >  3600                   THEN 1 END) AS "RT > 1 hour"
+        FROM(
+            Select {{ dbc.logdt }} as LogDate, UserName
+            ,((FirstRespTime - StartTime) HOUR(3) TO SECOND(6)) AS Execution_Time
+            ,ZEROIFNULL(CAST( EXTRACT(HOUR   FROM Execution_Time) * 3600 +
+                              EXTRACT(MINUTE FROM Execution_Time) * 60 +
+                              EXTRACT(SECOND FROM Execution_Time) AS DECIMAL(32,4))) AS RT_Sec
+            FROM {{ dbc.log }}
+            WHERE LogDate BETWEEN {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
+        ) ResponseT
+        Group By 1,2
+      ) with data
+      primary index (LogDate, UserName)
+      on commit preserve rows
+
+- name: "Collect stats on vt_queries_by_runtime_bucket"
+  connect: source
+  execute:
+    sql: collect stats on vt_queries_by_runtime_bucket column(LogDate, UserName)
+
+{% endif %}
+{{ run.completed.append('vt_queries_by_runtime_bucket') or '' }}

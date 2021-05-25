@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dbc_indices_by_database' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbc_indices_by_database' in run.completed %}
 
 {% include 'vt_dim_indextype.j2' %}
 
@@ -37,4 +37,4 @@
     sql: collect stats on vt_dbc_indices_by_database column(DatabaseName)
 
 {% endif %}
-{{ completed.append('vt_dbc_indices_by_database') or '' }}
+{{ run.completed.append('vt_dbc_indices_by_database') or '' }}

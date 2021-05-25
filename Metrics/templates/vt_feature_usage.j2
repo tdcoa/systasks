@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_feature_usage' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_feature_usage' in run.completed %}
 
 {% include "vt_dim_user.j2" %}
 
@@ -32,7 +32,7 @@
 - name: import metadata into vt_dim_feature
   connect: source
   import:
-    file: data/dim_feature.csv
+    file: {{ dim_feature | default (dirs.systasks / "Metrics" / "data" / "dim_feature.csv") }}
     table: vt_dim_feature
 {% endif %}
 
@@ -277,7 +277,7 @@
           ,column (Department)
       on vt_feature_usage
 
-
+{% if reconcile %}
 - name: Reconcile vt_feature_usage_prework and vt_feature_usage
   connect: source
   export:
@@ -288,12 +288,17 @@
         union all
       Select 'vt_feature_usage', count(*)
       from vt_feature_usage
-
+{% endif %}
 
 - name: Drop temp vt_feature_usage_prework
   connect: source
   execute:
     sql: drop table vt_feature_usage_prework
 
+- name: Drop temp vt_dim_feature
+  connect: source
+  execute:
+    sql: drop table vt_dim_feature
+
 {% endif %}
-{{ completed.append('vt_feature_usage') or '' }}
+{{ run.completed.append('vt_feature_usage') or '' }}

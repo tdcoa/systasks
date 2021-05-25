@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_transfer_bytes_in_out' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_transfer_bytes_in_out' in run.completed %}
 
 - name:  Create vt_transfer_bytes_in_out
   connect: source
@@ -23,4 +23,4 @@
     sql: collect stats on vt_transfer_bytes_in_out column(LogDate)
 
 {% endif %}
-{{ completed.append('vt_transfer_bytes_in_out') or '' }}
+{{ run.completed.append('vt_transfer_bytes_in_out') or '' }}

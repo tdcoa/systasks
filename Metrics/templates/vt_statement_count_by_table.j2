@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_statement_count_by_table' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_statement_count_by_table' in run.completed %}
 
 {% include "vt_dim_statement.j2" %}
 
@@ -16,7 +16,13 @@
           ,l.StatementType
           ,count(*) as Request_Count
         from {{ dbc.log }} as l
-        join (Select {{ dbc.logdt }} as LogDate1, QueryID, ObjectDatabaseName, ObjectTableName
+        join (Select
+              {% if pdcr %}
+              LogDate as LogDate1
+              {% else %}
+              cast(CollectTimeStamp as DATE) as LogDate1
+              {% endif %}
+              ,QueryID, ObjectDatabaseName, ObjectTableName
               from   {{ dbc.obj }}
               where logdate1 between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
                 and ObjectTableName is not null
@@ -61,4 +67,4 @@
     sql: drop table vt_statement_count_by_table_prework
 
 {% endif %}
-{{ completed.append('vt_statement_count_by_table') or '' }}
+{{ run.completed.append('vt_statement_count_by_table') or '' }}

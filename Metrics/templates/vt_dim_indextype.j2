@@ -1,5 +1,6 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_indextype' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_indextype' in run.completed %}
+
 
 - name:  Create vt_dim_indextype
   connect: source
@@ -18,7 +19,7 @@
 - name: import metadata into vt_dim_indextype
   connect: source
   import:
-    file: data/dim_indextype.csv
+    file: {{ dim_indextype | default (dirs.systasks / "Metrics" / "data" / "dim_indextype.csv") }}
     table: vt_dim_indextype
 {% endif %}
 
@@ -28,4 +29,4 @@
     sql: collect stats on vt_dim_indextype column(IndexType)
 
 {% endif %}
-{{ completed.append('vt_dim_indextype') or '' }}
+{{ run.completed.append('vt_dim_indextype') or '' }}

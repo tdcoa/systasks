@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_app' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_app' in run.completed %}
 
 - name:  "Create vt_dim_app_load to catch file"
   connect: source
@@ -22,7 +22,7 @@
 - name: import metadata into vt_dim_app
   connect: source
   import:
-    file: data/dim_app.csv
+    file: {{ dim_app | default (dirs.systasks / "Metrics" / "data" / "dim_app.csv") }}
     table: vt_dim_app_load
 {% endif %}
 
@@ -62,4 +62,4 @@
       on vt_dim_app
 
 {% endif %}
-{{ completed.append('vt_dim_app') or '' }}
+{{ run.completed.append('vt_dim_app') or '' }}

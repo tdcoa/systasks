@@ -1,5 +1,5 @@
-{% set completed = [] if completed is not defined else completed %}
-{% if not 'vt_dim_tablekind' in completed %}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dim_tablekind' in run.completed %}
 
 - name: Create vt_dim_tablekind
   connect: source
@@ -20,7 +20,7 @@
 - name: import metadata into vt_dim_tablekind
   connect: source
   import:
-    file: data/dim_tablekind.csv
+    file: {{ dim_tablekind | default (dirs.systasks / "Metrics" / "data" / "dim_tablekind.csv") }}
     table: vt_dim_tablekind
 {% endif %}
 
@@ -36,4 +36,4 @@
     sql: collect stats on vt_dim_tablekind column(TableKind, CommitOpt)
 
 {% endif %}
-{{ completed.append('vt_dim_tablekind') or '' }}
+{{ run.completed.append('vt_dim_tablekind') or '' }}
