@@ -1,6 +1,7 @@
 description: Generates the BigQuery Competitive Powerpoint deck, designed to be customer facing.  Please see the associated training, linked in the HELP section.
 version: 1
-# add this line to skip duplicate CREATE vt_* statements :  {% set completed = [] %}
+# add this line to skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[]) if run is not defined else run %}
 
 # set master default for start/end date in this solution to 6wks, unless otherwise defined
 {% set startdate   = 'DATE-43' if startdate is not defined else startdate %}
