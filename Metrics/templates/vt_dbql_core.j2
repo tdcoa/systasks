@@ -6,6 +6,7 @@
 {% set include_hour   = False if include_hour   is not defined else include_hour %}
 {% set include_user   = False if include_user   is not defined else include_user %}
 {% set include_wdname = False if include_wdname is not defined else include_wdname %}
+{% set reconcile      = False if reconcile      is not defined else reconcile %}
 
 {% set dbqlcore_tasklabel = '' %}
 {% set dbqlcore_tasklabel = dbqlcore_tasklabel ~ ' by hour' if include_hour else dbqlcore_tasklabel %}
@@ -13,6 +14,7 @@
 {% set dbqlcore_tasklabel = dbqlcore_tasklabel ~ ' by WDName' if include_wdname else dbqlcore_tasklabel %}
 
 {% set td15 = True if tdver[:2]=='15' else False %}
+
 
 # load other dim templates:
 {% include "vt_dim_app.j2" %}
@@ -132,8 +134,8 @@
           else 0 end as FLOAT))) AS TransferTime_Sec
 
         /* ====== Metrics: CPU & IO ====== */
-        ,zeroifnull(sum( cast(dbql.ParserCPUTime    as decimal(18,2)))) as CPU_Parse_Sec
-        ,zeroifnull(sum( cast(dbql.AMPCPUtime       as decimal(18,2)))) as CPU_AMP_Sec
+        ,zeroifnull(sum( cast(dbql.ParserCPUTime    as decimal(32,3)))) as CPU_Parse_Sec
+        ,zeroifnull(sum( cast(dbql.AMPCPUtime       as decimal(32,3)))) as CPU_AMP_Sec
         ,zeroifnull(sum( cast(case when ReqPhysIO    <(10**38) then ReqPhysIO    else 0 end /1e6  as decimal(18,2)))) as IOCntM_Physical
         ,zeroifnull(sum( cast(case when TotalIOCount <(10**38) then TotalIOCount else 0 end /1e6  as decimal(18,2)))) as IOCntM_Total
         ,zeroifnull(sum( cast(case when ReqPhysIOKB  <(10**38) then ReqPhysIOKB  else 0 end /1e6  as decimal(18,2)))) as IOGB_Physical
@@ -221,8 +223,8 @@
         ,0 as TransferTime_Sec
 
         /* ====== Metrics: CPU & IO ====== */
-        ,zeroifnull(sum(cast(smry.ParserCPUTime as decimal(18,2)))) as CPU_Parse_Sec
-        ,zeroifnull(sum(cast(smry.AMPCPUTime as decimal(18,2)))) as CPU_AMP_Sec
+        ,zeroifnull(sum(cast(smry.ParserCPUTime as decimal(32,3)))) as CPU_Parse_Sec
+        ,zeroifnull(sum(cast(smry.AMPCPUTime as decimal(32,3)))) as CPU_AMP_Sec
         {% if td15  %}
         ,zeroifnull(sum(cast(smry.ReqPhysIO/1e6 as decimal(18,2)))) as IOCntM_Physical
         ,zeroifnull(sum(cast(smry.TotalIOCount/1e6 as decimal(18,2)))) as IOCntM_Total
@@ -264,7 +266,7 @@
          ,WDName
          {% endif %}
          {% if td15 %}
-         ,username15  
+         ,username15
          {% else %}
          ,UserName
          {% endif %}
@@ -431,6 +433,80 @@
       on vt_dbql_core
 
 
+
+{% if reconcile %}
+
+- name: "Create RECONCILE Process: vt_dbql_core_reconcile"
+  connect: source
+  execute:
+    sql: |
+      Create volatile table vt_dbql_core_reconcile
+      (Row_Order      integer
+      ,Source_Name    varchar(128)
+      ,LogDate_Count  integer
+      ,CPU_AMP_Sec    decimal(32,3)
+      ,Row_Count      bigint)
+      no primary index
+      on commit preserve rows
+
+
+- name: "RECONCILE: RAW {{ dbc.log }}"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 1 as Row_Order
+      ,'RAW {{ dbc.log }}' as Source_Name
+      ,count(distinct {{ dbc.logdt }} ) as LogDate_Count
+      ,sum(AMPCPUtime)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from {{ dbc.log }}
+      where {{ dbc.logdt }} between DATE-7 and DATE-1
+
+- name: "RECONCILE: RAW {{ dbc.summary }}"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 2 as Row_Order
+      ,'RAW {{ dbc.summary }}' as Source_Name
+      ,count(distinct {{ dbc.logdt }} ) as LogDate_Count
+      ,sum(AMPCPUtime)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from {{ dbc.summary }}
+      where {{ dbc.logdt }} between DATE-7 and DATE-1
+
+- name: "RECONCILE: COA vt_dbql_core_prework"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 3 as Row_Order
+      ,'COA vt_dbql_core_prework' as Source_Name
+      ,count(distinct LogDate ) as LogDate_Count
+      ,sum(CPU_AMP_Sec)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from vt_dbql_core_prework
+
+- name: "RECONCILE: COA vt_dbql_core"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 4 as Row_Order
+      ,'COA vt_dbql_core' as Source_Name
+      ,count(distinct LogDate ) as LogDate_Count
+      ,sum(CPU_AMP_Sec)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from vt_dbql_core
+
+- name: "RECONCILE: Export final records"
+  connect: source
+  export:
+    file: dbql_core_reconcile.csv
+    sql:  Select * from vt_dbql_core_reconcile order by Row_Order
+
+{% endif %}
 
 {% if save_prework is false %}
 - name: Drop table vt_dbql_core_prework

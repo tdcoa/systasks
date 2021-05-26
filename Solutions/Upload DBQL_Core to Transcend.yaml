@@ -1,0 +1,41 @@
+description: "Runs DBQL_Core and upload results to Transcend, including both the existing COA table (adlste_coa.coa_dat_DBQL_Core) which covers existing PowerBI reporting, as well as the new COA table (adlste_coa.coa_dat_DBQL_Core2) which includes more request/statement breakouts for more nuanced querycount designs.  See the 'Help' article for more details. "
+version: 1
+# add this line to skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+
+tasks:
+{% set save_prework   = False %}
+{% set include_hour   = False %}
+{% set include_wdname = False %}
+{% set include_user   = False %}
+{% set reconcile      = True %}
+{% include "vt_dbql_core.j2" %}
+
+{% set upload = True if upload is not defined else False %}
+{% set stagedb = 'adlste_coa_stg' if stagedb is not defined else stagedb %}
+{% set targetdb = 'adlste_coa' if targetdb is not defined else targetdb %}
+
+{% if upload %}
+- name: Export DBQL_Core.csv for upload to Transcend
+  connect: source
+  export:
+    file: dbql_core_upload.csv
+    sql: |
+      Select * from vt_dbql_core
+      Order by Site_ID, LogDate
+
+- name: Import dbql_core_upload.csv into Transcend staging area
+  connect: transcend
+  import:
+    file: dbql_core_upload.csv
+    table: {{ stagedb }}.stg_dat_DBQL_Core2
+
+- name: Merge staged data into the core layer
+  connect: transcend
+  call:
+    proc: {{ targetdb }}.sp_dat_DBQL_Core2
+    params:
+    - Null
+
+{% endif %}

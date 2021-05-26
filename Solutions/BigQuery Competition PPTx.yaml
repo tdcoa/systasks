@@ -364,10 +364,10 @@ tasks:
     file: bq--databases_most_dml_tables.csv
     sql: |
       Select DatabaseName
-      ,cast(cast(avg(Request_Count) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Avg DML Request Count per Table"
+      ,cast(cast(avg(cast(Request_Count as BigInt)) as BigInt format'ZZZ,ZZZ,ZZZ,ZZZ,ZZ9') as varchar(128)) as "Avg DML Request Count per Table"
       from vt_statement_count_by_table
       group by 1
-      order by avg(Request_Count) desc
+      order by 2 desc
 
 - name: DROP volatile table to save spool - vt_statement_count_by_table
   connect: source
