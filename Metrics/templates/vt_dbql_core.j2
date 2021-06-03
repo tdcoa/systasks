@@ -151,7 +151,9 @@
         ,zeroifnull(sum(cast(dbql.NumResultRows as BigInt) )) as Returned_Row_Cnt
         ,zeroifnull(cast(avg(NumOfActiveAMPs) as decimal(18,4))) as NumOfActiveAMPs_Avg
         ,cast(avg(dbql.NumSteps) as decimal(15,4)) as Query_Complexity_Score_Avg
-        ,zeroifnull(avg( cast(1-(ReqPhysIO/nullifzero(TotalIOCount)) as decimal(32,6)) )) as CacheHit_Pct
+        -- updated datatype to float to remove numeric overflows:
+        ,avg( zeroifnull(cast(1 as float) -(ReqPhysIO/nullifzero(TotalIOCount)) ) ) as CacheHit_Pct
+        --,zeroifnull(avg( cast(1-(ReqPhysIO/nullifzero(TotalIOCount)) as decimal(32,6)) )) as CacheHit_Pct
 
         From {{ dbc.log }} as dbql
         where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
@@ -245,9 +247,11 @@
         ,cast(0 as float) as NumOfActiveAMPs_Avg
         ,cast(0 as decimal(18,4)) as Query_Complexity_Score_Avg
         {% if td15  %}
-        ,zeroifnull(avg( cast(1-(ReqPhysIO/nullifzero(TotalIOCount)) as decimal(32,6)) )) as CacheHit_Pct
+        -- updated datatype to float to remove numeric overflows:
+        ,avg( zeroifnull(cast(1 as float) -(ReqPhysIO/nullifzero(TotalIOCount)) ) ) as CacheHit_Pct
+        -- ,zeroifnull(avg( cast(1-(ReqPhysIO/nullifzero(TotalIOCount)) as decimal(32,6)) )) as CacheHit_Pct
         {% else %}
-        ,cast(0 as decimal(32,6)) as CacheHit_Pct
+        ,0 as CacheHit_Pct
         {% endif %}
 
         From {{ dbc.summary }} smry

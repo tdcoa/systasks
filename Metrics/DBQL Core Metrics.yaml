@@ -2,6 +2,7 @@ description: Download vt_dbql_core_daily output.  One year (365 days) on Transce
 version: 1
 tasks:
 
+{% set run = namespace(completed=[]) if run is not defined else run %}
 {% include "vt_dbql_core.j2" %}
 
 # save_prework   - boolean flag variable to drop prework table (default=true)
@@ -9,29 +10,52 @@ tasks:
 # include_user   - boolean flag variable to include user   dimension in vt_dbql_core (default=false)
 # include_wdname - boolean flag variable to include wdname dimension in vt_dbql_core (default=false)
 {% set export_all = False if export_all is not defined else export_all %}
+{% set chart = True if chart is not defined else chart %}
+
+# Let's just blast out the graphs via a loop:
+{% if chart %}
+
+{% set run.dimensions = ['LogDate','Application','Application_Use','Application_Company','Statement_Bucket','Statement_Outcome','UserType','Organization','Department'] %}
+
+
+
+{% for dimension in run.dimensions %}
+
+{% set metricprefixs = ['Request','Statement']%}
+{% for metricprefix in metricprefixs %}
+
 
 
 - name: Export Statement Counts per day for graphing
   connect: source
   export:
-    file: statement_throughput_daily.csv
+    file: dbql_core_{{ metricprefix }}_x_{{ dimension }}.csv
     sql: |
       select
-       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
-      ,sum(Statement_Total_Cnt) (BigInt) as "Total Statements--#27C1BD"
-      ,sum(Statement_SubSecond_Cnt)(BigInt) as "Subsecond Statements--#636363"
+       {{ dimension }} as "Breakout" -- xaxis
+      ,sum({{ metricprefix }}_Total_Cnt) as "Total {{ metricprefix }} Count" -- Bars
+       {% set metricsuffixs = ['SubSecond','Tactical','Error','Spool_Error','TASM_Abort','Abort','NoIO','InMem','PhysIO','AllAmp','Utility']%}
+       {% for metricsuffix in metricsuffixs %}
+      ,sum({{ metricprefix }}_{{ metricsuffix }}_Cnt) (BigInt) as "{{ metricsuffix }} Count" -- Line
+       {% endfor %}
       from vt_dbql_core
-      group by LogDate
+      group by 1
       order by 1
 
 - name: Chart query per day over time
   chart:
-    command: chart/line_xDate_yElse.py
+    command: chart/barline_xLabels_yBar_yLine.py
     params:
-      - "csvfile:statement_throughput_daily.csv"
-      - "title:Statement Throughtput per Day - {{ siteid }}"
+      - "csvfile:dbql_core_{{ metricprefix }}_x_{{ dimension }}.csv"
+      - "title:Count of {{ metricprefix }} by Day, by Type - {{ siteid }}"
       - "height:4"
       - "width:16"
+      - "xrotate:90"
+
+{% endfor %}
+{% endfor %}
+{% endif %}
+
 
 {% if export_all %}
 - name: "Export entire vt_dbql_core (export_all=true)"

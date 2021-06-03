@@ -43,7 +43,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     from matplotlib.ticker import FuncFormatter
     import matplotlib.patches as mpatches
     from datetime import date
-    default_colors = ['#27C1BD','black','blue','yellow','orange','purple']
+    default_colors = ['#27C1BD','#636363','#EC8D1A','#038DAC','#EEA200','purple','green', 'orange', 'red','blue','yellow','brown','black']
     formatter = FuncFormatter(human_format)
 
     # define all variables, with defaults
