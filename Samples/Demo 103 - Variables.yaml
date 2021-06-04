@@ -33,6 +33,7 @@ tasks:
       ,month_of_calendar
       from sys_calendar.calendar
       where month_of_calendar = {{ demo_month_of_calendar | default('1234') }}
+      order by LogDate
 # user can now supply demo_month_of_calendar, or if omitted, a default will apply
 
 # there are some built-in variables available, with the prefix: "dbc" that will
@@ -50,5 +51,155 @@ tasks:
       from {{ dbc.log }} as qrylog
       where {{ dbc.logdt }} = DATE-1
 # there are 20 translated tables (DBQL, ResUsage), and we can continue to extend
-# as it makes sense.  A full list can be found at the bottom of this page:
-#  https://github.com/tdcoa/systasks
+# as it makes sense.  A full list can be found in the "Collaboration" section of
+# the sharepoint documentation: https://teradata.sharepoint.com/teams/SalesTech/COA
+
+
+# finally, you can set variables in code, with defaults, and allow the user to
+# override (or not).  This is frequently used for "hidden" variables that
+# modify the behavior of the process.  Some common examples:
+#      variable     default
+{% set chart      = True    if chart      is not defined else chart %}
+{% set upload     = False   if upload     is not defined else upload %}
+{% set export_all = False   if export_all is not defined else export_all %}
+{% set reconcile  = False   if reconcile  is not defined else reconcile %}
+
+# the above variables are all boolean, but don't have to be:
+{% set year  = 2021  if year  is not defined else year %}
+{% set stage = 'dev' if stage is not defined else stage %}
+
+# to use these variables:
+- name: Create vt_random table (by date)
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_random as
+      (
+        select
+         calendar_date as LogDate
+        ,'{{ stage }}' as Stage
+        ,Week_of_Year as WeekID
+        ,random(10,100) as random_value1
+        ,random_value1 + random(-10,30) as random_value2
+        from sys_calendar.calendar
+        where year_of_Calendar = {{ year }}
+      ) with data no primary index on commit preserve rows
+
+# note that year didn't have a default defined in the SQL, as it was
+# predefined above instead.
+
+{% if chart %}
+# anything inside this IF only happens if "chart" is True
+# per above, the default behavior (if not overridden by user) is TRUE
+
+- name: Export random number by week, for charting
+  connect: source
+  export:
+    file: random_week_for_charting.csv
+    sql: |
+      select
+       max(LogDate) as "Week Beginning"
+      ,sum(Random_Value1) as Random1
+      ,sum(Random_Value2) as Random2
+      from vt_random
+      group by WeekID
+      order by 1
+
+
+- name: Chart random number by date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:random_week_for_charting.csv"
+      - "title:Random Number by Week - for Site: {{ siteid }}"
+      - "height:6"
+      - "width:12"
+
+{% endif %}
+
+
+
+{% if export_all %}
+# anything inside this IF only happens if "export_all" is True
+# per above, the default behavior (if not overridden by user) is FALSE
+# to make this code execute, make a new variable called "export_all" = True
+
+- name: Export entire vt_random
+  connect: source
+  export:
+    file: random_date.csv
+    sql: select *  from vt_random order by 1
+
+{% endif %}
+
+
+
+{% if stage == 'prod' %}
+# anything inside this section only happens if stage is 'prod'
+
+- name: Export data for prod data
+  connect: source
+  export:
+    file: random_stage_prod.csv
+    sql: |
+      select stage, 'this is only for prod purposes' as msg
+      ,sum(Random_Value1) as Random1
+      from vt_random
+      group by stage
+
+
+
+{% elif stage == 'dev' %}
+# anything inside this section only happens if stage is 'dev'
+
+- name: Export data for dev data
+  connect: source
+  export:
+    file: random_stage_dev.csv
+    sql: |
+      select stage, 'this is only for dev purposes' as msg
+      ,sum(Random_Value1) as Random1
+      from vt_random
+      group by stage
+
+
+
+{% else %}
+# this section will execute if stage is not 'dev' nor 'prod'
+
+- name: Export data for unknown stage data
+  connect: source
+  export:
+    file: random_stage_unknown.csv
+    sql: |
+      select stage, 'this stage is not recongized: {{ stage }}' as msg
+      ,sum(Random_Value1) as Random1
+      from vt_random
+      group by stage
+
+{% endif%}
+
+
+
+
+# A more elegent alternative to do the above test:
+# (the tilde character ~ is for string concatination)
+{% if stage in ['prod','dev'] %}
+{% set msg = 'this is only for ' ~ stage ~ ' purposes' %}
+{% else %}
+{% set msg = 'this stage is not recongized: ' ~ stage %}
+{% set is_unknown = True %}
+{% endif %}
+
+- name: Export data for {{ 'unknown stage' if is_unknown else stage }} data (alt)
+  connect: source
+  export:
+    file: random_stage_{{ 'unknown' if is_unknown else stage }}_alt.csv
+    sql: |
+      select stage, '{{ msg }}' as msg
+      ,sum(Random_Value1) as Random1
+      from vt_random
+      group by stage
+
+# this approach honors the jinja precept: don't repeat yourself (DRY)
+# this way, one change covers all 3 scenarios: Dev, Prod, and Unknown 

@@ -28,12 +28,39 @@
       ) unique primary index (Feature_Name)
         on commit preserve rows
 
-{% if not skip_dim_load %}
-- name: import metadata into vt_dim_feature
+
+{% if transcend_dim_load %}
+- name: "TRANSCEND ONLY: insert into vt_dim_feature from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      Insert into vt_dim_feature
+      Select
+       Feature_Name
+      ,Feature_Category
+      ,Feature_SubCategory
+      ,Product_Name
+      ,Product_Category
+      ,Solution_Type
+      ,User_Experience_Level_Name
+      ,Initiator_Role_Category
+      ,Objective_Name
+      ,Feature_Weight
+      ,Max_Threshold_LOW
+      ,Max_Threshold_MED
+      ,Feature_CPU_Weight
+      ,Feature_IO_Weight
+      ,Feature_Time_Weight
+      ,Feature_Cnt_Weight
+      from mdm_edw_sub.COA_DIM_Feature_VW
+
+{% else %}
+- name: import metadata from .csv into vt_dim_feature
   connect: source
   import:
     file: {{ dim_feature | default (dirs.systasks / "Metrics" / "data" / "dim_feature.csv") }}
     table: vt_dim_feature
+
 {% endif %}
 
 

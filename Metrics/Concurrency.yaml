@@ -7,7 +7,7 @@ tasks:
 - name: Export vt_concurrency for charting
   connect: source
   export:
-    file: concurrency.csv
+    file: concurrency_charting.csv
     sql: |
       select LogDate
       ,Avg(Concurrency_Avg) as "Average--#10890A"
@@ -22,12 +22,12 @@ tasks:
   chart:
     command: chart/line_xDate_yElse.py
     params:
-      - "file:concurrency.csv"
+      - "file:concurrency_charting.csv"
       - "title:Concurrency - {{ siteid }}"
       - "width:12"
       - "height:6"
 
-- name: Re-export vt_concurrency entirety
+- name: Export vt_concurrency entirety
   connect: source
   export:
     file: concurrency.csv
