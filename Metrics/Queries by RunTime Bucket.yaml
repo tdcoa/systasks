@@ -6,10 +6,10 @@ tasks:
 
 {% include 'vt_queries_by_runtime_bucket.j2' %}
 
-- name: "export Queries by Runtime for Line Chart"
+- name: "export SUM of Queries by Runtime"
   connect: source
   export:
-    file: queries_by_runtime_history.csv
+    file: queries_by_runtime_sum.csv
     sql: |
       Select
        LogDate as "Log Date"
@@ -27,12 +27,43 @@ tasks:
       group by 1
       order by 1
 
-- name: Chart Queries by Runtime Bucket by Date
+- name: Chart Queries by Runtime SUM Bucket by Date
   chart:
     command: chart/line_xDate_yElse.py
     params:
-      - "file:queries_by_runtime_history.csv"
-      - "title:Queries by Runtime Bucket - {{ siteid }}"
+      - "file:queries_by_runtime_sum.csv"
+      - "title:Queries by Runtime SUM Bucket - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+- name: "export AVG of Queries by Runtime"
+  connect: source
+  export:
+    file: queries_by_runtime_avg.csv
+    sql: |
+      Select
+       LogDate as "Log Date"
+      ,avg("Avg RT < 1 sec"   ) AS "Avg RT < 1 sec"
+      ,avg("Avg RT 1-5 sec"   ) AS "Avg RT 1-5 sec"
+      ,avg("Avg RT 5-10 sec"  ) AS "Avg RT 5-10 sec"
+      ,avg("Avg RT 10-30 sec" ) AS "Avg RT 10-30 sec"
+      ,avg("Avg RT 30-60 sec" ) AS "Avg RT 30-60 sec"
+      ,avg("Avg RT 1-5 min"   ) AS "Avg RT 1-5 min"
+      ,avg("Avg RT 5-10 min"  ) AS "Avg RT 5-10 min"
+      ,avg("Avg RT 10-30 min" ) AS "Avg RT 10-30 min"
+      ,avg("Avg RT 30-60 min" ) AS "Avg RT 30-60 min"
+      ,avg("Avg RT > 1 hour"  ) AS "Avg RT > 1 hour"
+      from vt_queries_by_runtime_bucket
+      group by 1
+      order by 1
+
+- name: Chart Queries by Runtime AVG Bucket by Date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:queries_by_runtime_avg.csv"
+      - "title:Queries by Runtime AVG Bucket - {{ siteid }}"
       - "width:12"
       - "height:6"
 
