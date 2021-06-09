@@ -68,3 +68,7 @@ tasklists:
   Transfer Bytes In-Out:
     tags: [System, Transfer, Bytes, in, out, performance, bigquery]
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Transfer_Bytes_In_Out.aspx
+
+  Queries by RunTime Bucket:
+    tags: [System, query, queries, performance]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Queries_by_RunTime_Bucket.aspx

@@ -1,6 +1,10 @@
 description: Generates the Vantage Health Check deck, designed to be customer facing.
 version: 1
-# add this line to skip duplicate CREATE vt_* statements :  {% set completed = [] %}
+# below line allows for the tracking of vt_table states,
+# so the process doesn't try to re-create the same table twice:
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% set reconcile = true if reconcile is not defined else reconcile %}
+{% set export_all = true if export_all is not defined else export_all %}
 
 tasks:
 
@@ -125,5 +129,45 @@ tasks:
       - "xrotate:90"
       - "barlogscale:True"
       - "pngfile:queries_by_runtime_unpivot_log.png"
+
+{% endif %}
+
+
+{% if export_all %}
+
+- name: "Export entire vt_queries_by_runtime_bucket"
+  connect: source
+  export:
+    file: queries_by_runtime_bucket.csv
+    sql: |
+      Select * from vt_queries_by_runtime_bucket
+      order by LogDate, Username
+
+{% endif %}
+
+
+{% if reconcile %}
+
+- name: "RECONCILE vt_queries_by_runtime_bucket"
+  connect: source
+  export:
+    file: queries_by_runtime_bucket.csv
+    sql: |
+      Select 'vt_queries_by_runtime_bucket -- aggregate all RT fields' as testname
+      ,count(distinct UserName) as Distinct_UserNames
+      ,sum("RT < 1 sec"+"RT 1-5 sec"+"RT 5-10 sec"+"RT 10-30 sec"+"RT 30-60 sec"+"RT 1-5 min"+
+           "RT 5-10 min"+"RT 10-30 min"+"RT 30-60 min"+"RT > 1 hour") as Total_Request_Count_by_adding_RT
+      from vt_queries_by_runtime_bucket
+          union all
+      Select 'vt_queries_by_runtime_bucket -- sum Total_Request_Count' as testname
+      ,count(distinct UserName) as Distinct_UserNames
+      ,sum(Total_Request_Count) as Total_Request_Count
+      from vt_queries_by_runtime_bucket
+          union all
+      Select 'Direct Pull of {{ dbc.log }}'
+      ,count(distinct UserName) as Distinct_UserNames
+      ,count(*)
+      FROM {{ dbc.log }}
+      WHERE {{ dbc.logdt }} BETWEEN DATE-7 and DATE-1
 
 {% endif %}
