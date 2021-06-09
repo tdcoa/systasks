@@ -13,7 +13,7 @@ tasks:
 - name: "export SUM of Queries by Runtime"
   connect: source
   export:
-    file: queries_by_runtime_sum.csv
+    file: queries_by_runtime_bucket_sum.csv
     sql: |
       Select
        LogDate as "Log Date"
@@ -35,7 +35,7 @@ tasks:
   chart:
     command: chart/line_xDate_yElse.py
     params:
-      - "file:queries_by_runtime_sum.csv"
+      - "file:queries_by_runtime_bucket_sum.csv"
       - "title:Queries by Runtime SUM Bucket - {{ siteid }}"
       - "width:12"
       - "height:6"
@@ -44,7 +44,7 @@ tasks:
 - name: "export AVG of Queries by Runtime"
   connect: source
   export:
-    file: queries_by_runtime_avg.csv
+    file: queries_by_runtime_bucket_avg.csv
     sql: |
       Select
        LogDate as "Log Date"
@@ -66,7 +66,7 @@ tasks:
   chart:
     command: chart/line_xDate_yElse.py
     params:
-      - "file:queries_by_runtime_avg.csv"
+      - "file:queries_by_runtime_bucket_avg.csv"
       - "title:Queries by Runtime AVG Bucket - {{ siteid }}"
       - "width:12"
       - "height:6"
@@ -76,7 +76,7 @@ tasks:
 - name: "export Queries by Runtime by Bucket"
   connect: source
   export:
-    file: queries_by_runtime_unpivot.csv
+    file: queries_by_runtime_bucket_unpivot.csv
     sql: |
       Select
        Runtime_Bucket
@@ -112,7 +112,7 @@ tasks:
   chart:
     command: chart/barline_xLabels_yBar_yLine.py
     params:
-      - "file:queries_by_runtime_unpivot.csv"
+      - "file:queries_by_runtime_bucket_unpivot.csv"
       - "title:Queries by Runtime Bucket - {{ siteid }}"
       - "height:6"
       - "width:16"
@@ -122,7 +122,7 @@ tasks:
   chart:
     command: chart/barline_xLabels_yBar_yLine.py
     params:
-      - "file:queries_by_runtime_unpivot.csv"
+      - "file:queries_by_runtime_bucket_unpivot.csv"
       - "title:Queries by Runtime Bucket - {{ siteid }}"
       - "height:6"
       - "width:16"
@@ -142,32 +142,5 @@ tasks:
     sql: |
       Select * from vt_queries_by_runtime_bucket
       order by LogDate, Username
-
-{% endif %}
-
-
-{% if reconcile %}
-
-- name: "RECONCILE vt_queries_by_runtime_bucket"
-  connect: source
-  export:
-    file: queries_by_runtime_bucket.csv
-    sql: |
-      Select 'vt_queries_by_runtime_bucket -- aggregate all RT fields' as testname
-      ,count(distinct UserName) as Distinct_UserNames
-      ,sum("RT < 1 sec"+"RT 1-5 sec"+"RT 5-10 sec"+"RT 10-30 sec"+"RT 30-60 sec"+"RT 1-5 min"+
-           "RT 5-10 min"+"RT 10-30 min"+"RT 30-60 min"+"RT > 1 hour") as Total_Request_Count_by_adding_RT
-      from vt_queries_by_runtime_bucket
-          union all
-      Select 'vt_queries_by_runtime_bucket -- sum Total_Request_Count' as testname
-      ,count(distinct UserName) as Distinct_UserNames
-      ,sum(Total_Request_Count) as Total_Request_Count
-      from vt_queries_by_runtime_bucket
-          union all
-      Select 'Direct Pull of {{ dbc.log }}'
-      ,count(distinct UserName) as Distinct_UserNames
-      ,count(*)
-      FROM {{ dbc.log }}
-      WHERE {{ dbc.logdt }} BETWEEN DATE-7 and DATE-1
 
 {% endif %}
