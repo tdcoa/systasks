@@ -355,6 +355,7 @@ tasks:
           Select LogDate, Count(TableName) as TableCount
           from vt_statement_count_by_table
           where Request_Count > 1500
+            and Statement_Class = 'DML'
           group by 1
       ) as a
 
