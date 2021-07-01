@@ -12,7 +12,7 @@ tasks:
 {% set reconcile      = True %}
 {% include "vt_dbql_core.j2" %}
 
-{% set upload = True if upload is not defined else False %}
+{% set upload = True if upload is not defined else upload %}
 {% set stagedb = 'adlste_coa_stg' if stagedb is not defined else stagedb %}
 {% set targetdb = 'adlste_coa' if targetdb is not defined else targetdb %}
 
