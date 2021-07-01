@@ -4,7 +4,7 @@ tasks:
 
 {% include "vt_dim_app.j2" %}
 
-- name: Export vt_dim_app for reconciliation
+- name: Export vt_dim_app for reconciliation 
   connect: source
   export:
     file: dim_app_reconcile.csv

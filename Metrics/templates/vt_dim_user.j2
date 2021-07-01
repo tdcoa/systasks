@@ -19,12 +19,27 @@
       )
       UNIQUE PRIMARY INDEX ( UserName ) on commit preserve rows
 
-{% if not skip_dim_load %}
+
+{% if transcend_dim_load %}
+- name: "TRANSCEND ONLY: insert into vt_dim_user from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      Insert into vt_dim_user
+      Select UserName, FullName, UserType, Organization, Department
+      ,coalesce(Exclude_VantageUnit_Flag,0) as Exclude_VantageUnit_Flag
+      ,coalesce(Exclude_Performance_Flag,0) as Exclude_Performance_Flag
+      from pdcrinfo.userinfo
+      left outer join vt_dim_tdinternal_databases
+      on DatabaseName = UserName
+
+{% else %}
 - name: "Import metadata dim_user.csv (user mappings) into vt_dim_user"
   connect: source
   import:
     file: {{ dim_user | default (dirs.systasks / "Metrics" / "data" / "dim_user.csv") }}
     table: vt_dim_user
+
 {% endif %}
 
 

@@ -15,7 +15,19 @@
       ) NO PRIMARY INDEX
       ON COMMIT PRESERVE ROWS;
 
-{% if not skip_dim_load %}
+
+{% if transcend_dim_load %}
+- name: "TRANSCEND ONLY: insert into vt_dim_tdinternal_databases from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dim_tdinternal_databases_temp
+      select DatabaseName, DatabaseUse
+      ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag, Notes
+      from td_common_view.Teradata_Database_Exclusions
+
+
+{% else %}
 - name: import metadata into vt_dim_tdinternal_databases_temp
   connect: source
   import:

@@ -4,6 +4,8 @@ description: >
   calendar table with a random number generator, which is saved to both a .csv
   and a graph.  All save output to the defined "Out" directory.
 
+# as an aside: the above description text will wrap, because of the ">" character.
+# change that character to a pipe "|" and it will preserve linebreaks
 
 tasks:
 
