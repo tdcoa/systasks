@@ -22,16 +22,16 @@
         ,Count(CASE WHEN RT_Sec >= 1800 AND RT_Sec < 3600 THEN 1 END) AS "RT 30-60 min"
         ,Count(CASE WHEN RT_Sec >  3600                   THEN 1 END) AS "RT > 1 hour"
 
-        ,avg(CASE WHEN RT_Sec  <    1                   THEN RT_Sec END) AS "Avg RT < 1 sec"
-        ,avg(CASE WHEN RT_Sec >=    1 AND RT_Sec <    5 THEN RT_Sec END) AS "Avg RT 1-5 sec"
-        ,avg(CASE WHEN RT_Sec >=    5 AND RT_Sec <   10 THEN RT_Sec END) AS "Avg RT 5-10 sec"
-        ,avg(CASE WHEN RT_Sec >=   10 AND RT_Sec <   30 THEN RT_Sec END) AS "Avg RT 10-30 sec"
-        ,avg(CASE WHEN RT_Sec >=   30 AND RT_Sec <   60 THEN RT_Sec END) AS "Avg RT 30-60 sec"
-        ,avg(CASE WHEN RT_Sec >=   60 AND RT_Sec <  300 THEN RT_Sec END) AS "Avg RT 1-5 min"
-        ,avg(CASE WHEN RT_Sec >=  300 AND RT_Sec <  600 THEN RT_Sec END) AS "Avg RT 5-10 min"
-        ,avg(CASE WHEN RT_Sec >=  600 AND RT_Sec < 1800 THEN RT_Sec END) AS "Avg RT 10-30 min"
-        ,avg(CASE WHEN RT_Sec >= 1800 AND RT_Sec < 3600 THEN RT_Sec END) AS "Avg RT 30-60 min"
-        ,avg(CASE WHEN RT_Sec >  3600                   THEN RT_Sec END) AS "Avg RT > 1 hour"
+        ,cast(avg(CASE WHEN RT_Sec  <    1                   THEN RT_Sec END) as decimal(38,6)) AS "Avg RT < 1 sec"
+        ,cast(avg(CASE WHEN RT_Sec >=    1 AND RT_Sec <    5 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 1-5 sec"
+        ,cast(avg(CASE WHEN RT_Sec >=    5 AND RT_Sec <   10 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 5-10 sec"
+        ,cast(avg(CASE WHEN RT_Sec >=   10 AND RT_Sec <   30 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 10-30 sec"
+        ,cast(avg(CASE WHEN RT_Sec >=   30 AND RT_Sec <   60 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 30-60 sec"
+        ,cast(avg(CASE WHEN RT_Sec >=   60 AND RT_Sec <  300 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 1-5 min"
+        ,cast(avg(CASE WHEN RT_Sec >=  300 AND RT_Sec <  600 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 5-10 min"
+        ,cast(avg(CASE WHEN RT_Sec >=  600 AND RT_Sec < 1800 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 10-30 min"
+        ,cast(avg(CASE WHEN RT_Sec >= 1800 AND RT_Sec < 3600 THEN RT_Sec END) as decimal(38,6)) AS "Avg RT 30-60 min"
+        ,cast(avg(CASE WHEN RT_Sec >  3600                   THEN RT_Sec END) as decimal(38,6)) AS "Avg RT > 1 hour"
 
         FROM(
             Select {{ dbc.logdt }} as LogDate, UserName
