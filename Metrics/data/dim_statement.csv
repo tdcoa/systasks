@@ -1,93 +1,93 @@
-Statement_Type,Statement_Bucket,Statement_Outcome,Statement_Class
-Abort                                   ,Admin,System/Procedural,TCL
-Alter Function                          ,Unknown,System/Procedural,DDL
-Alter Procedure                         ,Unknown,System/Procedural,DDL
-Alter Table                             ,Admin,System/Procedural,DDL
-Alter Table Map                         ,Admin,System/Procedural,DDL
-Alter Type                              ,Unknown,System/Procedural,DDL
-AsyncAbort                              ,Unknown,System/Procedural,TCL
-Begin Delete Mload                      ,Load,System/Procedural,Util
-Begin Loading                           ,Load,Ingest & Prep,Util
-Begin Mload                             ,Load,System/Procedural,Util
-Begin Transaction                       ,Other,System/Procedural,TCL
-Begin/End DBQL                          ,Admin,System/Procedural,DDL
-Call                                    ,Stored Proc,System/Procedural,DQL
-Check Point                             ,Load,System/Procedural,TCL
-Check Workload                          ,Load,System/Procedural,TCL
-CheckPoint Loading                      ,Load,System/Procedural,Util
-Collect Statistics                      ,Collect Stats,System/Procedural,DDL
-Comment Get/Set                         ,Admin,System/Procedural,DDL
-Commit Work                             ,Load,System/Procedural,TCL
-Create Authorization                    ,Create/Drop,System/Procedural,DDL
-Create Database/User                    ,Create/Drop,System/Procedural,DDL
-Create Function                         ,Create/Drop,System/Procedural,DDL
-Create Index                            ,Create/Drop,System/Procedural,DDL
-Create Join Index                       ,Create/Drop,System/Procedural,DDL
-Create Macro                            ,Create/Drop,System/Procedural,DDL
-Create Map                              ,Create/Drop,System/Procedural,DDL
-Create Procedure                        ,Create/Drop,System/Procedural,DDL
-Create Profile                          ,Create/Drop,System/Procedural,DDL
-Create Role                             ,Create/Drop,System/Procedural,DDL
-Create Server                           ,Create/Drop,System/Procedural,DDL
-Create Table                            ,Create/Drop,System/Procedural,DDL
-Create Type                             ,Create/Drop,System/Procedural,DDL
-Create View                             ,Create/Drop,System/Procedural,DDL
-Database                                ,Other,System/Procedural,Session
-Delete                                  ,Merge/Update/Delete,Ingest & Prep,DML
-Delete Database                         ,Unknown,System/Procedural,DDL
-Drop Authorization                      ,Create/Drop,System/Procedural,DDL
-Drop Database                           ,Create/Drop,System/Procedural,DDL
-Drop Function                           ,Create/Drop,System/Procedural,DDL
-Drop Index                              ,Create/Drop,System/Procedural,DDL
-Drop Join Index                         ,Create/Drop,System/Procedural,DDL
-Drop Macro                              ,Create/Drop,System/Procedural,DDL
-Drop Procedure                          ,Create/Drop,System/Procedural,DDL
-Drop Profile                            ,Create/Drop,System/Procedural,DDL
-Drop Role                               ,Create/Drop,System/Procedural,DDL
-Drop Server                             ,Create/Drop,System/Procedural,DDL
-Drop Statistics                         ,Create/Drop,System/Procedural,DDL
-Drop Table                              ,Create/Drop,System/Procedural,DDL
-Drop Type                               ,Create/Drop,System/Procedural,DDL
-Drop View                               ,Create/Drop,System/Procedural,DDL
-Dump Database                           ,Admin,System/Procedural,Util
-Echo                                    ,Unknown,System/Procedural,Util
-End Edit                                ,Other,System/Procedural,Util
-End Loading                             ,Load,Ingest & Prep,Util
-End Transaction                         ,Other,System/Procedural,TCL
-Exec                                    ,Macro,System/Procedural,DQL
-Execute Mload                           ,Load,System/Procedural,Util
-Flush Query Logging                     ,Admin,System/Procedural,DDL
-Give                                    ,Admin,System/Procedural,DCL
-Grant                                   ,Admin,System/Procedural,DCL
-Grant/Revoke Con Thr                    ,Admin,System/Procedural,DCL
-Grant/Revoke Logon                      ,Admin,System/Procedural,DCL
-Help                                    ,Other,System/Procedural,DQL
-Insert                                  ,Insert,System/Procedural,DML
-Merge Into                              ,Merge/Update/Delete,Ingest & Prep,DML
-Mload                                   ,Load,Ingest & Prep,Util
-Modify Database                         ,Admin,System/Procedural,DDL
-Modify Profile                          ,Admin,System/Procedural,DDL
-Not Applicable                          ,Other,System/Procedural,Other
-Null                                    ,Other,System/Procedural,Other
-Release Lock                            ,Admin,System/Procedural,TCL
-Release Mload                           ,Load,System/Procedural,TCL
-Rename Procedure                        ,Admin,System/Procedural,DDL
-Rename Table                            ,Admin,System/Procedural,DDL
-Rename View                             ,Admin,System/Procedural,DDL
-Replace Authorizatio                    ,Create/Drop,System/Procedural,DDL
-Replace External SP                     ,Create/Drop,System/Procedural,DDL
-Replace Function                        ,Create/Drop,System/Procedural,DDL
-Replace Macro                           ,Create/Drop,System/Procedural,DDL
-Replace Procedure                       ,Create/Drop,System/Procedural,DDL
-Replace View                            ,Create/Drop,System/Procedural,DDL
-Restore                                 ,Admin,System/Procedural,TCL
-Revoke                                  ,Admin,System/Procedural,DCL
-Select                                  ,Select,Answers,DQL
-Set Query_Band                          ,Admin,System/Procedural,Session
-Set Role                                ,Unknown,System/Procedural,Session
-Set Session                             ,Other,System/Procedural,Session
-Set Time Zone                           ,Other,System/Procedural,Session
-Show                                    ,Other,System/Procedural,DQL
-UCAbort                                 ,Admin,System/Procedural,TCL
-Unrecognized type                       ,Other,System/Procedural,Other
-Update                                  ,Merge/Update/Delete,Ingest & Prep,DML
+Statement_Type,Statement_Class,Statement_Use15,Statement_Use12,Statement_Use9,Statement_Use6,Statement_Use3
+Abort ,TCL,System,Admin,Admin,Admin,Develop/Support
+Alter Function,DDL,Development,Development,Development,Development,Develop/Support
+Alter Procedure ,DDL,Development,Development,Development,Development,Develop/Support
+Alter Table ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Alter Table Map ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Alter Type,DDL,Admin,Admin,Admin,Admin,Develop/Support
+AsyncAbort,TCL,System,Admin,Admin,Admin,Develop/Support
+Begin Delete Mload,DML,Load,Load,Load,Load,Load/Transform
+Begin Loading ,DML,Load,Load,Load,Load,Load/Transform
+Begin Mload ,DML,Load,Load,Load,Load,Load/Transform
+Begin Transaction ,TCL,Development,Development,Development,Development,Develop/Support
+Begin/End DBQL,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Call,DQL,Stored Proc,Run Procedural,Transform,Transform,Load/Transform
+Check Point ,TCL,Load,Load,Load,Load,Load/Transform
+Check Workload,TCL,Load,Load,Load,Load,Load/Transform
+CheckPoint Loading,TCL,Load,Load,Load,Load,Load/Transform
+Collect Statistics,DDL,Collect Stats,Collect Stats,Collect Stats,Admin,Develop/Support
+Comment Get/Set ,DDL,Development,Development,Development,Development,Develop/Support
+Commit Work ,TCL,System,Admin,Admin,Admin,Develop/Support
+Create Authorization,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Database/User,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Function ,DDL,Development,Development,Development,Development,Develop/Support
+Create Index,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Join Index ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Macro,DDL,Development,Development,Development,Development,Develop/Support
+Create Map,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Procedure,DDL,Development,Development,Development,Development,Develop/Support
+Create Profile ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Role ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Server ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Create Table,DDL,Development,Development,Development,Development,Develop/Support
+Create Type ,DDL,Create Table,Create Table,Create Table,Transform,Load/Transform
+Create View ,DDL,Create View,Create View,Development,Development,Develop/Support
+Database,DQL,Set Session,Set Session,Query - Other,Query - Other,Query
+Delete,DML,Delete,Delete,Transform,Transform,Load/Transform
+Delete Database ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Authorization,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Database ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Function ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Index,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Join Index ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Macro,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Procedure,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Profile,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Role ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Server ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Statistics ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Table,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop Type ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Drop View ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Dump Database ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Echo,DQL,Other,Development,Development,Development,Develop/Support
+End Edit,TCL,Development,Development,Development,Development,Develop/Support
+End Loading ,DML,Load,Load,Load,Load,Load/Transform
+End Transaction ,TCL,System,Admin,Admin,Admin,Develop/Support
+Exec,DQL,Macro,Run Procedural,Query - Other,Query - Other,Query
+Execute Mload ,DML,Load,Load,Load,Load,Load/Transform
+Flush Query Logging ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Give,DCL,Admin,Admin,Admin,Admin,Develop/Support
+Grant ,DCL,Admin,Admin,Admin,Admin,Develop/Support
+Grant/Revoke Con Thr,DCL,Admin,Admin,Admin,Admin,Develop/Support
+Grant/Revoke Logon,DCL,Admin,Admin,Admin,Admin,Develop/Support
+Help,DQL,Development,Development,Development,Development,Develop/Support
+Insert,DML,Insert,Insert,Insert,Transform,Load/Transform
+Merge Into,DML,Merge/Update,Merge/Update,Transform,Transform,Load/Transform
+Mload ,DML,Load,Load,Load,Load,Load/Transform
+Modify Database ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Modify Profile,DCL,Admin,Admin,Admin,Admin,Develop/Support
+Not Applicable,DML,Other,Admin,Admin,Admin,Develop/Support
+Null,DML,Other,Admin,Admin,Admin,Develop/Support
+Release Lock,TCL,Admin,Admin,Admin,Admin,Develop/Support
+Release Mload ,TCL,Load,Load,Load,Load,Load/Transform
+Rename Procedure,DDL,Development,Development,Development,Development,Develop/Support
+Rename Table,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Rename View ,DDL,Development,Development,Development,Development,Develop/Support
+Replace Authorizatio,TCL,Admin,Admin,Admin,Admin,Develop/Support
+Replace External SP ,DDL,Development,Development,Development,Development,Develop/Support
+Replace Function,DDL,Development,Development,Development,Development,Develop/Support
+Replace Macro ,DDL,Development,Development,Development,Development,Develop/Support
+Replace Procedure ,DDL,Development,Development,Development,Development,Develop/Support
+Replace View,DDL,Development,Development,Development,Development,Develop/Support
+Restore ,DDL,Admin,Admin,Admin,Admin,Develop/Support
+Revoke,DCL,Admin,Admin,Admin,Admin,Develop/Support
+Select,DQL,Select,Select,Select,Select,Query
+Set Query_Band,DQL,Set Session,Set Session,Query - Other,Query - Other,Query
+Set Role,DQL,Set Session,Set Session,Query - Other,Query - Other,Query
+Set Session ,DQL,Set Session,Set Session,Query - Other,Query - Other,Query
+Set Time Zone ,DQL,Set Session,Set Session,Query - Other,Query - Other,Query
+Show,DQL,Development,Development,Development,Development,Develop/Support
+UCAbort ,TCL,System,Admin,Admin,Admin,Develop/Support
+Unrecognized type ,DDL,Other,Admin,Admin,Admin,Develop/Support
+Update,DML,Merge/Update,Merge/Update,Transform,Transform,Load/Transform
