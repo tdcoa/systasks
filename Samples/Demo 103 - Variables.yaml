@@ -2,7 +2,6 @@ description: >
   Demonstrate taking advantage of variables set in the UI. This includes user-
   defined variables, as well as default values for variables.
 
-
 tasks:
 
 # variables appear in double curly-brackets, and can substitute any part
@@ -36,6 +35,7 @@ tasks:
       order by LogDate
 # user can now supply demo_month_of_calendar, or if omitted, a default will apply
 
+
 # there are some built-in variables available, with the prefix: "dbc" that will
 # return different values depending on the collection type of the source system,
 # aka pdcr or dbc.   For exmaple, the SQL below will return the first 10 rows
@@ -58,7 +58,7 @@ tasks:
 # finally, you can set variables in code, with defaults, and allow the user to
 # override (or not).  This is frequently used for "hidden" variables that
 # modify the behavior of the process.  Some common examples:
-#      variable     default
+#      variable     default if variable   is not defined otherwise use what WAS defined
 {% set chart      = True    if chart      is not defined else chart %}
 {% set upload     = False   if upload     is not defined else upload %}
 {% set export_all = False   if export_all is not defined else export_all %}
@@ -202,4 +202,90 @@ tasks:
       group by stage
 
 # this approach honors the jinja precept: don't repeat yourself (DRY)
-# this way, one change covers all 3 scenarios: Dev, Prod, and Unknown 
+# this way, one change covers all 3 scenarios: Dev, Prod, and Unknown
+
+
+
+
+# you can also test to see if a string is inside a variable.  This allows you
+# to manage one variable, then test for sub-components.  For example:
+
+# set default
+{% set include_time = 'Week,Month,Quarter,Year' if include_time is not defined else include_time %}
+
+# setup collection table
+- name: "Create vt_time_period for collection"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_time_selection
+      (order_created      integer
+      ,selected_with      varchar(128)
+      ,time_period        varchar(128)
+      ,full_include_txt   varchar(128)
+      ,insert_ts          timestamp(0)
+      ) no primary index
+        on commit preserve rows
+
+# TEST if include_time contains Quarter
+{% if 'Quarter' in include_time %}
+- name: "Insert time_period: quarter"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_time_selection( 1
+       ,'hard-coded search for "Quarter"'
+       ,'Quarter'
+       ,'{{ include_time }}'
+       ,current_timestamp(0))
+{% endif %}
+
+# note, the above test is CAP SENSITIVE, so this NEAR identical block
+# will never run:
+{% if 'quarter' in include_time %}  # only difference is lower-case "q"
+- name: "Insert time_period: quarter"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_time_selection( 2
+       ,'doesn''t matter, this will never run'
+       ,'Quarter'
+       ,'{{ include_time }}'
+       ,current_timestamp(0))
+{% endif %}
+
+# to correct for Cap sensitivity, you can cast strings to all lower case:
+{% if 'quarter' in include_time.lower() %}  # now everything is lower-case
+- name: "Insert time_period: Quarter (with .lower())"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_time_selection( 3
+       ,'hard-coded search for "Quarter", with lower (#2 was not run because of Cap Sensitivity)'
+       ,'Quarter'
+       ,'{{ include_time }}'
+       ,current_timestamp(0))
+{% endif %}
+
+# Advanced: we can also split the include_time by comma, and loop thru each time:
+{% set times = include_time.split(',') %}
+{% for time in times %}
+- name: "Insert time_period: {{ time }}"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_time_selection( 3 + {{loop.index}}
+       ,'iterative for loop on "{{ time }}"'
+       ,'{{ time }}'
+       ,'{{ include_time }}'
+       ,current_timestamp(0))
+{% endfor %}
+# the loop.index is a Jinja internal counter of interation count.  we can use
+# it to continue incrementing our counter without defining another variable
+
+# export results
+- name: Export entire vt_time_selection
+  connect: source
+  export:
+    file: time_selection.csv
+    sql: select *  from vt_time_selection order by 1
