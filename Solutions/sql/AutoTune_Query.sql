@@ -554,7 +554,7 @@ on DT.Statistics_Type = GroupKey.Statistics_Type
 -- use this for TCA runs
 
 And DT.DatabaseName Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 
 Group by 1
 ) TCA
@@ -566,7 +566,7 @@ Group by 1
 Inner Join
 (
 Select count(*) TotalTables From dbc.TablesV Where TableKind in ('t','o') And DatabaseName Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 ) t
 on 1=1
 
@@ -577,7 +577,7 @@ on 1=1
 Inner Join
 (
 Select count(distinct databasename||Tablename) TotalPart From dbc.ColumnsV Where PartitioningColumn = 'Y' And DatabaseName Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 ) pt
 on 1=1
 
@@ -589,7 +589,7 @@ on 1=1
 Inner Join
 (
 Select coalesce(count(distinct databasename||Tablename),0) TotalSI From dbc.indicesV Where DatabaseName Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 ) si
 on 1=1
 
@@ -600,7 +600,7 @@ on 1=1
 Inner Join
 (
 Select coalesce(count(distinct databasename||Tablename),0) TotalJI From dbc.IndicesV Where indextype IN ('1','2') And DatabaseName Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 ) ji
 on 1=1
 
@@ -611,7 +611,7 @@ on 1=1
 Inner Join
 (
 Select coalesce(count(Childdb||ChildTable),0) TotalSR From dbc.all_ri_childrenV Where Childdb Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 ) sr
 on 1=1
 
@@ -622,7 +622,7 @@ on 1=1
 Inner Join
 (
 Select coalesce(count(*),0) TotalTemp From dbc.TablesV Where TemporalProperty in ('t','v','b') And DatabaseName Not In
-(select DatabaseName from vt_dim_tdinternal_databases)
+(select DatabaseName from vt_decode_tdbinternal)
 ) tt
 on 1=1
 

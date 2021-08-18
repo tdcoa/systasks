@@ -1,0 +1,11 @@
+description: Print out table vt_dim_tablekind, for reconciliation purposes.
+version: 1
+tasks:
+
+{% include "vt_dim_tablekind.j2" %}
+
+- name: Export vt_dim_tablekind for reconciliation
+  connect: source
+  export:
+    file: dim_tablekind.csv
+    sql:  Select * from vt_dim_tablekind order by 1

@@ -1,0 +1,24 @@
+description: Print out table vt_dim_statement, for reconciliation purposes.
+version: 1
+tasks:
+
+{% include "vt_decode_statement.j2" %}
+
+- name: Export vt_decode_statement with all data
+  connect: source
+  export:
+    file: decode_statement.csv
+    sql: Select * from vt_decode_statement order by 2,1
+
+- name: Create Decode subfolder, if missing
+  connect: source
+  script:
+    command: scripts/mkdir.py
+    params:
+      - myDecodes
+
+- name: Export decode_statement for myDecodes
+  connect: source
+  export:
+    file: myDecodes/decode_statement.csv
+    sql: Select * from vt_decode_statement order by 2,1

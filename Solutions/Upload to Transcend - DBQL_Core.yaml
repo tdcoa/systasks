@@ -1,0 +1,100 @@
+description: "Runs DBQL_Core and upload results to Transcend, including both the existing COA table (adlste_coa.coa_dat_DBQL_Core) which covers existing PowerBI reporting, as well as the new COA table (adlste_coa.coa_dat_DBQL_Core2) which includes more request/statement breakouts for more nuanced querycount designs.  See the 'Help' article for more details. "
+version: 1
+# add this line to skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+
+tasks:
+{% set save_prework  = false %}
+{% set reconcile     = true %}
+{% set upload        = True if upload is not defined else upload %}
+{% set stagedb       = 'adlste_coa_stg' if stagedb is not defined else stagedb %}
+{% set targetdb      = 'adlste_coa' if targetdb is not defined else targetdb %}
+
+{% set include = '' %}
+{% set include_hour         = true %}
+{% set include_exclude_flag = true %}
+{% set include_wdname       = false %}
+{% set include_user         = false %}
+
+{% include "vt_dbql_core.j2" %}
+
+
+{% if upload %}
+- name: Export DBQL_Core.csv for upload to Transcend
+  connect: source
+  export:
+    file: dbql_core_upload.csv
+    sql: |
+      Select
+       Site_ID
+      ,cast(cast(LogDate as DATE format 'YYYY-MM-DD') as char(10)) as LogDate
+      ,LogTS
+      ,count(distinct LogDate) as LogDate_Cnt
+      ,Total_AMPs,Application,Application_Use,Application_Company
+      ,Statement_Bucket,Statement_Outcome,UserType,Organization,Department
+      ,Exclude_Performance_Flag,Exclude_VantageUnit_Flag
+      /* ==== Metrics ==== */
+      ,sum(Request_Total_Cnt         ) as Request_Total_Cnt
+      ,sum(Statement_Total_Cnt       ) as Statement_Total_Cnt
+      ,sum(Request_MultiStatement_Cnt) as Request_MultiStatement_Cnt
+      ,sum(Request_SubSecond_Cnt     ) as Request_SubSecond_Cnt
+      ,sum(Statement_SubSecond_Cnt   ) as Statement_SubSecond_Cnt
+      ,sum(Request_Tactical_Cnt      ) as Request_Tactical_Cnt
+      ,sum(Statement_Tactical_Cnt    ) as Statement_Tactical_Cnt
+      ,sum(Request_Error_Cnt         ) as Request_Error_Cnt
+      ,sum(Statement_Error_Cnt       ) as Statement_Error_Cnt
+      ,sum(Request_Spool_Error_Cnt   ) as Request_Spool_Error_Cnt
+      ,sum(Statement_Spool_Error_Cnt ) as Statement_Spool_Error_Cnt
+      ,sum(Request_TASM_Abort_Cnt    ) as Request_TASM_Abort_Cnt
+      ,sum(Statement_TASM_Abort_Cnt  ) as Statement_TASM_Abort_Cnt
+      ,sum(Request_Abort_Cnt         ) as Request_Abort_Cnt
+      ,sum(Statement_Abort_Cnt       ) as Statement_Abort_Cnt
+      ,sum(Request_NoIO_Cnt          ) as Request_NoIO_Cnt
+      ,sum(Statement_NoIO_Cnt        ) as Statement_NoIO_Cnt
+      ,sum(Request_InMem_Cnt         ) as Request_InMem_Cnt
+      ,sum(Statement_InMem_Cnt       ) as Statement_InMem_Cnt
+      ,sum(Request_PhysIO_Cnt        ) as Request_PhysIO_Cnt
+      ,sum(Statement_PhysIO_Cnt      ) as Statement_PhysIO_Cnt
+      ,sum(Request_AllAMP_Cnt        ) as Request_AllAMP_Cnt
+      ,sum(Statement_AllAMP_Cnt      ) as Statement_AllAMP_Cnt
+      ,sum(Request_Utility_Cnt       ) as Request_Utility_Cnt
+      ,sum(Statement_Utility_Cnt     ) as Statement_Utility_Cnt
+      ,sum(DelayTime_Sec             ) as DelayTime_Sec
+      ,sum(RunTime_Parse_Sec         ) as RunTime_Parse_Sec
+      ,sum(Runtime_AMP_Sec           ) as Runtime_AMP_Sec
+      ,sum(RunTime_Total_Sec         ) as RunTime_Total_Sec
+      ,sum(TransferTime_Sec          ) as TransferTime_Sec
+      ,sum(CPU_Total_Sec-CPU_AMP_Sec ) as CPU_Parse_Sec
+      ,sum(CPU_AMP_Sec               ) as CPU_AMP_Sec
+      ,sum(IO_Physical_CntM          ) as IOCntM_Physical
+      ,sum(IO_Total_CntM             ) as IOCntM_Total
+      ,sum(IO_Physical_GB            ) as IOGB_Physical
+      ,sum(IO_Total_GB               ) as IOGB_Total
+      ,sum(IOTA_Used_CntB            ) as IOTA_Used_CntB
+      ,sum(Spool_GB                  ) as Spool_GB
+      ,sum(Returned_Row_Cnt          ) as Returned_Row_Cnt
+      ,avg(NumOfActiveAMPs_Avg       ) as NumOfActiveAMPs_Avg
+      ,null as Query_Complexity_Score_Avg
+      ,1 - zeroifnull(sum(IO_Physical_CntM) / nullifzero(sum(IO_Total_CntM)) ) as CacheHit_Pct
+      from vt_dbql_core
+      group by Site_ID,LogDate,LogTS
+      ,Total_AMPs,Application,Application_Use,Application_Company
+      ,Statement_Bucket,Statement_Outcome,UserType,Organization,Department
+      ,Exclude_Performance_Flag,Exclude_VantageUnit_Flag
+      Order by Site_ID, LogTS
+
+- name: Import dbql_core_upload.csv into Transcend staging area
+  connect: transcend
+  import:
+    file: dbql_core_upload.csv
+    table: {{ stagedb }}.stg_dat_DBQL_Core2
+
+- name: Merge staged data into the core layer
+  connect: transcend
+  call:
+    proc: {{ targetdb }}.sp_dat_DBQL_Core2
+    params:
+    - Null
+
+{% endif %}

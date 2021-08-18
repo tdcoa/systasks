@@ -1,0 +1,183 @@
+description: Generates the BigQuery Competitive Powerpoint deck, designed to be customer facing.  Please see the associated training, linked in the HELP section.
+version: 1
+
+# below line allows for the tracking of vt_table states,
+# so the process doesn't try to re-create the same table twice:
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+tasks:
+
+# ==============> Header information <=================
+{% include "vt_site_info.j2" %}
+- name: "Export Site and CSM information (if available) for pptx title slide"
+  connect: source
+  export:
+    file: vhc--Q00.intro.csv
+    sql: Select * from vt_site_info
+
+
+### done so far:  Q1, Q3, Q4, Q14, Q15
+
+
+
+# ==============================================================
+# ============> Queries Satisfied by DBQL_Core <================
+# ==============================================================
+{% set reconcile = true if reconcile is not defined else reconcile %}
+{% set save_prework = False %}
+{% set statement_use_buckets = 12 %}
+
+{% set include_hour   = true %}
+{% set include_user   = true %}
+{% set include_wdname = false %}
+{% set include_metric_classes = true %}
+{% set include_querygrid_flag = true %}
+{% set include_subsecond_flag = true %}
+{% set include_cachehit_score = true %}
+{% set include_complexity_score = true %}
+
+{% include "vt_dbql_core.j2" %}
+
+### Query 1
+#
+# Query Results File name : DepartmentCPUConsumption
+#   Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3
+- name: QUERY 01 - DepartmentCPUConsumption
+  connect: source
+  export:
+    file: vhc--Q01.DepartmentCPUConsumption.csv
+    sql: |
+      Select LogDate
+      ,Statement_Bucket as StatementType
+      ,Statement_Outcome as Statement_Outcome
+      ,UserName
+      ,Department
+      ,Organization as BusinessGroup
+      ,sum(CPU_Parse_Sec + CPU_Amp_Sec) as SumCPUTime
+      ,sum(Request_Total_Cnt) as QueryCount
+      from vt_dbql_core
+      group by 1,2,3,4,5,6
+
+
+### Query 4
+#
+# Query Results File name : consumption_ux_p1_v3
+# --Tableau Dashboard Name: UX-1, UX-2, UX-3, UX-4
+- name: QUERY 04 - consumption_ux_p1_v3
+  connect: source
+  export:
+    file: vhc--Q04.consumption_ux_p1_v3.csv
+    sql: |
+      Select
+       LogDate
+      ,extract(hour from cast(LogTS as timestamp(0))) as LogHour
+      ,CASE WHEN ((Application_Company = 'Teradata' and Application_Use ='ETL') or Application = 'JDBCL%') THEN 'LOAD'
+            WHEN Statement_Bucket in ('Insert', 'Merge/Update', 'Delete', 'Create Table')
+             AND NOT ((Application_Company = 'Teradata' and Application_Use ='ETL') or Application = 'JDBCL%') THEN 'ETL/ELT'
+            WHEN Statement_Bucket = 'Select' AND Application like any ('TPT Export%', 'FastExport%','JDBCE%') THEN 'EXPORT'
+            WHEN Statement_Bucket = 'Select' AND Application_Use <> 'ETL' THEN 'QUERY'
+            WHEN Statement_Bucket in('Admin','Collect Stats') THEN 'ADMIN'
+            ELSE 'OTHER'
+             END AS WorkLoadType
+      ,CASE WHEN Tactical_Flag = 1 THEN 'Tactical' ELSE 'Non-Tactical' END as "Query Type"
+      ,Statement_Outcome as "Statement Outcome"
+      ,CASE WHEN QueryGrid_Flag = 1 THEN 'QueryGrid' ELSE 'Local' END as "Query Origin"
+      ,DelayTime_Class     as "Delay Seconds Group"
+      ,ParseTime_Class     as "Parse Time Group"
+      ,TotalExec_Class     as "Execution Time Group"
+      ,TransferTime_Class  as "Transfer Time Group"
+      ,TotalIOCount_Class  as "I/O Group"
+      ,AMPCPUTime_Class    as "CPU Group"
+      ,ParserCPUTime_Class as "Parse CPU Group"
+      ,CacheMiss_CntScore  *10/1.25 as "Cache Miss Count Score"
+      ,CacheMiss_SizeScore *10/1.25 as "Cache Miss Volume Score"
+      ,Complexity_Effect_Avg      as "Complexity Effect"
+      ,Complexity_Effect_Step_Avg as "Complexity Effect Step"
+      ,Complexity_Score as COMPLEXITY
+      ,SUM(Request_Total_Cnt) AS "Request Count"
+      ,SUM(CPU_AMP_Sec) AS "Total AMPCPUTime"
+      ,SUM(IOCntM_Total    *1e6) AS "Total IOCount"
+      ,SUM(IOGB_Total      *1e6) AS "Total ReqIOKB"
+      ,SUM(IOCntM_Physical *1e6) AS "Total ReqPhysIO"
+      ,SUM(IOGB_Physical   *1e6) AS "Total ReqPhysIOKB"
+      ,SUM(IOGB_Total          ) as "Total ReqIO GB"
+      ,SUM(IOGB_Physical       ) AS "Total ReqPhysIOGB"
+      ,SUM(TotalServer_Byte_Cnt) AS "Total Server Byte Count"
+      from vt_dbql_core
+      group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+
+
+
+
+
+
+
+# ==================================================================
+# ============> Queries Satisfied by Feature_Usage <================
+# ==================================================================
+{% include "vt_feature_usage.j2" %}
+
+
+### Query 3
+# Query Results File name : consumption_feature_usage_v2
+# The below query is for Feature Consumption Cross reference.
+# The username wil be joined to ca_user_xref to aggregate by SubDepartment and Department
+- name: Export Feature Usage csv
+  connect: source
+  export:
+    file: vhc--Q03.consumption_feature_usage_v2.csv
+    sql: |
+      select
+       LogDate
+      ,UserName
+      ,FeatureName
+      ,sum(Request_Total_Cnt) as FeatureUseCount
+      ,sum(Request_Total_Cnt) as RequestCount
+      ,sum(sum_AmpCPUTime) as AMPCPUTime
+      from vt_feature_usage
+      Group by 1,2,3
+
+
+
+### Query 15
+#
+# Query Output File Name: consumption_feature_usage_v1
+# Tableau Dashboard: Feature Usage By User
+{% set featurecolumns = ['Collect Statistics', 'Fallback', 'SET Table', 'MULTISET Table', 'Hashed Table', 'Trigger', 'Block Level Compression', 'Auto Compression', 'Teradata Columnar', 'No Primary Index', 'Row Partitioning', 'Multi Level Partitioning', '8 Byte Partitioning', '2 Byte Partitioning', 'Column Partitioning and Row Partitioning', 'Column-Partitioned and a NoPI', 'Column-Partitioned and a PI', 'Column-Partitioned and a PA', 'Teradata Temporal', 'Parameterized Query', 'Binary LOB', 'Character LOB', 'Small LOB', 'Scalar Sub Query', 'Statement Info Parcel', 'User Defined Type', 'XML Data Type', 'JSON Data Type', 'Distinct Data Type', 'Structure Data Type', 'Geospatial', '3D Geospatial', 'Period Data Type', 'Array Data Type', 'Number Data Type', 'Teradata Stored Procedure', 'User Defined Function', 'External Stored Procedure', 'Table Function', 'Table Operator', 'Foreign Function', 'Teradata Remote Query', 'Query Grid', 'Data Stream Architecture', 'DBQL SQL Logging', 'DBQL STEP Logging', 'DBQL OBJECTS Logging', 'DBQL EXPLAIN Logging', 'DBQL XMLPLAN Logging', 'DBQL STATSUSAGE Logging', 'DBQL PARAMINFO Logging', 'DBQL OBJECT USECOUNT Logging', 'DBQL UTILITYINFO Logging', 'DBQL THRESHOLD Enabled', 'Incremental Planning and Execution', 'Teradata Unity', 'Autoreparse', 'Teradata In-Memory', 'Teradata Pivot', 'Teradata Unpivot', 'Redrive', 'Queryband', 'Index Analysis', 'Partition Analysis', 'Replication', 'Load Isolation', 'Single Sender Row Re-Distribution', 'Partition Level Locking', 'Primary Index', 'Secondary Index', 'Composite Secondary Index', 'Join Index', 'Non Unique UnHashed Index', 'Unique UnHashed Index', 'Non Unique Hashed Index', 'Unique Hashed Index', 'Fastexport Protocol', 'Fastload Protocol', 'Multiload Protocol', 'Archive/Restore', 'MloadX Protocol', 'Fast Path Function', 'R Table Operator', 'Bit Manipulation Function', 'Analytics Extensions', 'Partial Redistribution Partial Duplication', 'Queryable View Column Info', 'Multiple Count Distinct', 'Aggregation Push for Union All', 'Binary Join Push for Union All', 'Script Table Operator', 'Dataset Data Type', 'Dot Notation', 'Union All Pushdown', 'In-Memory Enhancement for Outer Join', 'In-Memory Enhancement for PRPD Join', 'In-Memory All Rows One AMP Optimization', 'In-Memory AVX2 Support', 'InList Rewrite to Subquery', 'InList Rewrite to Outer Join', 'InList Rewrite disqualifed by MultiTable Expression', 'InList Rewrite Threshold Exceeded', 'Sparse Map', 'Two Maps', 'Not System-Default Map', 'LEAD LAG Analytics', 'Geospatial Index Single Table Predicate', 'Geospatial Index Single Table Distance Predicate', 'Geospatial Index Join Predicate', 'Geospatial Index Distance Join Predicate', 'Dataset Data Type Storage Format CSV', 'Push TOP N into UNION ALL Derived Tables', 'In-Memory Bulk Qualification Enhancements', 'Time Series Table', 'Soft RetLimit for number of rows AMP step returns', 'Function Alias', 'QueryGrid Remote Tables', 'QueryGrid Common Remote Table Elimination', 'Dynamic Parameterization of Literals Feature', 'SET TRANSFORM', 'ODBC Scalar Functions', 'Multisource'] %}
+
+- name: Export Feature Usage Pivot csv
+  connect: source
+  export:
+    file: vhc--Q15.consumption_feature_usage_v1.csv
+    sql: |
+      select
+       LogDate
+      ,UserName as  MaskedUserName
+      ,sum(Request_Total_Cnt) as Request_Count
+      {% for fcol in featurecolumns %}
+      ,sum(case when FeatureName = '{{ fcol }}' then Request_Total_Cnt else 0 end) as "{{ fcol }}"
+      {% endfor %}
+      from vt_feature_usage
+      group by 1,2
+
+
+
+
+
+
+# ==================================================================
+# ========> Queries Satisfied by Other, Specific Metrics <==========
+# ==================================================================
+
+
+### Query 14
+#
+# Query Output File Name: ResponseTimeBucket
+# Tableau Dashboard: QueryRunTimes
+
+{% include "vt_queries_by_runtime_bucket.j2" %}
+- name: Export Feature Usage Pivot csv
+  connect: source
+  export:
+    file: vhc--Q14.ResponseTimeBucket.csv
+    sql: Select * from vt_queries_by_runtime_bucket order by 1,2

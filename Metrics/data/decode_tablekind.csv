@@ -1,0 +1,30 @@
+TableKind,CommitOpt,Description,Object_Group12,Object_Group09,Object_Group06,Object_Group04
+1,all,Dataset Schema Object,Other,Other,Other,Other
+2,all,Function - Alias Object,Function,Function,Function,Other
+A,all,Function - Aggregate,Function,Function,Function,Other
+B,all,Function - Combined Aggregate And Ordered Analytical,Function,Function,Function,Other
+C,all,Table Operator Parser Contract Function,Table Operator,Function,Function,Other
+D,all,JAR,Function,Function,Function,Other
+E,all,Stored Procedure - External,Stored Procedure,Stored Procedure,User Procedural,User Procedural
+F,all,Function - Standard,Function,Function,Function,Other
+G,all,Trigger,Stored Procedure,Stored Procedure,User Procedural,User Procedural
+H,all,Instance Or Constructor Method,Other,Other,Other,Other
+I,all,Index - Join,Index,Index,Index,Other
+J,all,Journal,Journal,Other,Other,Other
+K,all,Foreign Server Object,Foreign Server,Foreign Server,Other,Other
+L,all,User-Defined Table Operator,User Defined,User Defined,User Procedural,User Procedural
+M,all,Macro,Macro,Macro,User Procedural,User Procedural
+N,all,Index - Hash,Index,Index,Index,Other
+O,all,Table - No Primary Index And No Partitioning,Table,Table,Table,Table
+P,all,Stored Procedure,Stored Procedure,Stored Procedure,User Procedural,User Procedural
+Q,all,Table Queue,Table,Table,Table,Table
+R,all,Function - Table,Table Operator,Function,Function,Other
+S,all,Function - Ordered Analytical,Function,Function,Function,Other
+T,N,Table - Primary Index Partitioning Or Both,Table,Table,Table,Table
+T,P,Table - Global Temporary,Table,Table,Table,Table
+T,D,Table - Global Temporary,Table,Table,Table,Table
+U,all,User-Defined Data Type,User Defined,User Defined,User Procedural,User Procedural
+V,all,View,View,View,View,View
+X,all,Authorization,Other,Other,Other,Other
+Y,all,GLOP Set,Other,Other,Other,Other
+Z,all,User Installed File,User Defined,User Defined,User Procedural,User Procedural

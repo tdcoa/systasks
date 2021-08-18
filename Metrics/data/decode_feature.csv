@@ -1,0 +1,250 @@
+Feature_Name,Feature_Category,Feature_SubCategory,Product_Name,Product_Category,Solution_Type,User_Experience_Level_Name,Initiator_Role_Category,Objective_Name,Feature_Weight,Max_Threshold_LOW,Max_Threshold_MED,Feature_CPU_Weight,Feature_IO_Weight,Feature_Time_Weight,Feature_Cnt_Weight
+Viewpoint,Administration,System,Viewpoint,IntelliSphere,Administration,,TBD,Manage my environment,5,10,1000,1,1,1,1
+Replication,SQL Engine,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,0,0,0,1,1,1,1
+Binary Join Push for Union All,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,7,9,1,1,1,1
+Unique Hashed Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,19696,295623,1,1,1,1
+DBQL PARAMINFO Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+APPLY Table Operator,,,,,,,TBD,,0,10,1000,1,1,1,1
+XML Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,5,114,456,1,1,1,1
+Column-Partitioned and a PI,SQL Engine,Columnar,Vantage Database,Vantage,In-database Analytics,,TBD,Optimize Performance,2,6,54,1,1,1,1
+Incremental Planning and Execution,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,152,1053,1,1,1,1
+ODBC Scalar Functions,SQL Engine,Advanced SQL Function,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,0,0,0,1,1,1,1
+Quantum Tape Library,Data Duplication Storage System,Tape,Quantum Scalar Tape Library,Backup and Restore (BAR),Business Continuity,,TBD,Back up my data,0,10,1000,1,1,1,1
+Path Analysis,Machine Learning Engine,Path Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+NOS SAT-TC,,,,,,,TBD,,0,11,193,1,1,1,1
+DBQL STATSUSAGE Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+Not System-Default Map,SQL Engine,Data Distribution,Vantage Database,Vantage,Performance,,TBD,Load Data,0,8619,96860,1,1,1,1
+NOS Count (*),,,,,,,TBD,,0,4620,6801,1,1,1,1
+Consulting Accelerator,Accelerator,Data,Service Catalysts,Vantage,Accelerator,,TBD,Get help through services,10,10,1000,1,1,1,1
+Path,User Interface,Analyst UI,Vantage Analyst,Vantage,Self-Service,,TBD,Visualize Analytics,5,0,0,1,1,1,1
+Partition Analysis,SQL Engine,Performance Management,Vantage Database,Vantage,Administration,,TBD,Manage my environment,0,48,217,1,1,1,1
+In-Memory Bulk Qualification Enhancements,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,6760,139362,1,1,1,1
+Analyst UI,User Interface,Analyst UI,Vantage Analyst,Vantage,Self-Service,,TBD,Visualize Analytics,10,0,0,1,1,1,1
+Travel & Hospitality Industry Data Model,Data Model,Travel and Hospitality Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Table Operator,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Number Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,2,252,19464,1,1,1,1
+Algorithmic Compression,Compression,Compression,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,2,10,1000,1,1,1,1
+Time Series Table,SQL Engine,Time Series,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+AnalyticsOps,Accelerator,Analytics,Assets,Consulting,Accelerator,,TBD,Get help through services,10,10,1000,1,1,1,1
+MloadX Protocol,Connectivity,Teradata Parallel Transporter (TPT),Vantage Database,Vantage,Data Loading,,TBD,Load Data,2,36,180,1,1,1,1
+Count(*) improvements through cylinder index scans,,,,,,,TBD,,0,649,13098,1,1,1,1
+Index Analysis,SQL Engine,Performance Management,Vantage Database,Vantage,Administration,,TBD,Manage my environment,0,48,217,1,1,1,1
+Data Stream Extension for Veritas NetBackup,Connectivity,Backup Integration,Data Stream Extension,Backup and Restore (BAR),Business Continuity,,TBD,Back up my data,0,10,1000,1,1,1,1
+TDWM Internal Rule API,,,,,,,TBD,,0,10,1000,1,1,1,1
+Cluster Analysis,Machine Learning Engine,Cluster Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Analytics Library for R (tdplyr),Analytics Library,Analytics Library for R (tdplyr),Vantage Analytics,Vantage,Connectivity,,TBD,Run R,10,0,0,1,1,1,1
+Industry Data Model,Industry Data Model,Industry Data Model,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,5,10,1000,1,1,1,1
+Analytics Extensions,SQL Engine,In-Database Programming,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,0,0,0,1,1,1,1
+VLC Aware Aggregation,,,,,,,TBD,,0,250,311,1,1,1,1
+MovingAverage,SQL Engine,Analytics Functions,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Table Function,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Dynamic Parameterization of Literals Feature,SQL Engine,Performance - Request,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,10,1000,1,1,1,1
+Foreign Function,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Binary LOB,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,2,20,75,1,1,1,1
+Ecosystem Manager,Administration,System,Ecosystem Manager,IntelliSphere,Administration,,TBD,Manage my environment,5,10,1000,1,1,1,1
+Spatial Join,,,,,,,TBD,,0,10,1000,1,1,1,1
+SET TRANSFORM,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,2,10,1000,1,1,1,1
+Secondary Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,3386,133909,1,1,1,1
+Column Partition Buffered Load Enhancements,,,,,,,TBD,,0,17,242,1,1,1,1
+Direct Merge Optimization From NOS,,,,,,,TBD,,0,10,1000,1,1,1,1
+Data Transformations,Machine Learning Engine,Data Transformations,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Native Object Store Error Tables,,,,,,,TBD,,0,5,11,1,1,1,1
+Multiple Filter Ops,,,,,,,TBD,,0,10,1000,1,1,1,1
+Real-Time Decisioning,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+2 Byte Partitioning,SQL Engine,Performance - Partitioning,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,1838,16583,1,1,1,1
+Analytics Library for Python (teradataml),Analytics Library,Analytics Library for Python (teradataml),Vantage Analytics,Vantage,Connectivity,,TBD,Run Python,10,10,1000,1,1,1,1
+Teradata Remote Query,SQL Engine,In-Database Programming,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Row Level Security,SQL Engine,Security,Vantage Database,Vantage,Security,,TBD,Secure my environment,5,0,0,1,1,1,1
+SET Table,SQL Engine,Data Management,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+Dell EMC Data Domain,Data Duplication Storage System,Disk,Dell EMC Data Domain,Backup and Restore (BAR),Business Continuity,,TBD,Back up my data,0,10,1000,1,1,1,1
+Teradata Unity,SQL Engine,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,5,0,0,1,1,1,1
+Collect Statistics,SQL Engine,Performance Management,Vantage Database,Vantage,Performance,Getting Started,TBD,Optimize Performance,2,268,6239,1,1,1,1
+Teradata Columnar,SQL Engine,Columnar,Vantage Database,Vantage,In-database Analytics,,TBD,Optimize Performance,10,9,101,1,1,1,1
+Archive/Restore,SQL Engine,Backup and Restore,Vantage Database,Vantage,Business Continuity,,TBD,Back up my data,0,122,896,1,1,1,1
+Teradata Pivot,SQL Engine,Advanced SQL,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+DBQL STEP Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+InList Rewrite Threshold Exceeded,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,576,21272,1,1,1,1
+"Financial Services, Insurance Industry Data Model",Data Model,"Financial Services, Insurance Industry",Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Dataset Data Type Storage Format CSV,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,10,1,5,1,1,1,1
+Character LOB,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,5,31,2848,1,1,1,1
+JACS Auto Composition,,,,,,,TBD,,0,1,4,1,1,1,1
+Script Table Operator,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+Geospatial Index Join Predicate,SQL Engine,Geospatial,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+QueryBand,Usage Analysis,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,10,0,0,1,1,1,1
+Light-Weight Hash functions,,,,,,,TBD,,0,10,1000,1,1,1,1
+N-Way Join,,,,,,,TBD,,0,10,1000,1,1,1,1
+IPE for Unique-Join Tables,,,,,,,TBD,,0,10,1000,1,1,1,1
+Single Sender Row Re-Distribution,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,178,9729,1,1,1,1
+Rstudio,User Interface,Integrated Development Environment,Vantage Analytics,Vantage,User Interface,,TBD,Visualize Analytics,5,0,0,1,1,1,1
+Insert Select Direct Merge,,,,,,,TBD,,0,10,1000,1,1,1,1
+Auto Compression,SQL Engine,Compression,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,1259,63257,1,1,1,1
+Two Maps,SQL Engine,Multiple Hash Maps,Vantage Database,Vantage,Performance,,TBD,Load Data,0,6871,41273,1,1,1,1
+Multi-Value Compression,Compression,Compression,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,2,10,1000,1,1,1,1
+TDWM Rule API,,,,,,,TBD,,0,10,1000,1,1,1,1
+Machine Learning,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+Trigger,SQL Engine,In-Database Programming,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Statement Info Parcel,SQL Engine,Connectivity - ODBC,Vantage Database,Vantage,Connectivity,,TBD,Expose data to applications,0,54982,689686,1,1,1,1
+Parameterized Query,SQL Engine,Performance - Request,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,5,14867,825021,1,1,1,1
+Transport & Logistics Data Model,Data Model,Transport and Logistics,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Distinct Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,2,4,12,1,1,1,1
+NOS Path Filtering UJP,,,,,,,TBD,,0,10,1000,1,1,1,1
+JACS Auto Shredding,,,,,,,TBD,,0,10,1,1,1,1,1
+8 Byte Partitioning,SQL Engine,Performance - Partitioning,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,446,2790,1,1,1,1
+IPE for Multi-Statement Request,,,,,,,TBD,,0,603,767,1,1,1,1
+Advocated Stack,Accelerator,Data,Service Catalysts,Consulting,Accelerator,,TBD,Get help through services,0,10,1000,1,1,1,1
+Time Series Analysis,Machine Learning Engine,Time Series Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+PGB Applied for Outer Join,,,,,,,TBD,,0,1,1,1,1,1,1
+3D Geospatial,SQL Engine,Geospatial,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Cluster,User Interface,Analyst UI,Vantage Analyst,Vantage,Self-Service,,TBD,Visualize Analytics,5,0,0,1,1,1,1
+nPath,SQL Engine,Analytics Functions,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+NGramSplitter,SQL Engine,Analytics Functions,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+Python ML Engine Analytic Functions,Analytics Library,Analytics Library for Python (teradataml),Vantage Analytics,Vantage,Connectivity,,TBD,Run Python,5,10,1000,1,1,1,1
+User Defined Function,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Queryable View Column Info,SQL Engine,Data Management,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Python Data Interfaces,Analytics Library,Analytics Library for Python (teradataml),Vantage Analytics,Vantage,Connectivity,,TBD,Run Python,5,10,1000,1,1,1,1
+Geospatial Index Distance Join Predicate,SQL Engine,Geospatial,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+Composite Secondary Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,20,139,1,1,1,1
+Fastexport Protocol,Connectivity,Teradata Parallel Transporter (TPT),Vantage Database,Vantage,Data Loading,,TBD,Load Data,0,544,6540,1,1,1,1
+Structure Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,5,5,13,1,1,1,1
+DBQL XMLPLAN Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+Sessionize,SQL Engine,Analytics Functions,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+Data Mover,Connectivity,System,Data Mover,IntelliSphere,Data Loading,,TBD,Load Data,5,10,1000,1,1,1,1
+Non Unique Hashed Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,22094,597116,1,1,1,1
+NOS Path Filtering Literals,,,,,,,TBD,,0,8,24,1,1,1,1
+Primary Index,SQL Engine,Data Distribution,Vantage Database,Vantage,Performance,Getting Started,TBD,Load Data,0,47269,1100737,1,1,1,1
+Naive Bayes Functions,Machine Learning Engine,Naive Bayes Functions,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Communications Industry Data Model,Data Model,Communications Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Teradata Stored Procedure,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+User Defined Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,2,78,457,1,1,1,1
+Graph Analysis,Machine Learning Engine,Graph Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Teradata Integrated Workload Management (TIWM),Workload Management,Workload Management,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,5,10,1000,1,1,1,1
+Vantage Health Check,Accelerator,Data,Service Catalysts,Consulting,Accelerator,,TBD,Get help through services,0,10,1000,1,1,1,1
+LEAD LAG Analytics,SQL Engine,Advanced SQL,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+R Data Interfaces,Analytics Library,Analytics Library for R (tdplyr),Vantage Analytics,Vantage,Connectivity,,TBD,Run R,5,0,0,1,1,1,1
+RESTful API,Connectivity,Query Service,Vantage Database,Vantage,Connectivity,Getting Started,TBD,Expose data to applications,10,10,1000,1,1,1,1
+Partial Redistribution Partial Duplication,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,31,372,1,1,1,1
+Consumption Analytics,Accelerator,Data,Service Catalysts,Consulting,Accelerator,,TBD,Get help through services,0,10,1000,1,1,1,1
+DBQL SQL Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+Row Partitioning,Performance,Performance - Partitioning,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,5,2357,29180,1,1,1,1
+Attribution Analysis,Machine Learning Engine,Attribution Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Dataset Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,10,1,6,1,1,1,1
+NOS Access Path Fallback,,,,,,,TBD,,0,2,16,1,1,1,1
+InList Rewrite to Subquery,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,13,138,1,1,1,1
+Multiple Count Distinct,SQL Engine,Performance - SQL,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,0,0,1,1,1,1
+Data Stream Architecture,High Availability,Backup and Restore,Data Stream Architecture,Backup and Restore (BAR),Business Continuity,,TBD,Back up my data,2,232,3567,1,1,1,1
+Small LOB,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,5,37041,186207,1,1,1,1
+Utilities Industry Data Model,Data Model,Utilities Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Real-Time Decisioning (Extension),Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+Teradata Unpivot,SQL Engine,Advanced SQL,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+QueryGrid Remote Tables,SQL Engine,QueryGrid,Vantage Database,Vantage,Data Loading,,TBD,Load Data,5,1,12,1,1,1,1
+NOS Path Filtering Subquery,,,,,,,TBD,,0,10,1000,1,1,1,1
+DataOps,Accelerator,Data,Service Catalysts,Consulting,Accelerator,,TBD,Get help through services,0,10,1000,1,1,1,1
+Array Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,5,3,10,1,1,1,1
+AppCenter,User Interface,Application Development,AppCenter,IntelliSphere,Self-Service,,TBD,Visualize Analytics,10,0,0,1,1,1,1
+Media & Entertainment Industry Data Model,Data Model,Media and Entertainment Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Column-Partitioned and a PA,SQL Engine,Columnar,Vantage Database,Vantage,In-database Analytics,,TBD,Optimize Performance,2,7,100,1,1,1,1
+Block Level Compression,SQL Engine,Compression,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,47276,1100737,1,1,1,1
+Manufacturing Industry Data Model,Data Model,Manufacturing Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Load Isolation,SQL Engine,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,0,0,0,1,1,1,1
+Analytics for Enterprise Applications (EAS),Business Application,Data Integration,Analytics for Enterprise Applications (EAS),Applications,Applications,,TBD,reduce the complexity of enterprise application integration,10,0,0,1,1,1,1
+Statistical Analysis,Machine Learning Engine,Statistical Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+NOS Metadata Subquery Feedback,,,,,,,TBD,,0,10,1000,1,1,1,1
+DataDNA,Accelerator,Data,Service Catalysts,Consulting,Accelerator,,TBD,Get help through services,0,10,1000,1,1,1,1
+Data Lab,User Interface,Data Lab,Data Lab,IntelliSphere,Applications,Getting Started,TBD,Set-up self-service,10,0,0,1,1,1,1
+R ML Engine Analytic Functions,Analytics Library,Analytics Library for R (tdplyr),Vantage Analytics,Vantage,Connectivity,,TBD,Run R,5,0,0,1,1,1,1
+Bloom filter,,,,,,,TBD,,0,10,1000,1,1,1,1
+Teradata In-Memory,Performance,Teradata In-Memory,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,6003,93601,1,1,1,1
+NOS Spool Once Optimization - BlockSplit,,,,,,,TBD,,0,10,1000,1,1,1,1
+MULTISET Table,SQL Engine,Data Management,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+DBQL UTILITYINFO Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+DBQL OBJECTS Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+Hadoop Migration Accelerator,Accelerator,Migration,Assets,Consulting,Accelerator,,TBD,Get help through services,5,10,1000,1,1,1,1
+Join Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,5,135,9918,1,1,1,1
+Native Object Store,,,,,,,TBD,,0,3,26,1,1,1,1
+ANYNCPMERGEOPT,,,,,,,TBD,,0,10,1000,1,1,1,1
+Geospatial Index Single Table Predicate,SQL Engine,Geospatial,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+Teradata Active System Management (TASM),Workload Management,Workload Management,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,5,10,1000,1,1,1,1
+JupyterLab,User Interface,Integrated Development Environment,Vantage Analytics,Vantage,User Interface,Getting Started,TBD,Visualize Analytics,5,0,0,1,1,1,1
+Teradata Temporal,SQL Engine,Temporal,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+Multi Level Partitioning,SQL Engine,Performance - Partitioning,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,5,376,3513,1,1,1,1
+Columnar Bulk Aggregation,,,,,,,TBD,,0,10,1000,1,1,1,1
+External Stored Procedure,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+SQL-MR Infrastructure,,,,,,,TBD,,0,10,1000,1,1,1,1
+Column Partitioning and Row Partitioning,SQL Engine,Columnar,Vantage Database,Vantage,In-database Analytics,,TBD,Optimize Performance,2,25,114,1,1,1,1
+Redrive,SQL Engine,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,0,0,0,1,1,1,1
+NOS AutoSchema API,,,,,,,TBD,,0,10,1,1,1,1,1
+Geospatial Index Single Table Distance Predicate,SQL Engine,Geospatial,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+Support Services,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+Union All Pushdown,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,7,9,1,1,1,1
+Retail Industry Data Model,Data Model,Retail Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Segmentation/Customer List Building,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+Model,User Interface,Analyst UI,Vantage Analyst,Vantage,Self-Service,,TBD,Visualize Analytics,5,0,0,1,1,1,1
+NOS Dynamic Object Elimination Join,,,,,,,TBD,,0,10,1000,1,1,1,1
+Ensemble Methods,Machine Learning Engine,Ensemble Methods,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Function Alias,SQL Engine,Data Management,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,0,0,0,1,1,1,1
+Data Stream Extension for IBM Spectrum Protect,Connectivity,Backup Integration,Data Stream Extension,Backup and Restore (BAR),Business Continuity,,TBD,Back up my data,0,10,1000,1,1,1,1
+Dot Notation,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,10,5,47,1,1,1,1
+InList Rewrite to Outer Join,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,2,4,1,1,1,1
+Analytic Customer Profiles,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+PGB Applied for Duplicate Elimination,,,,,,,TBD,,0,10,1000,1,1,1,1
+Unique UnHashed Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,1,51,1,1,1,1
+DBQL Logging,Usage Analysis,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,10,0,0,1,1,1,1
+Life Sciences Industry Data Model,Data Model,Life Sciences Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Soft RetLimit for number of rows AMP step returns,SQL Engine,Data Management,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,0,0,0,1,1,1,1
+Non Unique UnHashed Index,SQL Engine,Performance - Indexing,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,1912,129976,1,1,1,1
+Text,User Interface,Analyst UI,Vantage Analyst,Vantage,Self-Service,,TBD,Visualize Analytics,5,0,0,1,1,1,1
+Column-Partitioned and a NoPI,SQL Engine,Columnar,Vantage Database,Vantage,In-database Analytics,,TBD,Optimize Performance,2,6,85,1,1,1,1
+In-Memory All Rows One AMP Optimization,SQL Engine,Performance - In-Memory,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,174,1678,1,1,1,1
+Neural Networks,Machine Learning Engine,Neural Networks,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+R Advanced SQL Engine Functions,Analytics Library,Analytics Library for R (tdplyr),Vantage Analytics,Vantage,Connectivity,,TBD,Run R,5,0,0,1,1,1,1
+LDAP/SSO,SQL Engine,Security,Vantage Database,Vantage,Security,,TBD,Secure my environment,2,0,0,1,1,1,1
+Fast Column Add,,,,,,,TBD,,0,10,1000,1,1,1,1
+Text Analysis,Machine Learning Engine,Text Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Unity,High Availability,Multi-System,Unity,IntelliSphere,Business Continuity,,TBD,Set up business continuity,5,0,0,1,1,1,1
+Workflow,User Interface,Analyst UI,Vantage Analyst,Vantage,Self-Service,,TBD,Visualize Analytics,5,0,0,1,1,1,1
+Attribution,SQL Engine,Analytics Functions,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+Nested Join for Semi Join,,,,,,,TBD,,0,10,1000,1,1,1,1
+QueryGrid Common Remote Table Elimination,SQL Engine,QueryGrid,Vantage Database,Vantage,Data Loading,,TBD,Load Data,5,1,7,1,1,1,1
+Cross Channel Orchestration,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+Hashed Table,SQL Engine,Data Distribution,Vantage Database,Vantage,Performance,,TBD,Load Data,0,47271,1100735,1,1,1,1
+Bit Manipulation Function,SQL Engine,In-Database Programming,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Push TOP N into UNION ALL Derived Tables,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,2,6,1,1,1,1
+Python Time Series API,Analytics Library,Analytics Library for Python (teradataml),Vantage Analytics,Vantage,Connectivity,,TBD,Run Python,5,10,1000,1,1,1,1
+Multiload Protocol,Connectivity,Teradata Parallel Transporter (TPT),Vantage Database,Vantage,Data Loading,Getting Started,TBD,Load Data,2,2653,41832,1,1,1,1
+Sparse Map,SQL Engine,Multiple Hash Maps,Vantage Database,Vantage,Performance,,TBD,Load Data,0,2,8,1,1,1,1
+In-Memory Enhancement for Outer Join,SQL Engine,Performance - In-Memory,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,48,217,1,1,1,1
+Fast Path Function,SQL Engine,In-Database Programming,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,0,0,0,1,1,1,1
+Period Data Type,SQL Engine,Temporal,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Multisource,SQL Engine,Advanced SQL Function,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Oil/Gas Industry Data Model,Data Model,Oil/Gas Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+Vantage CX,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,10,10,1000,1,1,1,1
+Fastload Protocol,Connectivity,Teradata Parallel Transporter (TPT),Vantage Database,Vantage,Data Loading,,TBD,Load Data,2,1856,22887,1,1,1,1
+WRITE NOS,,,,,,,TBD,,0,10,1000,1,1,1,1
+Aggregation Push for Union All,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,2,192,1,1,1,1
+Fallback,SQL Engine,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,0,0,0,1,1,1,1
+Reference Data Management (RDM),Business Application,Data Integration,Reference Data Management (RDM),Applications,Applications,,TBD,Simplify master data management,10,0,0,1,1,1,1
+In-Memory Enhancement for PRPD Join,SQL Engine,Performance - In-Memory,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,15,108,1,1,1,1
+DBQL THRESHOLD Enabled,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+Customer 360: Connected Identity,Business Application,Customer Experience,Vantage CX,Applications,Applications,,TBD,Better understand my customer,0,10,1000,1,1,1,1
+Geospatial,SQL Engine,Geospatial,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
+JSON Data Type,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,10,24,48,1,1,1,1
+NOS Spool Once Optimization - RelToSpool,,,,,,,TBD,,0,10,1000,1,1,1,1
+PGB Applied for PPI Tables,,,,,,,TBD,,0,10,1000,1,1,1,1
+Scalar Sub Query,SQL Engine,Advanced SQL Function,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,2,0,0,1,1,1,1
+Association Analysis,Machine Learning Engine,Association Analysis,Vantage Analytics,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Autoreparse,SQL Engine,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,0,0,0,1,1,1,1
+EVL Stack Reuse,,,,,,,TBD,,0,3874,24340,1,1,1,1
+Ecosystem Encoded,Accelerator,Data,Service Catalysts,Consulting,Accelerator,,TBD,Get help through services,0,10,1000,1,1,1,1
+No Primary Index,SQL Engine,Data Distribution,Vantage Database,Vantage,Performance,,TBD,Load Data,2,135,6701,1,1,1,1
+InList Rewrite disqualifed by MultiTable Expression,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,1,4,1,1,1,1
+DBQL OBJECT USECOUNT Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+DBQL EXPLAIN Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
+In-Memory AVX2 Support,SQL Engine,Performance - In-Memory,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,1482,23158,1,1,1,1
+IPE Enhancements,,,,,,,TBD,,0,163,592,1,1,1,1
+Data Lab Group,User Interface,Data Lab,Data Lab,IntelliSphere,Applications,Getting Started,TBD,Set-up self-service,5,0,0,1,1,1,1
+Partition Level Locking,High Availability,High Availability,Vantage Database,Vantage,Business Continuity,,TBD,Set up single-system continuity,0,0,0,1,1,1,1
+Python Advanced SQL Engine Functions,Analytics Library,Analytics Library for Python (teradataml),Vantage Analytics,Vantage,Connectivity,,TBD,Run Python,5,10,1000,1,1,1,1
+Healthcare & HHS Industry Data Model,Data Model,Healthcare and HHS Industry,Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+R Table Operator,SQL Engine,Programming Support,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,5,0,0,1,1,1,1
+Query Grid,Connectivity,QueryGrid,QueryGrid,IntelliSphere,Data Loading,,TBD,Load Data,10,34,789,1,1,1,1
+Master Data Management (MDM),Business Application,Data Integration,Master Data Management (MDM),Applications,Applications,,TBD,Simplify master data management,10,0,0,1,1,1,1

@@ -1,0 +1,48 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_datedriver' in run.completed %}
+
+
+### SET DEFAULT GENERATION BEHAVIOR
+{% set process_chunks  = 1  if process_chunks  is not defined else process_chunks %}
+{% set reconcile       = False if reconcile    is not defined else reconcile %}
+
+
+- name: Create vt_DateDriver, with TimeChunk breakout
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_DateDriver as
+      (
+          select Calendar_Date,  {{ process_chunks }} as Process_Chunks
+          ,CEILING(
+                ROW_NUMBER() OVER (ORDER BY Calendar_Date)
+              * cast(Process_Chunks as decimal(9,2))
+              / COUNT(*) OVER ()
+            )(INT) AS Process_Chunk
+          from sys_calendar.calendar
+          where calendar_Date between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+      ) with data
+        primary index (Process_Chunks)
+        on commit preserve rows
+
+- name: Collect Stats on vt_DateDriver
+  connect: source
+  execute:
+    sql: |
+      collect stats
+           column(Calendar_Date)
+          ,column(Process_Chunk)
+      on vt_DateDriver
+
+
+{% if reconcile %}
+- name: "RECONCILE: Export vt_DateDriver"
+  connect: source
+  export:
+    file: reconcile_datedriver.csv
+    sql: Select * from vt_DateDriver order by 1,3
+{% endif %}
+
+
+{% endif %}
+{{ run.completed.append('vt_datedriver') or '' }}

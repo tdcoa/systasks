@@ -1,0 +1,124 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_allocated_utilization_per_table' in run.completed %}
+
+### SET DEFAULT GENERATION BEHAVIOR
+{% set process_chunks  = 3     if process_chunks  is not defined else process_chunks %}
+
+### ============= BUILD Included Flag List =============
+# this macro will combine "include" and all include_* variables
+# into a single "included" variable list for easy testing in SQL
+{% import "coa_util.j2" as macro with context %}
+{{ macro.build_include_flags(run, []) }}
+
+
+{% include "vt_datedriver.j2" %}
+{% include "vt_disk_space.j2" %}
+
+{% for ichunk in range(1, process_chunks+1) %}
+
+- name: {{ 'Create' if ichunk==1 else 'Insert into' }} vt_allocated_utilization_per_table (chunk {{ ichunk }} of {{ process_chunks }})
+  connect: source
+  execute:
+    sql: |
+      {% if ichunk == 1 %}
+      create volatile table vt_allocated_utilization_per_table as (
+      {% else %}
+      insert into vt_allocated_utilization_per_table
+      {% endif %}
+      with
+      dbql as (
+          SELECT
+            {% if not pdcr or td15 %}
+            cast(o.CollectTimeStamp as date) as LogDate1
+            {% else %}
+            l.LogDate as LogDate1
+            {% endif %}
+          , o.QueryID
+          , objectdatabasename AS DatabaseName
+          , ObjectTableName AS TableName
+          , sum(FreqOfUse) AS Use_Cnt
+          , cast(Use_Cnt as float) / sum(Use_Cnt) over(partition by o.QueryID) as Allocation_Pct
+          , Allocation_Pct * sum(l.AMPCPUTime + l.ParserCPUTime) AS Allocated_CPU
+          , Allocation_Pct * sum(l.TotalIOCount) AS Allocated_IOCnt
+          , max(l.TotalIOCount) as UnAllocated_IOCnt
+          FROM {{ dbc.obj }}  o
+          JOIN {{ dbc.log }}  l
+          {% if not pdcr or td15 %}
+            on cast(o.CollectTimeStamp as date) = cast(l.CollectTimeStamp as date)
+          {% else %}
+            on o.LogDate = l.LogDate
+          {% endif %}
+           and o.QueryID = l.QueryID
+          WHERE Objecttype = 'Tab'
+            AND ObjectTableName IS NOT NULL
+            AND ObjectColumnName IS NULL
+            AND LogDate1 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+          GROUP BY 1,2,3,4
+          ),
+      io as (
+          SELECT thedate as LogDate
+          ,coalesce((sum(((FileAcqReadKB + FilePreReadKB + (MemTextPageReads + MemCtxtPageReads ) * 4)
+               + (FileWriteKB + MemCtxtPageWrites * 4) ) / (1024 * 1024) ) (FLOAT))
+            / sum(FileAcqs +FilePreReads +MemTextPageReads +MemCtxtPageWrites+MemCtxtPageReads+FileWrites ),1.0 / (1024 * 1024 * 1024)) AS AvgGB_perIO
+          FROM {{ dbc.spma }}
+          WHERE vproc1 > 0
+            AND LogDate in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+          GROUP BY LogDate
+          ),
+      cds as (
+          SELECT LogDate, DatabaseName, TableName, Table_CurrentPerm_GB
+          From vt_disk_space
+          group by 1,2,3,4
+          )
+      Select
+         dbql.LogDate1  as LogDate
+        {{ ',dbql.QueryID' if 'QueryID' in run.included }}
+        ,dbql.DatabaseName
+        ,dbql.TableName
+        ,sum(dbql.Use_Cnt) as Use_Cnt
+        ,count(*) as Request_Cnt
+        ,max(cds.Table_CurrentPerm_GB) as Table_CurrentPerm_GB
+        ,avg(dbql.Allocation_Pct) as Avg_Allocation_Pct
+        ,sum(dbql.Allocated_CPU) as Allocated_CPU
+        ,sum(dbql.Allocated_IOCnt) as Allocated_IOCnt
+        ,sum(dbql.Allocation_Pct * (dbql.UnAllocated_IOCnt * io.AvgGB_perIO)) as Allocated_IOGB
+        ,sum(dbql.Allocation_Pct * cds.Table_CurrentPerm_GB) as Allocated_CDS_GB
+      from dbql
+      join io
+        on dbql.LogDate1 = io.LogDate
+      join cds
+        on dbql.LogDate1 = cds.LogDate
+       and dbql.DatabaseName = cds.DatabaseName
+       and dbql.TableName = cds.TableName
+      group by
+       dbql.LogDate1
+      ,dbql.DatabaseName
+      ,dbql.TableName
+      {{ ',dbql.QueryID' if 'QueryID' in run.included }}
+      {% if ichunk == 1 %}
+      ) with data
+        {% if 'QueryID' in run.included %}
+        primary index(LogDate, QueryID)
+        {% else %}
+        primary index(LogDate, DatabaseName, TableName)
+        {% endif %}
+        on commit preserve rows
+      {% endif %}
+
+{% endfor %}
+
+
+- name: "Collect Stats on vt_allocated_utilization_per_table"
+  connect: source
+  execute:
+    sql: |
+      Collect Stats
+         column (LogDate, DatabaseName, TableName)
+        {{ ',column (LogDate, QueryID)' if 'QueryID' in run.included }}
+        ,column (LogDate, DatabaseName)
+        ,column (LogDate)
+        ,column (DatabaseName)
+      on vt_allocated_utilization_per_table
+
+{% endif %}
+{{ run.completed.append('vt_allocated_utilization_per_table') or '' }}

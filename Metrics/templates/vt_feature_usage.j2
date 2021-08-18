@@ -1,85 +1,77 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_feature_usage' in run.completed %}
 
-{% include "vt_dim_user.j2" %}
+### ============= SET DEFAULT EXECUTION BEHAVIOR =============
+{% set td15           = True  if tdver[:2]=='15'                else False %}
 
-- name: Create vt_dim_feature for later aggregations
+
+- name: "Create vt_feature_usage (empty)"
   connect: source
   execute:
     sql: |
-      create volatile table vt_dim_feature
-      (
-       Feature_Name                varchar(128)
-      ,Feature_Category            varchar(128)
-      ,Feature_SubCategory         varchar(128)
-      ,Product_Name                varchar(128)
-      ,Product_Category            varchar(128)
-      ,Solution_Type               varchar(128)
-      ,User_Experience_Level_Name  varchar(128)
-      ,Initiator_Role_Category     varchar(128)
-      ,Objective_Name              varchar(128)
-      ,Feature_Weight              smallint
-      ,Max_Threshold_LOW           integer
-      ,Max_Threshold_MED           bigint
-      ,Feature_CPU_Weight          smallint
-      ,Feature_IO_Weight           smallint
-      ,Feature_Time_Weight         smallint
-      ,Feature_Cnt_Weight          smallint
-      ) unique primary index (Feature_Name)
+      create volatile table vt_feature_usage
+      (Site_ID                    varchar(128)
+      ,LogDate                    date format 'yyyy-mm-dd'
+      ,UserName                   varchar(128)
+      ,UserType                   varchar(128) compress(null,'Unknown')
+      ,Organization               varchar(128) compress(null,'Unknown')
+      ,Department                 varchar(128) compress(null,'Unknown')
+      ,FeatureName                varchar(128)
+      ,BitPos                     integer
+      ,Feature_Category           varchar(128) compress(null,'Unknown')
+      ,Feature_SubCategory        varchar(128) compress(null,'Unknown')
+      ,Product_Name               varchar(128) compress(null,'Unknown')
+      ,Product_Category           varchar(128) compress(null,'Unknown')
+      ,Solution_Type              varchar(128) compress(null,'Unknown')
+      ,User_Experience_Level_Name varchar(128) compress(null,'Unknown')
+      ,Initiator_Role_Category    varchar(128) compress(null,'Unknown')
+      ,Objective_Name             varchar(128) compress(null,'Unknown')
+      ,Request_Total_Cnt          integer
+      ,Statement_Total_Cnt        integer
+      ,Request_Error_Cnt          integer
+      ,Statement_Error_Cnt        integer
+      ,Request_Abort_Cnt          integer
+      ,Statement_Abort_Cnt        integer
+      ,distinct_cnt_username      integer
+      ,sum_parsercputime          decimal(18,2)
+      ,sum_ampcputime             decimal(18,2)
+      ,sum_totaliocount           decimal(18,2)
+      ,sum_reqiokb                decimal(18,2)
+      ,sum_reqphysio              decimal(18,2)
+      ,sum_reqphysiokb            decimal(18,2)
+      ,sum_usediota               decimal(38,2)
+      ,sum_impactcpu              decimal(18,2)
+      ,sum_impactio               decimal(18,2)
+      ,sum_lockdelay              decimal(18,2)
+      ,sum_delaytime              decimal(18,2)
+      ,sum_minrespholdtime        decimal(18,2)
+      ,sum_totalfirstresptime     decimal(18,2)
+      ,cnt_allmapamp_query        decimal(18,2)
+      ,avg_allmapamp_pe           decimal(18,2)
+      ,sum_numsteps               integer
+      ,sum_spoolusage             bigint
+      ,sum_numresultrows          bigint
+      ,Feature_Weight             integer compress(null, 0)
+      ,Max_Threshold_LOW          integer compress(null, 10)
+      ,Max_Threshold_MED          integer compress(null, 1000)
+      ,Feature_CPU_Weight         integer compress(null, 1)
+      ,Feature_IO_Weight          integer compress(null, 1)
+      ,Feature_Time_Weight        integer compress(null, 1)
+      ,Feature_Cnt_Weight         integer compress(null, 1)
+      ) primary index(LogDate, UserName, FeatureName)
         on commit preserve rows
 
 
-{% if transcend_dim_load %}
-- name: "TRANSCEND ONLY: insert into vt_dim_feature from Transcend Master (will not work on customer system)"
-  connect: source
-  execute:
-    sql: |
-      Insert into vt_dim_feature
-      Select
-       Feature_Name
-      ,Feature_Category
-      ,Feature_SubCategory
-      ,Product_Name
-      ,Product_Category
-      ,Solution_Type
-      ,User_Experience_Level_Name
-      ,Initiator_Role_Category
-      ,Objective_Name
-      ,Feature_Weight
-      ,Max_Threshold_LOW
-      ,Max_Threshold_MED
-      ,Feature_CPU_Weight
-      ,Feature_IO_Weight
-      ,Feature_Time_Weight
-      ,Feature_Cnt_Weight
-      from mdm_edw_sub.COA_DIM_Feature_VW
 
-{% else %}
-- name: import metadata from .csv into vt_dim_feature
-  connect: source
-  import:
-    file: {{ dim_feature | default (dirs.systasks / "Metrics" / "data" / "dim_feature.csv") }}
-    table: vt_dim_feature
+{% if not td15 %}
+  ## then do most of the work...
+  ## remember, TD15 has no FeatureLogging capability,
+  ## so this returns the above empty table if on td15
+  ## to prevent down-stream processes from failing.
+  ## if not on 15, then do all work
 
-{% endif %}
-
-
-- name: Update vt_dim_feature to turn '' into null
-  connect: source
-  execute:
-    sql: |
-      update vt_dim_feature
-      set
-       Feature_Name               = case when Feature_Name               ='' then null else Feature_Name               end
-      ,Feature_Category           = case when Feature_Category           ='' then null else Feature_Category           end
-      ,Feature_SubCategory        = case when Feature_SubCategory        ='' then null else Feature_SubCategory        end
-      ,Product_Name               = case when Product_Name               ='' then null else Product_Name               end
-      ,Product_Category           = case when Product_Category           ='' then null else Product_Category           end
-      ,Solution_Type              = case when Solution_Type              ='' then null else Solution_Type              end
-      ,User_Experience_Level_Name = case when User_Experience_Level_Name ='' then null else User_Experience_Level_Name end
-      ,Initiator_Role_Category    = case when Initiator_Role_Category    ='' then null else Initiator_Role_Category    end
-      ,Objective_Name             = case when Objective_Name             ='' then null else Objective_Name             end
-
+{% include "vt_decode_feature.j2" %}
+{% include "vt_decode_user.j2" %}
 
 - name: Create vt_feature_usage_prework by date, user, and feature
   connect: source
@@ -136,11 +128,11 @@
                   --consumption metrics
                   ,sum(ParserCPUTime) as sum_parsercputime
                   ,sum(ampcputime)    as sum_ampcputime
-                  ,sum(totaliocount)  as sum_totaliocount
-                  ,sum(ReqIOKB)       as sum_reqiokb
-                  ,sum(ReqPhysIO)     as sum_reqphysio
-                  ,sum(ReqPhysIOKB)   as sum_reqphysiokb
-                  ,sum(usediota)      as sum_usediota
+                  ,sum(case when TotalIOCount >(10**38) then 0 else TotalIOCount end) as sum_totaliocount
+                  ,sum(case when ReqIOKB      >(10**38) then 0 else ReqIOKB      end) as sum_reqiokb
+                  ,sum(case when ReqPhysIO    >(10**38) then 0 else ReqPhysIO    end) as sum_reqphysio
+                  ,sum(case when ReqPhysIOKB  >(10**38) then 0 else ReqPhysIOKB  end) as sum_reqphysiokb
+                  ,sum(case when UsedIota     >(10**38) then 0 else UsedIota     end) as sum_usediota
                   --impact
                   ,sum(case when maxampcputime = 0 then ampcputime else maxampcputime * numofactiveamps end) as sum_impactcpu
                   ,sum(case when maxampio = 0 then totaliocount else maxampio * numofactiveamps end)         as sum_impactio
@@ -165,7 +157,7 @@
                   ,LogDate
                   ,featureusage
                ) as dbq
-          join vt_dim_user as usr
+          join vt_decode_user as usr
             on usr.UserName = dbq.UserName
           )
         select
@@ -218,7 +210,6 @@
       primary index (LogDate, Feature_Name, UserName)
       on commit preserve rows
 
-
 - name: Collect Stats on vt_feature_usage_prework
   connect: source
   execute:
@@ -228,13 +219,13 @@
       on vt_feature_usage_prework
 
 
-- name: Create final vt_feature_usage by date, user, feature
+- name: insert into final vt_feature_usage by date, user, feature
   connect: source
   execute:
     sql: |
-      create volatile table vt_feature_usage  as(
+      insert into vt_feature_usage
         Select
-        dat.Site_ID
+         dat.Site_ID
         ,dat.LogDate
         ,dat.UserName
         ,dat.UserType
@@ -283,11 +274,32 @@
         ,coalesce(dim.Feature_Time_Weight,  1) as Feature_Time_Weight
         ,coalesce(dim.Feature_Cnt_Weight,   1) as Feature_Cnt_Weight
         from vt_feature_usage_prework dat
-        left outer join vt_dim_feature dim
+        left outer join vt_decode_feature dim
         on dat.Feature_Name = dim.Feature_Name
-      ) with data
-        primary index(LogDate, UserName, FeatureName)
-        on commit preserve rows
+
+
+{% if reconcile %}
+- name: Reconcile vt_feature_usage_prework and vt_feature_usage
+  connect: source
+  export:
+    file: reconcile_feature_usage.csv
+    sql: |
+      Select 'vt_feature_usage_prework' as tbl, count(*) as RecCount
+      from vt_feature_usage_prework
+        union all
+      Select 'vt_feature_usage', count(*)
+      from vt_feature_usage
+{% endif %}
+
+{% if not save_prework %}
+- name: Drop temp vt_feature_usage_prework
+  connect: source
+  execute:
+    sql: drop table vt_feature_usage_prework
+{% endif %}
+
+
+{% endif %}  ## end TD15 flag
 
 
 - name: Collect Stats on vt_feature_usage
@@ -303,29 +315,6 @@
           ,column (Organization)
           ,column (Department)
       on vt_feature_usage
-
-{% if reconcile %}
-- name: Reconcile vt_feature_usage_prework and vt_feature_usage
-  connect: source
-  export:
-    file: reconcile_feature_usage.csv
-    sql: |
-      Select 'vt_feature_usage_prework' as tbl, count(*) as RecCount
-      from vt_feature_usage_prework
-        union all
-      Select 'vt_feature_usage', count(*)
-      from vt_feature_usage
-{% endif %}
-
-- name: Drop temp vt_feature_usage_prework
-  connect: source
-  execute:
-    sql: drop table vt_feature_usage_prework
-
-- name: Drop temp vt_dim_feature
-  connect: source
-  execute:
-    sql: drop table vt_dim_feature
 
 {% endif %}
 {{ run.completed.append('vt_feature_usage') or '' }}

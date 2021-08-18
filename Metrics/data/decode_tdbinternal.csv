@@ -1,0 +1,68 @@
+DatabaseName,DatabaseUse,Exclude_VantageUnit_Flag,Exclude_Performance_Flag,Notes
+all,Aliases,0,0,tbd
+autostats,System Administration,0,0,tbd
+autotune,Services App,1,0,tbd
+autotune_analytics,Services App,1,0,tbd
+autotune_Macros,Services App,1,0,tbd
+autotune_procs,Services App,1,0,tbd
+autotune_tables,Services App,1,0,tbd
+autotune_Views,Services App,1,0,tbd
+console,System Administration,0,0,tbd
+cpptadmin,Telemetry,0,0,tbd
+cpptdata,Telemetry,0,0,tbd
+cpptinfo,Telemetry,0,0,tbd
+crashDumps,System Administration,1,1,tbd
+dbc,DBC - Top Level Database,1,0,tbd
+dbcmanager,System Administration,1,0,tbd
+dbcmngr,System Administration,1,0,tbd
+dbqrymgr,System Administration,1,0,tbd
+default,Aliases,0,0,tbd
+edwdecoded,Services App,0,0,tbd
+external_ap,Extensibility,1,0,tbd
+extUser,Aliases,0,0,tbd
+locklogshredder,System Administration,1,1,tbd
+oldviewpoint,System Administration,1,0,tbd
+pdcraccess,Telemetry,0,0,tbd
+pdcradm,Telemetry,0,0,tbd
+pdcradmin,Telemetry,0,0,tbd
+pdcrdata,Telemetry,0,0,tbd
+pdcrhiga,Telemetry,0,0,tbd
+pdcrinfo,Telemetry,0,0,tbd
+pdcrstg,Telemetry,0,0,tbd
+pdcrtpcd,Telemetry,0,0,tbd
+public,Aliases,0,0,tbd
+spool_reserve,System Administration,0,0,tbd
+sqlj,Extensibility,0,0,tbd
+statisticsmanager,System Administration,0,0,tbd
+sysadmin,System Administration,0,0,tbd
+sysback,System Administration,0,0,tbd
+sysbar,System Administration,0,0,tbd
+sysdba,System Administration,0,0,tbd
+sysjdbc,Extensibility,0,0,tbd
+syslib,Extensibility,0,1,tbd
+sysspatial,Extensibility,0,0,tbd
+systemfe,System Administration,0,0,tbd
+sysudtlib,Extensibility,0,0,tbd
+sysuif,Extensibility,0,0,tbd
+sysxml,Extensibility,0,0,tbd
+sys_calendar,Calendar,0,0,tbd
+tdap_admin,System Administration,0,0,tbd
+tdmaps,Extensibility,1,0,tbd
+tdpUser,System Administration,0,0,tbd
+tdqcd,System Administration,0,0,tbd
+tdstats,System Administration,0,0,tbd
+tdviewpoint,System Administration,1,0,tbd
+tdvViewpoint1,System Administration,1,0,tbd
+tdwm,System Administration,0,0,tbd
+td_common,Services App,1,0,tbd
+td_common_data,Services App,1,0,tbd
+td_common_view,Services App,1,0,tbd
+td_reconfig,System Administration,0,0,tbd
+td_Server_db,System Administration,0,0,tbd
+td_sevices,Services App,1,0,tbd
+td_sysfnlib,Extensibility,0,0,tbd
+td_sysgpl,Extensibility,0,0,tbd
+td_sysxml,Extensibility,0,0,tbd
+td_upgradetestingframework,Services App,1,0,tbd
+userspace,System Administration,0,0,tbd
+viewpoint,System Administration,1,0,tbd

@@ -1,6 +1,8 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_dbc_column_summary' in run.completed %}
 
+{% set td15 = True  if tdver[:2]=='15' else False %}
+
 {% include "vt_dim_datatype.j2" %}
 
 - name:  Create vt_dbc_column_summary
@@ -19,7 +21,7 @@
              SELECT
                ColumnType
               ,IdColType
-              ,COALESCE(StorageFormat, '') AS StorageFormat
+              ,COALESCE({{ 'null' if td15 else 'StorageFormat' }}, '') AS StorageFormat
               ,CASE WHEN ColumnFormat IS NOT NULL THEN 'Y' ELSE 'N' END AS ColumnFormatted
               ,CASE ColumnType
                  WHEN 'BF' THEN       '(' || TRIM(ColumnLength (FORMAT '-(9)9')) || ')'
@@ -90,7 +92,9 @@
        ) C
         FULL OUTER JOIN vt_dim_datatype DT
          ON DT.DataType = C.ColumnType
+        {% if td15 %}
         AND coalesce(DT.StorageFormat,'') = coalesce(C.StorageFormat,'')
+        {% endif %}
       )with data
       no primary index on commit preserve rows
 

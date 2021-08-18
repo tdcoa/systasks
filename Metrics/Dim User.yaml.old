@@ -1,0 +1,17 @@
+description: Print out table vt_dim_user, for reconciliation purposes.
+version: 1
+tasks:
+
+{% include "vt_dim_user.j2" %}
+
+{% set chart      = True  if chart      is not defined else chart %}
+{% set upload     = False if upload     is not defined else upload %}
+{% set export_all = False if export_all is not defined else export_all %}
+{% set reconcile  = False if reconcile  is not defined else reconcile %}
+
+
+- name: Export vt_dim_user for reconciliation
+  connect: source
+  export:
+    file: dim_user_reconcile.csv
+    sql: Select * from vt_dim_user order by Organization, Department, UserName

@@ -1,0 +1,834 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbql_core' in run.completed %}
+
+### option switches and defaults:
+{% if include_fields %}
+{% if 'hour'           in include_fields.lower() %} {% set include_hour             = True %} {% endif %}
+{% if 'user'           in include_fields.lower() %} {% set include_user             = True %} {% endif %}
+{% if 'wdname'         in include_fields.lower() %} {% set include_wdname           = True %} {% endif %}
+{% if 'metric_classes' in include_fields.lower() %} {% set include_metric_classes   = True %} {% endif %}
+{% if 'querygrid'      in include_fields.lower() %} {% set include_querygrid_flag   = True %} {% endif %}
+{% if 'subsecond'      in include_fields.lower() %} {% set include_subsecond_flag   = True %} {% endif %}
+{% if 'cachehit'       in include_fields.lower() %} {% set include_cachehit_score   = True %} {% endif %}
+{% if 'complexity'     in include_fields.lower() %} {% set include_complexity_score = True %} {% endif %}
+{% endif %}
+
+### Set defaults for anything not defined above
+{% set reconcile                = False if reconcile                is not defined else reconcile %}
+{% set save_prework             = False if save_prework             is not defined else save_prework %}
+{% set include_hour             = False if include_hour             is not defined else include_hour %}
+{% set include_user             = False if include_user             is not defined else include_user %}
+{% set include_wdname           = False if include_wdname           is not defined else include_wdname %}
+{% set include_metric_classes   = False if include_metric_classes   is not defined else include_metric_classes %}
+{% set include_querygrid_flag   = False if include_querygrid_flag   is not defined else include_querygrid_flag %}
+{% set include_subsecond_flag   = False if include_subsecond_flag   is not defined else include_subsecond_flag %}
+{% set include_cachehit_score   = False if include_cachehit_score   is not defined else include_cachehit_score %}
+{% set include_complexity_score = False if include_complexity_score is not defined else include_complexity_score %}
+
+### allow either to work:
+{% if include_tactical_flag %} {% set include_subsecond_flag = true %} {% endif %}
+
+#### set statement bucket to between 3 and 15, as an increment of 3
+{% set statement_use_buckets = 15 if statement_use_buckets is not defined else statement_use_buckets %}
+{% if statement_use_buckets > 15 %}
+{% set statement_use_buckets = 15%}
+{% elif statement_use_buckets < 3 %}
+{% set statement_use_buckets = 3 %}
+{% elif statement_use_buckets % 3 != 0 %}
+{% set statement_use_buckets = ((statement_use_buckets / 3) |int) * 3 %}
+{% endif %}
+
+
+{% set dbqlcore_tasklabel = '' %}
+{% set dbqlcore_tasklabel = dbqlcore_tasklabel ~ ' by hour' if include_hour else dbqlcore_tasklabel %}
+{% set dbqlcore_tasklabel = dbqlcore_tasklabel ~ ' by user' if include_user else dbqlcore_tasklabel %}
+{% set dbqlcore_tasklabel = dbqlcore_tasklabel ~ ' by WDName' if include_wdname else dbqlcore_tasklabel %}
+
+{% set td15 = True if tdver[:2]=='15' else False %}
+
+### let's output all selections, just to reconcile:
+- name: Export all DBQL_Core settings, just for reference
+  connect: source
+  export:
+    file: dbql_core_reconcile_settings.csv
+    sql: |
+      select * from (select 'reconcile' (VARCHAR(128)) as varName, '{{reconcile}}' (VARCHAR(512))   as varValue)a1 union all
+      select * from (select 'save_prework'             as varName, '{{save_prework}}'   as varValue)a2 union all
+      select * from (select 'include_hour'             as varName, '{{include_hour}}'   as varValue)a3 union all
+      select * from (select 'include_user'             as varName, '{{include_user}}'   as varValue)a4 union all
+      select * from (select 'include_wdname'           as varName, '{{include_wdname}}'   as varValue)a5 union all
+      select * from (select 'include_metric_classes'   as varName, '{{include_metric_classes}}'   as varValue)a6 union all
+      select * from (select 'include_querygrid_flag'   as varName, '{{include_querygrid_flag}}'   as varValue)a7 union all
+      select * from (select 'include_subsecond_flag'   as varName, '{{include_subsecond_flag}}'   as varValue)a8 union all
+      select * from (select 'include_cachehit_score'   as varName, '{{include_cachehit_score}}'   as varValue)a9 union all
+      select * from (select 'include_complexity_score' as varName, '{{include_complexity_score}}'   as varValue)aa union all
+      select * from (select 'include_fields'           as varName, '{{include_fields}}'   as varValue)ab union all
+      select * from (select 'tdver'                    as varName, '{{tdver}}'   as varValue)ac union all
+      select * from (select 'is tdver <= 15?'          as varName, '{{td15}}'   as varValue)ad union all
+      select * from (select 'siteid'                   as varName, '{{siteid}}'   as varValue)ae union all
+      select * from (select 'pdcr'                     as varName, '{{pdcr}}'   as varValue)af union all
+      select * from (select 'customer_name'            as varName, '{{customer_name}}'   as varValue)ag union all
+      select * from (select 'your_name'                as varName, '{{your_name}}'   as varValue)ah union all
+      select * from (select 'your_title'               as varName, '{{your_title}}'   as varValue)ai union all
+      select * from (select 'startdate'                as varName, '{{startdate}}'   as varValue)aj union all
+      select * from (select 'enddate'                  as varName, '{{enddate}}'   as varValue)ak
+
+# load other dim templates:
+{% include "vt_dim_app.j2" %}
+{% include "vt_dim_user.j2" %}
+{% include "vt_dim_statement.j2" %}
+
+
+- name:  Create vt_dbql_core_prework to minimize spool-outs (TD15 = {{ td15 }})
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbql_core_prework as
+      (
+      SELECT
+         {{ dbc.logdt }} as LogDate
+        {% if include_hour %}
+        ,cast(cast(starttime as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as LogTS
+        {% endif %}
+        {% if include_wdname %}
+        ,WDName
+        {% endif %}
+        ,username
+        ,appid
+        ,StatementType
+        ,Total_AMPs
+        {% if include_querygrid_flag %}
+        ,QueryGrid_Flag
+        {% endif %}
+
+        {% if include_complexity_score %}
+        /* ======= Complexity Score ========== */
+        ,Complexity_Effect
+        ,Complexity_Effect_Step
+        {% endif %}
+
+        {% if include_cachehit_score %}
+        /* ======= CacheHit Score ========== */
+        /* Normal cache miss rate <20%, set score = 0.  For miss rate < 20%, scale from 0 to 10 */
+        ,case
+         when CacheMiss_CntPct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
+         when CacheMiss_CntPct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
+         else cast((CacheMiss_CntPct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
+          end as CacheMiss_CntScore
+        ,case
+         when CacheMiss_SizePct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
+         when CacheMiss_SizePct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
+         else cast((CacheMiss_SizePct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
+          end as CacheMiss_SizeScore
+        {% endif %}
+
+        /* ====== Request and Statement Counts ======= */
+        ,zeroifnull(cast(count(*) as BigInt)) as Request_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Statements as BigInt))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(case when dbql.StatementGroup like '%=%'     then 1 else 0 end as SmallInt))) as Request_MultiStatement_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)  then 1               else 0 end as bigint))) as   Request_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)  then dbql.Statements else 0 end as bigint))) as Statement_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)    then 1               else 0 end as bigint))) as   Request_Spool_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)    then dbql.Statements else 0 end as bigint))) as Statement_Spool_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)    then 1               else 0 end as bigint))) as   Request_TASM_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)    then dbql.Statements else 0 end as bigint))) as Statement_TASM_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'               then 1               else 0 end as bigint))) as   Request_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'               then dbql.Statements else 0 end as bigint))) as Statement_Abort_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount = 0                   then 1               else 0 end as bigint))) as   Request_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount = 0                   then dbql.Statements else 0 end as bigint))) as Statement_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO = 0 then 1               else 0 end as bigint))) as   Request_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO = 0 then dbql.Statements else 0 end as bigint))) as Statement_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO > 0 then 1               else 0 end as bigint))) as   Request_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO > 0 then dbql.Statements else 0 end as bigint))) as Statement_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1      then 1               else 0 end as bigint))) as   Request_AllAMP_Cnt
+        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1      then dbql.Statements else 0 end as bigint))) as Statement_AllAMP_Cnt
+        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)        then 1               else 0 end as bigint))) as   Request_Utility_Cnt
+        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)        then dbql.Statements else 0 end as bigint))) as Statement_Utility_Cnt
+        {% if include_subsecond_flag %}
+        ,SubSecond_Flag -- adds subsecond flag as dimension
+        {% endif %}
+        {% if include_tactical_flag %}
+        ,Tactical_Flag -- adds tactical flag as dimension
+        {% endif %}
+        ,cast(sum(SubSecond_Flag) as integer) as Request_SubSecond_Cnt
+        ,sum(cast(case when SubSecond_Flag = 1 then dbql.Statements else 0 end as integer)) as Statement_SubSecond_Cnt
+        ,cast(sum(Tactical_Flag) as integer)  as Request_Tactical_Cnt
+        ,sum(cast(case when Tactical_Flag  = 1 then dbql.Statements else 0 end as integer)) as Statement_Tactical_Cnt
+
+        /* ====== Metrics: RunTimes ======= */
+        ,sum(cast(zeroifnull(dbql.DelayTime)    as decimal(38,4))) as DelayTime_Sec
+        ,sum(cast(zeroifnull(ParseTime_Sec   ) as decimal(38,4))) AS RunTime_Parse_Sec
+        ,sum(cast(zeroifnull(AMPTime_Sec     ) as decimal(38,4))) AS RunTime_AMP_Sec
+        ,sum(cast(zeroifnull(TotalExec_Sec   ) as decimal(38,4))) AS RunTime_Total_Sec
+        ,sum(cast(zeroifnull(TransferTime_Sec) as decimal(38,4))) AS TransferTime_Sec
+
+        /* ====== Metrics: CPU & IO ====== */
+        ,zeroifnull(sum( cast(dbql.ParserCPUTime    as decimal(32,3)))) as CPU_Parse_Sec
+        ,zeroifnull(sum( cast(dbql.AMPCPUtime       as decimal(32,3)))) as CPU_AMP_Sec
+        ,zeroifnull(sum( cast(case when ReqPhysIO    <(10**38) then ReqPhysIO    else 0 end /1e6  as decimal(38,2)))) as IOCntM_Physical
+        ,zeroifnull(sum( cast(case when TotalIOCount <(10**38) then TotalIOCount else 0 end /1e6  as decimal(38,2)))) as IOCntM_Total
+        ,zeroifnull(sum( cast(case when ReqPhysIOKB  <(10**38) then ReqPhysIOKB  else 0 end /1e6  as decimal(38,2)))) as IOGB_Physical
+        ,zeroifnull(sum( cast(case when ReqIOKB      <(10**38) then ReqIOKB      else 0 end /1e6  as decimal(38,2)))) as IOGB_Total
+        {% if td15 %}
+        ,null as IOTA_Used_cntB
+        {% else %}
+        ,zeroifnull(sum( cast(case when UsedIOTA     < (10**38) then UsedIOTA    else 0 end /1e9  as decimal(38,2)))) as IOTA_Used_cntB
+        {% endif %}
+
+        /* ====== Metrics: Other ====== */
+        ,zeroifnull(sum(SpoolUsage/1e9))  as Spool_GB
+        ,zeroifnull(sum(cast(dbql.NumResultRows as BigInt) )) as Returned_Row_Cnt
+        ,zeroifnull(cast(avg(NumOfActiveAMPs) as decimal(18,4))) as NumOfActiveAMPs_Avg
+        ,cast(avg(dbql.NumSteps) as decimal(15,4)) as Query_Complexity_Score_Avg
+        ,sum(TotalServerByteCount) as TotalServer_Byte_Cnt
+
+
+        {% if include_metric_classes %}
+        /* ====== Metrics: Class Groupings ====== */
+        ,case when nullifzero(DelayTime) is NULL then '0000 - 0000'
+        {% set ns = namespace(lb=0, ubs=[1,5,10,30,60,300,600,1800,3600]) %}
+        {% for ub in ns.ubs %}
+              when DelayTime >= {{ '%04d' % ns.lb }}.0  AND DelayTime < {{ '%04d' % ub }}.0  then '{{ '%04d' % ns.lb }} - {{ '%04d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when DelayTime >= {{ '%04d' % ns.lb }}.0  then '{{ '%04d' % ns.lb }}+'
+          end as DelayTime_Class
+
+        ,case when nullifzero(ParseTime_Sec) is NULL then '0000 - 0000'
+        {% set ns = namespace(lb=0, ubs=[1,5,10,30,60,300,600,1800,3600]) %}
+        {% for ub in ns.ubs %}
+              when ParseTime_Sec >= {{ '%04d' % ns.lb }}.0  AND ParseTime_Sec < {{ '%04d' % ub }}.0  then '{{ '%04d' % ns.lb }} - {{ '%04d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when ParseTime_Sec >= {{ '%04d' % ns.lb }}.0  then '{{ '%04d' % ns.lb }}+'
+          end as ParseTime_Class
+
+        ,case when nullifzero(AMPTime_Sec) is NULL then '0000 - 0000'
+        {% set ns = namespace(lb=0, ubs=[1,5,10,30,60,300,600,1800,3600]) %}
+        {% for ub in ns.ubs %}
+              when AMPTime_Sec >= {{ '%04d' % ns.lb }}.0  AND AMPTime_Sec < {{ '%04d' % ub }}.0  then '{{ '%04d' % ns.lb }} - {{ '%04d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when AMPTime_Sec >= {{ '%04d' % ns.lb }}.0  then '{{ '%04d' % ns.lb }}+'
+          end as AMPTime_Class
+
+        ,case when nullifzero(TotalExec_Sec) is NULL then '0000 - 0000'
+        {% set ns = namespace(lb=0, ubs=[1,5,10,30,60,300,600,1800,3600]) %}
+        {% for ub in ns.ubs %}
+              when TotalExec_Sec >= {{ '%04d' % ns.lb }}.0  AND TotalExec_Sec < {{ '%04d' % ub }}.0  then '{{ '%04d' % ns.lb }} - {{ '%04d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when TotalExec_Sec >= {{ '%04d' % ns.lb }}.0  then '{{ '%04d' % ns.lb }}+'
+          end as TotalExec_Class
+
+        ,case when nullifzero(TransferTime_Sec) is NULL then '0000 - 0000'
+        {% set ns = namespace(lb=0, ubs=[1,5,10,30,60,300,600,1800,3600]) %}
+        {% for ub in ns.ubs %}
+              when TransferTime_Sec >= {{ '%04d' % ns.lb }}.0  AND TransferTime_Sec < {{ '%04d' % ub }}.0  then '{{ '%04d' % ns.lb }} - {{ '%04d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when TransferTime_Sec >= {{ '%04d' % ns.lb }}.0  then '{{ '%04d' % ns.lb }}+'
+          end as TransferTime_Class
+
+        ,case when nullifzero(TotalIOCount) is NULL then 'None'
+        {% set ns = namespace(lb=0, ubs=[1,4,6,8,10]) %}
+        {% for ub in ns.ubs %}
+              when TotalIOCount >= 1e{{ ns.lb }} AND TotalIOCount < 1e{{ ub }}  then '1e{{ ns.lb }} - 1e{{ ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when TotalIOCount >= 1e{{ ns.lb }}  then '1e{{ ns.lb }}+'
+          end as TotalIOCount_Class
+
+        ,case when nullifzero(AMPCPUTime) is NULL then '00000 - 000000'
+        {% set ns = namespace(lb=0, ubs=[1,10,100,1000,10000,100000]) %}
+        {% for ub in ns.ubs %}
+              when AMPCPUTime >= {{ '%05d' % ns.lb }}.0  AND AMPCPUTime < {{ '%05d' % ub }}.0  then '{{ '%05d' % ns.lb }} - {{ '%05d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when AMPCPUTime >= {{ '%05d' % ns.lb }}.0  then '{{ '%05d' % ns.lb }}+'
+          end as AMPCPUTime_Class
+
+        ,case when nullifzero(ParserCPUTime) is NULL then '00000 - 000000'
+        {% set ns = namespace(lb=0, ubs=[1,5,10,50,100,500,1000,5000,10000]) %}
+        {% for ub in ns.ubs %}
+              when ParserCPUTime >= {{ '%05d' % ns.lb }}.0  AND ParserCPUTime < {{ '%05d' % ub }}.0  then '{{ '%05d' % ns.lb }} - {{ '%05d' % ub }}'
+              {% set ns.lb = ub %}
+        {% endfor %}
+              when ParserCPUTime >= {{ '%05d' % ns.lb }}.0  then '{{ '%05d' % ns.lb }}+'
+          end as ParserCPUTime_Class
+
+        {% endif %}
+        From (
+            Select
+            /* ====== CORE FIELDS NEEDED (limits spool) ======= */
+            LogDate, CollectTimeStamp, QueryID, UserID, SessionID, LogicalHostID, RequestNum, LogonSource, AppID, ClientID, ClientAddr,
+            QueryBand, ProfileID, StartTime, FirstStepTime, FirstRespTime, LastStateChange, NumSteps, NumStepswPar, MaxStepsInPar,
+            NumResultRows, NumResultOneMBRows, MaxOneMBRowSize, TotalIOCount, AMPCPUTime, ParserCPUTime, UtilityByteCount, UtilityRowCount,
+            ErrorCode, ErrorText, WarningOnly, DelayTime, AbortFlag, CacheFlag, StatementType, NumOfActiveAMPs, MaxAMPCPUTime, MaxCPUAmpNumber,
+            MinAmpCPUTime, MaxAmpIO, MaxIOAmpNumber, MinAmpIO, SpoolUsage, WDID, WDName, OpEnvName, SysConName, FinalWDName, LSN,
+            NoClassification, WDOverride, ResponseTimeMet, ExceptionValue, FinalWDID, TDWMEstMaxRows, TDWMEstLastRows, TDWMEstTotalTime,
+            TDWMAllAmpFlag, TDWMConfLevelUsed, TDWMRuleID, UserName, DefaultDatabase, AMPCPUTimeNorm, ParserCPUTimeNorm,
+            MaxAMPCPUTimeNorm, MaxCPUAmpNumberNorm, MinAmpCPUTimeNorm, EstResultRows, EstProcTime, EstMaxRowCount, ProxyUser, ProxyRole,
+            StatementGroup, SessionTemporalQualifier, CalendarName, SessionWDID, DataCollectAlg, ParserExpReq, KeepFlag,
+            QueryRedriven, ReDriveKind, CPUDecayLevel, IODecayLevel, TacticalCPUException, TacticalIOException, SeqRespTime,
+            ReqIOKB, ReqPhysIO, ReqPhysIOKB, NumFragments, CheckpointNum, UnityTime, LockDelay, LastRespTime, DisCPUTime, Statements,
+            DisCPUTimeNorm, TxnMode, RequestMode, UtilityInfoAvailable, UnitySQL, ThrottleBypassed, FlexThrottle, DBQLStatus,
+            IterationCount, VHLogicalIO, VHPhysIO, VHLogicalIOKB, VHPhysIOKB, TDWMEstMemUsage, MaxStepMemory, TotalServerByteCount,
+            ProxyUserID, TxnUniq, LockLevel, TTGranularity, ProfileName, EstMaxStepTime, ParamQuery, RemoteQuery, PersistentSpool,
+            MinRespHoldTime, TotalFirstRespTime, MaxNumMapAMPs, MinNumMapAMPs, SysDefNumMapAMPs, FeatureUsage, ReqMaxSpool, NumAmpsImpacted,
+            SessionWDName, MaxAmpsMapNo
+            {% if not td15 %}
+            ,UsedIota
+            {% endif %}
+
+            /* ====== GENERAL ENHANCED FIELDS ======= */
+            ,cast(HashAmp()+1 as Integer) as Total_AMPs
+            ,case when TotalServerByteCount > 0 then 1 else 0 END AS QueryGrid_Flag
+            ,((FirstStepTime - StartTime    ) HOUR(3) TO SECOND(6)) AS Parse_Time
+            ,((FirstRespTime - FirstStepTime) HOUR(3) TO SECOND(6)) AS AMP_Time
+            ,((FirstRespTime - StartTime    ) HOUR(3) TO SECOND(6)) AS TotalExec_Time
+            ,((COALESCE(LastRespTime,FirstRespTime) - FirstRespTime) HOUR(3) TO SECOND(6)) AS Transfer_Time
+            ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM Parse_Time)     * 3600 + EXTRACT(MINUTE FROM Parse_Time)     * 60 + EXTRACT(SECOND FROM Parse_Time)     AS FLOAT)) AS ParseTime_Sec
+            ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM AMP_Time)       * 3600 + EXTRACT(MINUTE FROM AMP_Time)       * 60 + EXTRACT(SECOND FROM AMP_Time)       AS FLOAT)) AS AMPTime_Sec
+            ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM TotalExec_Time) * 3600 + EXTRACT(MINUTE FROM TotalExec_Time) * 60 + EXTRACT(SECOND FROM TotalExec_Time) AS FLOAT)) AS TotalExec_Sec
+            ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM Transfer_Time)  * 3600 + EXTRACT(MINUTE FROM Transfer_Time)  * 60 + EXTRACT(SECOND FROM Transfer_Time)  AS FLOAT)) AS TransferTime_Sec
+            ,case when TotalExec_Sec <= 1.00000 then 1 else 0 end as SubSecond_Flag
+            ,case when d.StatementType = 'Select' and d.NumOfActiveAMPs < (Total_AMPs * 0.10) and SubSecond_Flag = 1 then 1 else 0 end  as Tactical_Flag
+            ,case when TotalIOCount <(10**38) then cast(zeroifnull(ReqPhysIO   /nullifzero(TotalIOCount))  as float) else 0.0 end as CacheMiss_CntPct
+            ,case when ReqIOKB      <(10**38) then cast(zeroifnull(ReqPhysIOKB /nullifzero(ReqIOKB)) as float) else 0.0 end as CacheMiss_SizePct
+
+            {% if include_complexity_score %}
+            /* ===========> OPTIONAL: COMPLEXITY SCORE <================ */
+            ,sum(AMPCPUTime)   over() /10.0  as MaxCPU_Decile
+            ,sum(TotalIOCount) over() /10.0  as MaxIO_Decile
+            ,sum(NumSteps)     over() /10.0  as MaxSteps_Decile
+            ,case
+            {% set ns = namespace(lb=0, ubs=range(1,10)) %}
+            {% for ub in ns.ubs %}
+                  when AMPCPUTime >= (MaxCPU_Decile * {{ ns.lb }}.0) AND AMPCPUTime < (MaxCPU_Decile * {{ ub }}.0)  then {{ ns.lb }}
+                  {% set ns.lb = ub %}
+            {% endfor %}
+                  when AMPCPUTime >= (MaxCPU_Decile * {{ ns.lb }}.0)  then {{ ns.lb }}
+              end as Complexity_CPU
+            ,case
+            {% set ns = namespace(lb=0, ubs=range(1,10)) %}
+            {% for ub in ns.ubs %}
+                  when TotalIOCount >= (MaxIO_Decile * {{ ns.lb }}.0) AND TotalIOCount < (MaxIO_Decile * {{ ub }}.0)  then {{ ns.lb }}
+                  {% set ns.lb = ub %}
+            {% endfor %}
+                  when TotalIOCount >= (MaxIO_Decile * {{ ns.lb }}.0)  then {{ ns.lb }}
+              end as Complexity_IO
+            ,case
+            {% set ns = namespace(lb=0, ubs=range(1,10)) %}
+            {% for ub in ns.ubs %}
+                  when NumSteps >= (MaxIO_Decile * {{ ns.lb }}.0) AND NumSteps < (MaxIO_Decile * {{ ub }}.0)  then {{ ns.lb }}
+                  {% set ns.lb = ub %}
+            {% endfor %}
+                  when NumSteps >= (MaxIO_Decile * {{ ns.lb }}.0)  then {{ ns.lb }}
+              end as Complexity_NumSteps
+            ,(((COMPLEXITY_CPU + COMPLEXITY_IO + COMPLEXITY_NUMSTEPS + 0.7)/3)(DECIMAL(6,0))) as Complexity_Effect_Step
+            ,(((COMPLEXITY_CPU + COMPLEXITY_IO + 0.5)/2) (DECIMAL(6,0))) as Complexity_Effect
+            /* ===========> END COMPLEXITY SCORE <================ */
+            {% endif %}
+
+            from {{ dbc.log }} as d
+            where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+            ) as dbql
+        Group by
+         {{ dbc.logdt }}
+         {% if include_hour %}
+         ,LogTS
+         {% endif %}
+         {% if include_wdname %}
+         ,WDName
+         {% endif %}
+         ,username
+        ,appid
+        ,StatementType
+        {% if include_subsecond_flag %}
+        ,SubSecond_Flag
+        {% endif %}
+        {% if include_tactical_flag %}
+        ,Tactical_Flag
+        {% endif %}
+        {% if include_querygrid_flag %}
+        ,QueryGrid_Flag
+        {% endif %}
+        {% if include_complexity_score %}
+        ,Complexity_Effect
+        ,Complexity_Effect_Step
+        {% endif %}
+        {% if include_cachehit_score %}
+        ,CacheMiss_CntScore
+        ,CacheMiss_SizeScore
+        {% endif %}
+        {% if include_metric_classes %}
+        ,DelayTime_Class
+        ,ParseTime_Class
+        ,AMPTime_Class
+        ,TotalExec_Class
+        ,TransferTime_Class
+        ,TotalIOCount_Class
+        ,AMPCPUTime_Class
+        ,ParserCPUTime_Class
+        {% endif %}
+
+      union all
+
+
+      /* ========================== */
+      /* ====== SUMMARY DATA ====== */
+      /* ========================== */
+      SELECT
+         {{ dbc.logdt }} as LogDate
+        {% if include_hour %}
+        ,cast(cast(starttime as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as LogTS
+        {% endif %}
+        {% if include_wdname %}
+        ,'Summary' as WDName
+        {% endif %}
+        {% if td15 %}
+        ,username15 as UserName
+        {% else %}
+        ,UserName
+        {% endif %}
+        ,appid
+        ,'Summary' as StatementType
+        ,HashAmp() + 1 as Total_AMPs
+        {% if include_querygrid_flag %}
+        ,0 as QueryGrid_Flag
+        {% endif %}
+        {% if include_complexity_score %}
+        ,1 as Complexity_Effect
+        ,1 as Complexity_Effect_Step
+        {% endif %}
+        {% if include_cachehit_score %}
+        /* ======= CacheHit Score ========== */
+        ,case
+         when case when TotalIOCount <(10**38) then cast(zeroifnull(ReqPhysIO/nullifzero(TotalIOCount))  as float) else 0.0 end <= 0.20 then 0
+         when case when TotalIOCount <(10**38) then cast(zeroifnull(ReqPhysIO/nullifzero(TotalIOCount))  as float) else 0.0 end >= 1.00 then 10
+         else cast(((case when TotalIOCount <(10**38) then cast(zeroifnull(ReqPhysIO/nullifzero(TotalIOCount))  as float) else 0.0 end) - 0.20) * 12.5 as integer)
+          end as CacheMiss_CntScore
+        ,CacheMiss_CntScore as CacheMiss_SizeScore
+        {% endif %}
+
+        /* ====== Request and Statement Counts ======= */
+        ,zeroifnull(sum(cast(QueryCount as bigint))) as Request_Cnt
+        ,zeroifnull(sum(cast(QueryCount as bigint))) as Query_Cnt
+        ,0 as Request_MultiStatement_Cnt
+        ,0 as   Request_Error_Cnt
+        ,0 as Statement_Error_Cnt
+        ,0 as   Request_Spool_Error_Cnt
+        ,0 as Statement_Spool_Error_Cnt
+        ,0 as   Request_TASM_Abort_Cnt
+        ,0 as Statement_TASM_Abort_Cnt
+        ,0 as   Request_Abort_Cnt
+        ,0 as Statement_Abort_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount = 0                   then 1          else 0 end as bigint))) as   Request_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount = 0                   then QueryCount else 0 end as bigint))) as Statement_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO = 0 then QueryCount else 0 end as bigint))) as   Request_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO = 0 then QueryCount else 0 end as bigint))) as Statement_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO > 0 then QueryCount else 0 end as bigint))) as   Request_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount > 0 AND ReqPhysIO > 0 then QueryCount else 0 end as bigint))) as Statement_PhysIO_Cnt
+        ,0 as   Request_AllAMP_Cnt
+        ,0 as Statement_AllAMP_Cnt
+        ,0 as   Request_Utility_Cnt
+        ,0 as Statement_Utility_Cnt
+        {% if include_subsecond_flag %}
+        ,0 as SubSecond_Flag
+        {% endif %}
+        {% if include_tactical_flag %}
+        ,0 as Tactical_Flag
+        {% endif %}
+        ,sum(case when cast(smry.QuerySeconds / nullifzero(smry.QueryCount) as float) <= 1.000
+                  then zeroifnull(smry.QueryCount) else 0 end) as   Request_SubSecond_Cnt
+        ,sum(case when cast(smry.QuerySeconds / nullifzero(smry.QueryCount) as float) <= 1.000
+                  then zeroifnull(smry.QueryCount) else 0 end) as Statement_SubSecond_Cnt
+        ,0 as   Request_Tactical_Cnt
+        ,0 as Statement_Tactical_Cnt
+
+        /* ====== Metrics: RunTimes ====== */
+        ,0 as DelayTime_Sec
+        ,0 as RunTime_Parse_Sec
+        ,0 as Runtime_AMP_Sec
+        ,zeroifnull(sum(cast(smry.QuerySeconds as decimal(38,2)))) as RunTime_Total_Sec
+        ,0 as TransferTime_Sec
+
+        /* ====== Metrics: CPU & IO ====== */
+        ,zeroifnull(sum(cast(ParserCPUTime as decimal(38,3)))) as CPU_Parse_Sec
+        ,zeroifnull(sum(cast(AMPCPUTime    as decimal(38,3)))) as CPU_AMP_Sec
+        {% if td15  %}
+        ,cast(0 as decimal(38,2)) as IOCntM_Physical
+        ,zeroifnull(sum(cast(case when TotalIOCount <(10**38) then TotalIOCount else 0 end /1e6 as decimal(38,2)))) as IOCntM_Total
+        ,cast(0 as decimal(38,2)) as IOGB_Physical
+        ,cast(0 as decimal(38,2)) as IOGB_Total
+        ,cast(0 as decimal(38,2)) as IOTA_Used_cntB
+        {% else %}
+        ,zeroifnull(sum(cast(case when ReqPhysIO    <(10**38) then ReqPhysIO    else 0 end /1e6 as decimal(38,2)))) as IOCntM_Physical
+        ,zeroifnull(sum(cast(case when TotalIOCount <(10**38) then TotalIOCount else 0 end /1e6 as decimal(38,2)))) as IOCntM_Total
+        ,zeroifnull(sum(cast(case when ReqPhysIOKB  <(10**38) then ReqPhysIOKB  else 0 end /1e6 as decimal(38,2)))) as IOGB_Physical
+        ,0 as IOGB_Total
+        ,zeroifnull(sum(cast(case when UsedIota     <(10**38) then UsedIota     else 0 end /1e9 as decimal(38,2)))) as IOTA_Used_cntB
+        {% endif %}
+
+        /* ====== Metrics: Other ====== */
+        ,cast(0 as decimal(38,2)) as Spool_GB
+        ,cast(0 as bigint) as Returned_Row_Cnt
+        ,cast(0 as float) as NumOfActiveAMPs_Avg
+        ,cast(0 as decimal(38,4)) as Query_Complexity_Score_Avg
+        ,0 as TotalServer_Byte_Cnt
+
+        {% if include_metric_classes %}
+        /* ====== Metrics: Class Groupings ====== */
+        ,'Summary Data' as DelayTime_Class
+        ,'Summary Data' as ParseTime_Class
+        ,'Summary Data' as AMPTime_Class
+        ,'Summary Data' as TotalExec_Class
+        ,'Summary Data' as TransferTime_Class
+        ,'Summary Data' as TotalIOCount_Class
+        ,'Summary Data' as AMPCPUTime_Class
+        ,'Summary Data' as ParserCPUTime_Class
+        {% endif %}
+
+        From {{ dbc.summary }} smry
+        {% if td15  %}
+        join (Select DatabaseName as UserName15, DatabaseId as UserID from dbc.dbase) dbid
+          on smry.UserID = dbid.UserID
+        {% endif %}
+
+        where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+        Group by
+         {{ dbc.logdt }}
+         {% if include_hour %}
+         ,LogTS
+         {% endif %}
+         {% if include_wdname %}
+         ,WDName
+         {% endif %}
+         {% if td15 %}
+         ,username15
+         {% else %}
+         ,UserName
+         {% endif %}
+        ,appid
+        ,StatementType
+        {% if include_subsecond_flag %}
+        ,SubSecond_Flag
+        {% endif %}
+        {% if include_tactical_flag %}
+        ,Tactical_Flag
+        {% endif %}
+        {% if include_querygrid_flag %}
+        ,QueryGrid_Flag
+        {% endif %}
+        {% if include_complexity_score %}
+        ,Complexity_Effect
+        ,Complexity_Effect_Step
+        {% endif %}
+        {% if include_cachehit_score %}
+        ,CacheMiss_CntScore
+        ,CacheMiss_SizeScore
+        {% endif %}
+      ) with data
+      no primary index on commit preserve rows
+
+
+
+- name: Create vt_dbql_core{{ dbqlcore_tasklabel }}
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbql_core
+      as (
+        SELECT
+         '{{ siteid }}'  as Site_ID
+        ,LogDate
+        {% if include_hour %}
+        ,LogTS
+        {% endif %}
+        ,cast({{ enddate }} as DATE) - cast({{ startdate }} as DATE) as LogDate_Cnt
+        ,max(Total_AMPs) as Total_AMPs
+        ,coalesce(Application,        'Unknown') as Application
+        ,coalesce(Application_Use,    'Unknown') as Application_Use
+        ,coalesce(Application_Company,'Unknown') as Application_Company
+        ,coalesce(Statement_Bucket,   'Unknown') as Statement_Bucket
+        ,coalesce(Statement_Outcome,  'Unknown') as Statement_Outcome
+        {% if include_subsecond_flag %}
+        ,SubSecond_Flag
+        ,Tactical_Flag
+        {% endif %}
+        {% if include_querygrid_flag %}
+        ,QueryGrid_Flag
+        {% endif %}
+        {% if include_wdname %}
+        ,coalesce(WDName,             'Unknown') as Workload_Definition
+        {% endif %}
+        {% if include_user %}
+        ,coalesce(UserName,           'Unknown') as UserName
+        {% endif %}
+        ,coalesce(UserType,           'Unknown') as UserType
+        ,coalesce(Organization,       'Unknown') as Organization
+        ,coalesce(Department,         'Unknown') as Department
+        ,coalesce(Exclude_Performance_Flag, 0)   as Exclude_Performance_Flag
+        ,coalesce(Exclude_VantageUnit_Flag, 0)   as Exclude_VantageUnit_Flag
+        {% if include_metric_classes %}
+        ,DelayTime_Class
+        ,ParseTime_Class
+        ,AMPTime_Class
+        ,TotalExec_Class
+        ,TransferTime_Class
+        ,TotalIOCount_Class
+        ,AMPCPUTime_Class
+        ,ParserCPUTime_Class
+        {% endif %}
+        {% if include_complexity_score %}
+        /* ====== Complexity ======= */
+        ,avg(Complexity_Effect)      as Complexity_Effect_Avg
+        ,avg(Complexity_Effect_Step) as Complexity_Effect_Step_Avg
+        ,CASE
+         WHEN Complexity_Effect_Step BETWEEN 0  and 1 THEN '1. Simple'
+         WHEN Complexity_Effect_Step >1 and Complexity_Effect_Step <=2 THEN '2. Medium'
+         WHEN Complexity_Effect_Step >2 and Complexity_Effect_Step <=3 THEN '3. Complex'
+         WHEN Complexity_Effect_Step >3 THEN '4. Very Complex'
+         END as Complexity_Score
+        {% endif %}
+        {% if include_cachehit_score %}
+        ,CacheMiss_CntScore
+        ,CacheMiss_SizeScore
+        {% endif %}
+
+        /* ====== Request and Statement Counts ======= */
+        ,sum(cast( Request_Total_Cnt             as bigint))        as    Request_Total_Cnt
+        ,sum(cast( Statement_Total_Cnt           as bigint))        as  Statement_Total_Cnt
+        ,sum(cast( Request_MultiStatement_Cnt    as bigint))        as    Request_MultiStatement_Cnt
+        ,sum(cast(   Request_SubSecond_Cnt       as bigint))        as    Request_SubSecond_Cnt
+        ,sum(cast( Statement_SubSecond_Cnt       as bigint))        as  Statement_SubSecond_Cnt
+        ,sum(cast(   Request_Tactical_Cnt        as bigint))        as    Request_Tactical_Cnt
+        ,sum(cast( Statement_Tactical_Cnt        as bigint))        as  Statement_Tactical_Cnt
+        ,sum(cast(   Request_Error_Cnt           as bigint))        as    Request_Error_Cnt
+        ,sum(cast( Statement_Error_Cnt           as bigint))        as  Statement_Error_Cnt
+        ,sum(cast(   Request_Spool_Error_Cnt     as bigint))        as    Request_Spool_Error_Cnt
+        ,sum(cast( Statement_Spool_Error_Cnt     as bigint))        as  Statement_Spool_Error_Cnt
+        ,sum(cast(   Request_TASM_Abort_Cnt      as bigint))        as    Request_TASM_Abort_Cnt
+        ,sum(cast( Statement_TASM_Abort_Cnt      as bigint))        as  Statement_TASM_Abort_Cnt
+        ,sum(cast(   Request_Abort_Cnt           as bigint))        as    Request_Abort_Cnt
+        ,sum(cast( Statement_Abort_Cnt           as bigint))        as  Statement_Abort_Cnt
+        ,sum(cast(   Request_NoIO_Cnt            as bigint))        as    Request_NoIO_Cnt
+        ,sum(cast( Statement_NoIO_Cnt            as bigint))        as  Statement_NoIO_Cnt
+        ,sum(cast(   Request_InMem_Cnt           as bigint))        as    Request_InMem_Cnt
+        ,sum(cast( Statement_InMem_Cnt           as bigint))        as  Statement_InMem_Cnt
+        ,sum(cast(   Request_PhysIO_Cnt          as bigint))        as    Request_PhysIO_Cnt
+        ,sum(cast( Statement_PhysIO_Cnt          as bigint))        as  Statement_PhysIO_Cnt
+        ,sum(cast(   Request_AllAMP_Cnt          as bigint))        as    Request_AllAMP_Cnt
+        ,sum(cast( Statement_AllAMP_Cnt          as bigint))        as  Statement_AllAMP_Cnt
+        ,sum(cast(   Request_Utility_Cnt         as bigint))        as    Request_Utility_Cnt
+        ,sum(cast( Statement_Utility_Cnt         as bigint))        as  Statement_Utility_Cnt
+
+        /* ====== Metrics: RunTimes ====== */
+        ,sum(cast(DelayTime_Sec                  as decimal(18,4))) as DelayTime_Sec
+        ,sum(cast(RunTime_Parse_Sec              as decimal(18,4))) as RunTime_Parse_Sec
+        ,sum(cast(Runtime_AMP_Sec                as decimal(18,4))) as Runtime_AMP_Sec
+        ,sum(cast(RunTime_Total_Sec              as decimal(18,4))) as RunTime_Total_Sec
+        ,sum(cast(TransferTime_Sec               as decimal(18,4))) as TransferTime_Sec
+
+        /* ====== Metrics: CPU & IO ====== */
+        ,sum(cast(CPU_Parse_Sec                  as decimal(18,4))) as CPU_Parse_Sec
+        ,sum(cast(CPU_AMP_Sec                    as decimal(18,4))) as CPU_AMP_Sec
+        ,sum(cast(IOCntM_Physical                as bigint))        as IOCntM_Physical
+        ,sum(cast(IOCntM_Total                   as bigint))        as IOCntM_Total
+        ,sum(cast(IOGB_Physical                  as decimal(18,4))) as IOGB_Physical
+        ,sum(cast(IOGB_Total                     as decimal(18,4))) as IOGB_Total
+        ,sum(cast(IOTA_Used_cntB                 as bigint))        as IOTA_Used_cntB
+
+        /* ====== Metrics: Other ====== */
+        ,sum(cast(Spool_GB                       as decimal(32,4))) as Spool_GB
+        ,sum(cast(Returned_Row_Cnt               as bigint))        as Returned_Row_Cnt
+        ,cast(avg(NumOfActiveAMPs_Avg        (float)) as decimal(32,8)) as NumOfActiveAMPs_Avg
+        ,cast(avg(Query_Complexity_Score_Avg (float)) as decimal(32,8)) as Query_Complexity_Score_Avg
+        ,cast(cast(1 as float) - (sum(IOCntM_Physical(float))
+         / nullifzero(sum(IOCntM_Total(float)))) as decimal(32,8))  as CacheHit_Pct
+        ,sum(TotalServer_Byte_Cnt) as TotalServer_Byte_Cnt
+
+        from (
+          select dbql.*
+           ,app.Application              as Application
+           ,app.Usage                    as Application_Use
+           ,app.Company                  as Application_Company
+           ,coalesce(stm.Statement_Use{{ statement_use_buckets }}, 'unknown')  as Statement_Bucket
+           ,coalesce(stm.Statement_Outcome, 'unknown')  as Statement_Outcome
+           ,usr.UserType                 as UserType
+           ,usr.Organization             as Organization
+           ,usr.Department               as Department
+           ,usr.Exclude_Performance_Flag as Exclude_Performance_Flag
+           ,usr.Exclude_VantageUnit_Flag as Exclude_VantageUnit_Flag
+          from vt_dbql_core_prework dbql
+          left outer join vt_dim_user usr
+            on dbql.UserName = usr.UserName
+          left outer join vt_dim_statement stm
+            on dbql.StatementType = stm.Statement_Type
+          left outer join vt_dim_app app
+          on (case
+              when app.Pattern_Type = 'Equal' and lower(dbql.AppID) =    lower(app.AppID_Pattern) then 1
+              when app.Pattern_Type = 'Like'  and lower(dbql.AppID) like lower(app.AppID_Pattern) then 1
+              when app.Pattern_Type = 'RegEx'
+               and character_length(regexp_substr(dbql.AppID, app.AppID_Pattern,1,1,'i'))>0 then 1
+              else 0 end) = 1
+          qualify coalesce(app.Priority,1e9) = min(coalesce(app.Priority,1e9))over(partition by dbql.AppID)
+        ) as dbql
+        group by
+           LogDate
+           {% if include_hour %}
+           ,LogTS
+           {% endif %}
+          ,Application
+          ,Application_Use
+          ,Application_Company
+          ,Statement_Bucket
+          ,Statement_Outcome
+          {% if include_wdname %}
+          ,Workload_Definition
+          {% endif %}
+          {% if include_subsecond_flag %}
+          ,SubSecond_Flag
+          ,Tactical_Flag
+          {% endif %}
+          {% if include_querygrid_flag %}
+          ,QueryGrid_Flag
+          {% endif %}
+          {% if include_complexity_score %}
+          ,Complexity_Score
+          {% endif %}
+          {% if include_cachehit_score %}
+          ,CacheMiss_CntScore
+          ,CacheMiss_SizeScore
+          {% endif %}
+          {% if include_user %}
+          ,UserName
+          {% endif %}
+          ,UserType
+          ,Organization
+          ,Department
+          ,Exclude_Performance_Flag
+          ,Exclude_VantageUnit_Flag
+          {% if include_metric_classes %}
+          ,DelayTime_Class
+          ,ParseTime_Class
+          ,AMPTime_Class
+          ,TotalExec_Class
+          ,TransferTime_Class
+          ,TotalIOCount_Class
+          ,AMPCPUTime_Class
+          ,ParserCPUTime_Class
+          {% endif %}
+      ) with data
+        no primary index -- (LogDate, Department, Application, Statement_Bucket)
+        on commit preserve rows
+
+
+- name: Collect Stats on vt_dbql_core
+  connect: source
+  execute:
+    sql: |
+      collect stats
+        column (LogDate, Department, Application, Statement_Bucket),
+        column (LogDate),
+        column (UserType),
+        {% if include_wdname %}
+        column (Workload_Definition),
+        {% endif %}
+        {% if include_user %}
+        column(UserName),
+        {% endif %}
+        column (Organization),
+        column (Department),
+        column (Application),
+        column (Application_Use),
+        column (Statement_Bucket),
+        column (Statement_Outcome)
+      on vt_dbql_core
+
+
+
+{% if reconcile %}
+
+- name: "Create RECONCILE Process: vt_dbql_core_reconcile"
+  connect: source
+  execute:
+    sql: |
+      Create volatile table vt_dbql_core_reconcile
+      (Row_Order      integer
+      ,Source_Name    varchar(128)
+      ,LogDate_Count  integer
+      ,CPU_AMP_Sec    decimal(32,3)
+      ,Row_Count      bigint)
+      no primary index
+      on commit preserve rows
+
+
+- name: "RECONCILE: RAW {{ dbc.log }}"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 1 as Row_Order
+      ,'RAW {{ dbc.log }}' as Source_Name
+      ,count(distinct {{ dbc.logdt }} ) as LogDate_Count
+      ,sum(AMPCPUtime)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from {{ dbc.log }}
+      where {{ dbc.logdt }} between DATE-7 and DATE-1
+
+- name: "RECONCILE: RAW {{ dbc.summary }}"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 2 as Row_Order
+      ,'RAW {{ dbc.summary }}' as Source_Name
+      ,count(distinct {{ dbc.logdt }} ) as LogDate_Count
+      ,sum(AMPCPUtime)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from {{ dbc.summary }}
+      where {{ dbc.logdt }} between DATE-7 and DATE-1
+
+- name: "RECONCILE: COA vt_dbql_core_prework"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 3 as Row_Order
+      ,'COA vt_dbql_core_prework' as Source_Name
+      ,count(distinct LogDate ) as LogDate_Count
+      ,sum(CPU_AMP_Sec)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from vt_dbql_core_prework
+
+- name: "RECONCILE: COA vt_dbql_core"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_dbql_core_reconcile
+      Select 4 as Row_Order
+      ,'COA vt_dbql_core' as Source_Name
+      ,count(distinct LogDate ) as LogDate_Count
+      ,sum(CPU_AMP_Sec)(decimal(32,3)) as CPU_AMP_Sec
+      ,count(*) as row_count
+      from vt_dbql_core
+
+- name: "RECONCILE: Export final records"
+  connect: source
+  export:
+    file: dbql_core_reconcile_data.csv
+    sql:  Select * from vt_dbql_core_reconcile order by Row_Order
+
+{% endif %}
+
+{% if save_prework is not true %}
+- name: Drop table vt_dbql_core_prework
+  connect: source
+  execute:
+    sql: Drop table vt_dbql_core_prework
+{% endif %}
+
+{% endif %}
+{{ run.completed.append('vt_dbql_core') or '' }}

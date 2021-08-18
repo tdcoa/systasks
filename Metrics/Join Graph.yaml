@@ -1,0 +1,16 @@
+description: |
+  Generate data required to perform graph analysis on joins between all the
+  tables or databases on the system.   Currently this generates the volatile table
+  and csv file, but doesn't generate the graph (yet).  To switch the graph level
+  between table and database, set the variable 'graph_level' to either 'table'
+  or 'database'.  Default is 'table'.
+version: 0
+tasks:
+
+{% include "vt_join_graph.j2" %}
+
+- name: Export full vt_join_graph
+  connect: source
+  export:
+    file: join_graph.csv
+    sql: Select * from vt_join_graph order by 1,2

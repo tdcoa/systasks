@@ -1,7 +1,7 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_dbc_object_count' in run.completed %}
 
-{% include "vt_dim_tablekind.j2" %}
+{% include "vt_decode_tablekind.j2" %}
 
 - name: Create vt_dbc_object_count, listing counts of all objects (aka TableKind) by database, with various group columns
   connect: source
@@ -11,7 +11,7 @@
       (
         select
          coalesce(t.DatabaseName,'< Unused >') as DatabaseName
-        ,k.Object_Name
+        ,k.Description as Object_Name
         ,k.Object_Group12
         ,k.Object_Group09
         ,k.Object_Group06
@@ -26,7 +26,7 @@
              from dbc.TablesV
              group by 1,2,3
              ) t
-        full outer join vt_dim_TableKind k
+        full outer join vt_decode_tablekind k
          on t.TableKind = k.TableKind
         and t.CommitOpt = case when k.CommitOpt in ('','all','any') then t.CommitOpt else k.CommitOpt end
         group by 1,2,3,4,5,6

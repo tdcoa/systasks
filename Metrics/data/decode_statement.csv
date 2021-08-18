@@ -1,0 +1,93 @@
+Statement_Type,Statement_Class,Statement_Use15,Statement_Use12,Statement_Use9,Statement_Use6,Statement_Use3,Statement_Outcome
+Drop Profile,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Authorization,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Grant/Revoke Con Thr,DCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Index,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Server,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Alter Table Map,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Modify Profile,DCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Server,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Revoke,DCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Type,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Join Index,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Grant/Revoke Logon,DCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Restore,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Release Lock,TCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Join Index,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Modify Database,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Alter Type,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Map,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop View,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Alter Table,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Replace Authorization,TCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Table,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Database,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Grant,DCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Begin/End DBQL,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Function,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Authorization,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Database/User,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Give,DCL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Index,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Procedure,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Profile,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Create Role,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Role,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Flush Query Logging,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Dump Database,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Delete Database,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Rename Table,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Statistics,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Drop Macro,DDL,Admin,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Collect Statistics,DDL,Collect Stats,Collect Stats,Collect Stats,Admin,Develop/Support,Data Maintenance
+Create Table,DDL,Create Table,Create Table,Create Table,Transform,Load/Transform,Ingest & Prep
+Create View,DDL,Create View,Create View,Development,Development,Develop/Support,Data Maintenance
+Delete,DML,Delete,Delete,Transform,Transform,Load/Transform,Ingest & Prep
+Create Type,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Rename View,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+End Edit,TCL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Create Procedure,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Alter Function,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Comment Get/Set,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Replace Macro,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Help,DQL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Create Macro,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Alter Procedure,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Create Function,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Rename Procedure,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Replace Procedure,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Begin Transaction,TCL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Replace View,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Replace Function,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Replace External SP,DDL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Show,DQL,Development,Development,Development,Development,Develop/Support,Data Maintenance
+Insert,DML,Insert,Insert,Insert,Transform,Load/Transform,Ingest & Prep
+Execute Mload,DML,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Release Mload,TCL,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Check Workload,TCL,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Begin Mload,DML,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+CheckPoint Loading,TCL,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Begin Delete Mload,DML,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Mload,DML,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Check Point,TCL,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Begin Loading,DML,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+End Loading,DML,Load,Load,Load,Load,Load/Transform,Ingest & Prep
+Exec,DQL,Macro,Run Procedural,Query - Other,Query - Other,Query,Answers
+Merge Into,DML,Merge/Update,Merge/Update,Transform,Transform,Load/Transform,Ingest & Prep
+Update,DML,Merge/Update,Merge/Update,Transform,Transform,Load/Transform,Ingest & Prep
+Null,DML,Other,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Not Applicable,DML,Other,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Unrecognized type,DDL,Other,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Echo,DQL,Other,Development,Development,Development,Develop/Support,Data Maintenance
+Select,DQL,Select,Select,Select,Select,Query,Answers
+Set Role,DQL,Set Session,Set Session,Query - Other,Query - Other,Query,Answers
+Set Session,DQL,Set Session,Set Session,Query - Other,Query - Other,Query,Answers
+Set Query_Band,DQL,Set Session,Set Session,Query - Other,Query - Other,Query,Answers
+Database,DQL,Set Session,Set Session,Query - Other,Query - Other,Query,Answers
+Set Time Zone,DQL,Set Session,Set Session,Query - Other,Query - Other,Query,Answers
+Call,DQL,Stored Proc,Run Procedural,Transform,Transform,Load/Transform,Ingest & Prep
+Commit Work,TCL,System,Admin,Admin,Admin,Develop/Support,Data Maintenance
+AsyncAbort,TCL,System,Admin,Admin,Admin,Develop/Support,Data Maintenance
+End Transaction,TCL,System,Admin,Admin,Admin,Develop/Support,Data Maintenance
+UCAbort,TCL,System,Admin,Admin,Admin,Develop/Support,Data Maintenance
+Abort,TCL,System,Admin,Admin,Admin,Develop/Support,Data Maintenance

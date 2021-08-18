@@ -1,14 +1,26 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_statement_count_by_table' in run.completed %}
 
-{% include "vt_dim_statement.j2" %}
 
-- name: Create prework temp table, for performance improvement
+### SET DEFAULT GENERATION BEHAVIOR
+{% set process_chunks  = 3     if process_chunks  is not defined else process_chunks %}
+
+
+{% include "vt_decode_statement.j2" %}
+{% include "vt_datedriver.j2" %}
+
+
+{% for ichunk in range(1, process_chunks+1) %}
+
+- name: {{ 'Create' if ichunk==1 else 'Insert into' }} prework table vt_statement_count_by_table_prework (chunk {{ ichunk }} of {{ process_chunks }})
   connect: source
   execute:
     sql: |
-      create volatile table vt_statement_count_by_table_prework
-      as (
+      {% if ichunk == 1 %}
+      create volatile table vt_statement_count_by_table_prework as (
+      {% else %}
+      insert into vt_statement_count_by_table_prework
+      {% endif %}
         Select
            {{ dbc.logdt }} as LogDate
           ,o.ObjectDatabaseName as DatabaseName
@@ -24,16 +36,20 @@
               {% endif %}
               ,QueryID, ObjectDatabaseName, ObjectTableName
               from   {{ dbc.obj }}
-              where logdate1 between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
+              where logdate1 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
                 and ObjectTableName is not null
              ) as o
           on l.QueryID = o.QueryID
-         and {{ dbc.logdt }} = o.LogDate1
-         and {{ dbc.logdt }} between {{ startdate | default('DATE-15')}} and {{ enddate | default('DATE-1')}}
+         and LogDate = o.LogDate1
+         and LogDate in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
         group by 1,2,3,4
+      {% if ichunk == 1 %}
       ) with data
-      no primary index
-      on commit preserve rows
+        no primary index
+        on commit preserve rows
+      {% endif %}
+{% endfor %}
+
 
 - name: Create vt_statement_count_by_table, final outcome
   connect: source
@@ -49,19 +65,20 @@
         ,Statement_Class
         ,sum(Request_Count) as Request_Count
         from vt_statement_count_by_table_prework p
-        join vt_dim_statement s
+        join vt_decode_statement s
           on p.StatementType = s.Statement_Type
         group by 1,2,3,4,5
       ) with data
       primary index (LogDate, TableName)
       on commit preserve rows
 
+
 - name: Collect Stats on vt_statement_count_by_table
   connect: source
   execute:
     sql: collect stats on vt_statement_count_by_table column(LogDate, TableName)
 
-- name: drop prework table
+- name: drop prework vt_statement_count_by_table_prework
   connect: source
   execute:
     sql: drop table vt_statement_count_by_table_prework

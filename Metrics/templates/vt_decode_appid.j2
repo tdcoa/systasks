@@ -1,0 +1,177 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_appid' in run.completed %}
+
+# variables
+#  expected: startdate, enddate, dbc.logdt, dbc.log
+#  optional: save_prework, reconcile, decode_from_transcend, custom_decode_folder
+
+- name:  "Create vt_decode_appid_load to catch file"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_appid_load
+      (
+       Pattern_Type       varchar(32)
+      ,AppID_Pattern      varchar(128)
+      ,Application        varchar(128)
+      ,Usage              varchar(128)
+      ,Company            varchar(128)
+      ,Priority           integer
+      ,Data_Source        varchar(32)
+      )
+      unique primary index (Priority)
+      on commit preserve rows
+
+
+{% if decode_from_transcend %}
+- name: "TRANSCEND ONLY: insert into vt_decode_appid_load from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_appid_load
+      Select
+       case when character_length(AppID) - character_length(OReplace(AppID, '%')) = 0
+            then 'Equal' else 'Like' end as Pattern_Type
+      ,AppID as AppID_Pattern
+      ,ApplicationName, Usage, CompanyName, Priority
+      ,'Transcend' as Data_source
+      From TD_Common_View.Decode_AppId;
+
+{% else %}
+- name: "Import decode_appid.csv into vt_decode_appid_load (change file location with variable: custom_decode_folder)"
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_appid.csv
+    table: vt_decode_appid_load
+{% endif %}
+
+
+
+
+- name:  "CREATE FINAL vt_decode_appid - produces exhaustive mapping for all AppIDs found in DBQLogTbl for the time period"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_appid as(
+      with
+      dbql as (
+              select AppID
+              ,count(*)(bigInt) as Requests
+              ,sum(Statements)(bigint) as Statements
+              ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
+              from {{ dbc.log }}
+              where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+              group by 1
+              ),
+      app  as (
+              select a.*, max(Priority_Base)over() as Priority_Max
+              from(
+                  select Pattern_Type, AppID_Pattern
+                  ,Application, Company, Usage
+                  ,row_number()over(order by Priority,Pattern_Type,AppID_Pattern,Application
+                                            ,Company,Usage,Data_Source) as Priority_Base
+                  ,Data_Source
+                  from vt_decode_appid_load) a
+              )
+      Select dbql.appID
+      ,case when character_length(regexp_substr(trim(dbql.appID), '^[ -~]+$', 1,1, 'i')) > 0
+            then dbql.appID else 'Invalid Character' end as AppID_Export
+      ,coalesce(Pattern_Type  ,'None')     as Pattern_Type
+      ,coalesce(AppID_Pattern ,'UnMatched')as AppID_Pattern
+      ,coalesce(Application   ,'Unknown')  as Application
+      ,coalesce(Company       ,'Unknown')  as Company
+      ,coalesce(Usage         ,'Unknown')  as Usage
+      ,zeroifnull(dbql.Requests)           as Requests
+      ,zeroifnull(dbql.Statements)         as Statements
+      ,zeroifnull(dbql.CPU_Sec)            as CPU_Sec
+      ,cast(({{ enddate | default('DATE-1') }})-({{ startdate | default('DATE-92') }}) +1 as INT)  as DayCount
+      ,cast(coalesce(Priority_Base, 1e12)  as bigint) as Priority
+      ,coalesce(Data_Source, 'Customer')   as Data_Source
+      from dbql
+      left outer join app
+        on (case
+            when app.Pattern_Type = 'Equal' and lower(dbql.AppID) =    lower(app.AppID_Pattern) then 1
+            when app.Pattern_Type = 'Like'  and lower(dbql.AppID) like lower(app.AppID_Pattern) then 1
+            when app.Pattern_Type = 'RegEx'
+             and character_length(regexp_substr(dbql.AppID, app.AppID_Pattern,1,1,'i'))>0 then 1
+            else 0 end) = 1
+        qualify Priority = min(Priority)over(partition by dbql.AppID)
+      ) with data
+        unique primary index(AppID)
+        on commit preserve rows
+
+
+- name:  "Collect Stats on final vt_decode_appid"
+  connect: source
+  execute:
+    sql: |
+      collect stats
+            column(AppID)
+           ,column(AppID_Export)
+           ,column(Application)
+           ,column(Company)
+           ,column(Usage)
+      on vt_decode_appid
+
+
+# ======================== RECONCILE ========================
+{% if reconcile %}
+
+- name: "RECONCILE: create vt_decode_appid_reconcile"
+  connect: source
+  execute:
+    sql: |
+      Create volatile table vt_decode_appid_reconcile
+      (Row_Order      integer
+      ,Source_Name    varchar(128)
+      ,Requests       bigint
+      ,Row_Count      bigint
+      ,CPU_Sec        decimal(36,4)
+      )
+      no primary index
+      on commit preserve rows
+
+- name: "RECONCILE: RAW {{ dbc.log }}"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_appid_reconcile
+      Select 1 as Row_Order
+      ,'RAW {{ dbc.log }}' as Source_Name
+      ,count(*)(bigInt) as Requests
+      ,Requests as Row_Count
+      ,sum(AmpCPUTime+ParserCPUTime)(bigint) as CPU_Sec
+      from {{ dbc.log }}
+      where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+
+- name: "RECONCILE: vt_decode_appid"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_appid_reconcile
+      select 2 as Row_Order
+      ,'vt_decode_appid' as Source_Name
+      ,sum(Requests) as Requests
+      ,count(*) as Row_Count
+      ,sum(CPU_Sec)(bigint) as CPU_Sec
+      from vt_decode_appid
+
+- name: "RECONCILE: Export final records"
+  connect: source
+  export:
+    file: reconcile_decode_appid.csv
+    sql:  Select * from vt_decode_appid_reconcile order by Row_Order
+
+{% endif %}
+
+
+{% if save_prework is not true %}
+- name:  "Drop interim vt_decode_appid_load"
+  connect: source
+  execute:
+    sql: drop table vt_decode_appid_load
+{% endif %}
+
+
+{% endif %}
+{{ run.completed.append('vt_decode_appid') or '' }}

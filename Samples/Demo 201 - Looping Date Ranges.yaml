@@ -1,0 +1,67 @@
+description: >
+  Demonstrate how to loop over a peice of logic multiple times, submitting
+  different dates/variables each time.
+
+# include this line to skip duplicitive CVTs:
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+tasks:
+
+### ========= FIRST, SOME SETUP ========= ###
+
+# set some basic defaults for this run:
+{% set startdate = "DATE-91" %}
+{% set enddate   = "DATE-1"  %}
+{% set process_chunks  = 5  if process_chunks  is not defined else process_chunks %}
+
+# call for a "date driver" volatile table:
+{% include "vt_datedriver.j2" %}
+
+- name: Create VT to capture our final output
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_demo201
+      (
+        Iteration_ID   smallint
+       ,Site_ID        varchar(128)
+       ,StartDate      date
+       ,EndDate        date
+       ,CPU_Idle       bigint
+       ,CPU_IOWait     bigint
+       ,CPU_OS         bigint
+       ,CPU_DBS        bigint
+       ,CPU_Total      bigint
+      ) no primary index on commit preserve rows
+
+
+### ========= SECOND, LOOP ONCE PER Process_Chunks DEFINED ========= ###
+
+{% for iteration_id in range(1, process_chunks+1) %}
+
+- name: Insert Iteration {{ iteration_id }}
+  connect: source
+  execute:
+    sql: |
+      insert into vt_demo201
+      Select {{ iteration_id }} as Iteration_ID
+      ,'{{ siteid }}' as Site_ID
+      ,min(theDate) as StartDate
+      ,max(theDate) as EndDate
+      ,sum(cast(CPUIdle   as decimal(18,0))) as CPU_Idle
+      ,sum(cast(CPUIOWait as decimal(18,0))) as CPU_IOWait
+      ,sum(cast(CPUUServ  as decimal(18,0))) as CPU_OS
+      ,sum(cast(CPUUExec  as decimal(18,0))) as CPU_DBS
+      ,CPU_Idle+CPU_IOWait+CPU_OS+CPU_DBS as CPU_Total
+      from {{ dbc.spma }}
+      where TheDate in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ iteration_id }} )
+
+{% endfor %}
+
+### ========= THIRD, OUTPUT RESULTS ========= ###
+
+- name: Export full dataset
+  connect: source
+  export:
+    file: demo201_looping.csv
+    sql: Select * from vt_demo201 order by Iteration_ID

@@ -1,0 +1,45 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_columntype' in run.completed %}
+
+
+# variables
+#  expected: none
+#  optional: decode_from_transcend, custom_decode_folder
+
+
+- name:  "Create vt_decode_columntype"
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_decode_columntype
+      (ColumnType     char(2)      character set latin  -- was DataType
+      ,StorageFormat  varchar(8)   character set latin
+      ,Description    varchar(128) character set latin
+      ,ColumnCategory varchar(32)  character set latin
+      ) no primary index
+      on commit preserve rows
+
+{% if decode_from_transcend %}
+- name:  "TRANSCEND ONLY: insert into vt_decode_columntype from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_columntype
+      select ColumnType, StorageFormat, Description, ColumnCategory
+      from td_common_view.Decode_ColumnType
+
+{% else %}
+- name: import metadata into vt_decode_columntype
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_columntype.csv
+    table: vt_decode_columntype
+{% endif %}
+
+- name:  "Collect Stats vt_decode_columntype"
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_columntype column(ColumnType, StorageFormat)
+
+{% endif %}
+{{ run.completed.append('vt_decode_columntype') or '' }}

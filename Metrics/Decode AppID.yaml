@@ -1,0 +1,124 @@
+description: Print out table vt_decode_appid, for reconciliation purposes.
+version: 1
+tasks:
+
+{% set chart     = True  if chart     is not defined else chart %}
+{% set save_prework = True %}
+{% include "vt_decode_appid.j2" %}
+
+
+- name: Export vt_decode_appid with all data
+  connect: source
+  export:
+    file: decode_appid_full.csv
+    sql: |
+      select distinct
+       AppID_Export as AppID
+      ,Pattern_Type
+      ,AppID_Pattern
+      ,Application
+      ,Company
+      ,Usage
+      ,Requests
+      ,Statements
+      ,CPU_Sec
+      ,DayCount
+      ,Priority
+      ,Data_Source
+      from vt_decode_appid
+      order by Priority
+
+- name: Create Decode subfolder, if missing
+  connect: source
+  script:
+    command: scripts/mkdir.py
+    params:
+      - myDecodes
+
+- name: Export decode_appid as sample for custom decode file
+  connect: source
+  export:
+    file: myDecodes/decode_appid.csv
+    sql: |
+      Select * from
+      (
+          select distinct
+          Pattern_Type
+          ,AppID_Pattern
+          ,Application
+          ,Usage
+          ,Company
+          ,cast(Priority as bigint) * 1000 as Priority
+          ,'Custom File'(varchar(128)) as Data_Source
+          from vt_decode_appid
+          where Pattern_Type <> 'None'
+            union all
+          select distinct
+          'Equal' as Pattern_Type
+          ,AppID
+          ,Application
+          ,Usage
+          ,Company
+          ,(cast(Priority as bigint)+row_number()over(order by AppID)) * 100  as Priority
+          ,'Custom File - Unknown' as Data_Source
+          from vt_decode_appid
+          where Pattern_Type = 'None' and AppID_Export <> 'Invalid Character'
+            union all
+          select * from vt_decode_appid_load
+      ) a
+      qualify Priority = min(Priority)over(partition by AppID_Pattern)
+      order by 6
+
+
+- name:  "Drop interim vt_decode_appid_load"
+  connect: source
+  execute:
+    sql: drop table vt_decode_appid_load
+
+
+
+
+{% if chart %}
+{% set rptlvls = ['Application','Company','Usage'] %}
+{% for rptlvl in rptlvls %}
+
+- name: "Export data for charting: {{ rptlvl }}"
+  connect: source
+  export:
+    file: decode_appid_chart_{{ rptlvl }}.csv
+    sql: |
+      select
+       {{ rptlvl }} -- xaxis
+      ,cast(sum(CPU_Sec)    as decimal(18,4))/max(DayCount) as "CPU Seconds per Day" -- bar
+      ,cast(sum(Requests)   as decimal(18,4))/max(DayCount) as "Requests per Day"    -- line1
+      ,cast(sum(Statements) as decimal(18,4))/max(DayCount) as "Statements per Day"  -- line2
+      from vt_decode_appid
+      group by 1
+
+- name: "Chart (linear): {{ rptlvl }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:decode_appid_chart_{{ rptlvl }}.csv"
+      - "title:Application Breakout: {{ rptlvl }} - {{ siteid }}"
+      - "height:5"
+      - "width:15"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:decode_appid_chart_{{ rptlvl }}_linear.png"
+
+- name: "Chart (log): {{ rptlvl }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:decode_appid_chart_{{ rptlvl }}.csv"
+      - "title:Application Breakout: {{ rptlvl }} - {{ siteid }}"
+      - "height:5"
+      - "width:15"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:decode_appid_chart_{{ rptlvl }}_log.png"
+      - "logscale:true"
+
+{% endfor %}
+{% endif %}

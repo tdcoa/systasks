@@ -1,0 +1,120 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_user' in run.completed %}
+
+{% include "vt_decode_tdbinternal.j2" %}
+
+# variables
+#  expected: pdcr, startdate, enddate
+#  optional: decode_from_transcend, custom_decode_folder
+
+
+- name: Create vt_decode_user
+  connect: source
+  execute:
+    sql: |
+      CREATE SET Volatile TABLE vt_decode_user
+      (
+           UserName                 VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC NOT NULL
+          ,FullName                 VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,UserType                 VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,Organization             VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,Department               VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+          ,Exclude_VantageUnit_Flag BYTEINT
+          ,Exclude_Performance_Flag BYTEINT
+      )
+      UNIQUE PRIMARY INDEX ( UserName ) on commit preserve rows
+
+
+{% if not decode_from_transcend %}
+- name: "Import metadata decode_user.csv into vt_decode_user (change file location with variable: custom_decode_folder)"
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_user.csv
+    table: vt_decode_user
+
+- name: "Update null exclusion columns to zero"
+  connect: source
+  execute:
+    sql: |
+      update vt_decode_user
+      set Exclude_VantageUnit_Flag = coalesce(Exclude_VantageUnit_Flag,0)
+         ,Exclude_Performance_Flag = coalesce(Exclude_Performance_Flag,0)
+{% endif %}
+
+
+{% if pdcr %}
+- name: If PDCR, insert PDCRInfo.UserInfo information into vt_decode_user, if missing
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_user
+      select UserName, FullName, UserType, Organization, Department, 0, 0
+      from pdcrinfo.UserInfo
+      where
+        (RecordStartDate between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}  or
+         RecordEndDate   between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}  or
+         coalesce(RecordEndDate, DATE+1) >= {{ enddate | default('DATE-1') }} )
+      and UserName not in (Select UserName from vt_decode_user)
+      qualify coalesce(RecordEndDate,DATE+1) = max(coalesce(RecordEndDate,DATE+1)) over(partition by UserName)
+{% endif %}
+
+
+- name: Insert any TD Internal Databases we may have defined
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_user
+      select DatabaseName as UserName
+      ,coalesce(CommentString,DatabaseUse,'Unknown') as FullName
+      ,'Teradata Internal' as UserType
+      ,'Teradata Internal' as Organization
+      ,'Teradata Internal' as Department
+      ,0,0 --EXCLUDE flags
+      from vt_decode_tdbinternal
+      where DatabaseName not in (Select UserName from vt_decode_user)
+        and DatabaseUse = 'U'
+
+
+- name: Insert any missing UserNames into vt_decode_user from dbc.Databases
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_user
+      Select DatabaseName as UserName
+      ,'Unknown' as FullName
+      ,'Unknown' as UserType
+      ,'Unknown' as Organization
+      ,'Unknown' as Department
+      ,0,0 --EXCLUDE flags
+      from dbc.DatabasesV
+      where DBKind = 'U'
+      and UserName not in (Select UserName from vt_decode_user)
+
+
+- name: Update TDInternal Databases to a consistent UserType
+  connect: source
+  execute:
+    sql: |
+      update A
+      from vt_decode_user A,  vt_decode_tdbinternal B
+      SET Exclude_VantageUnit_Flag = B.Exclude_VantageUnit_Flag
+         ,Exclude_Performance_Flag = B.Exclude_Performance_Flag
+         ,UserType = 'Teradata Internal'
+      where A.UserName = B.DatabaseName
+
+{% if td15 %}
+- name: Insert dummy record for "Summary Queries" to allow for td15 joins
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_user
+      values ('Summary Queries','Summary Queries','Dummy Record','NA','NA',1,1)
+{% endif %}
+
+- name:  "Collect Stats vt_decode_user"
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_user column(UserName)
+
+{% endif %}
+{{ run.completed.append('vt_decode_user') or '' }}

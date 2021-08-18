@@ -1,0 +1,74 @@
+description: >
+  Creates a volatile table vt_allocated_utilization_per_table that allocates
+  CPU, IO, and CDS to each DB.Table based on the number of times that table
+  was used in all queries (object logging required).
+
+version: 0
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+tasks:
+
+{% include "vt_allocated_utilization_per_table.j2" %}
+
+- name: Export Allocated Utilization per Table
+  connect: source
+  export:
+    file: allocated_utilization_per_table.csv
+    sql: |
+      select LogDate, DatabaseName, TableName
+      ,sum(Use_Cnt) as Use_Cnt
+      ,sum(Request_Cnt) as Request_Cnt
+      ,Avg(Avg_Allocation_Pct) as Avg_Allocation_Pct
+      ,sum(Allocated_CPU) as Allocated_CPU
+      ,sum(Allocated_IOCnt) as Allocated_IOCnt
+      ,sum(Allocated_IOGB) as Allocated_IOGB
+      ,sum(Allocated_CDS_GB) as Allocated_CDS_GB
+      ,max(Table_CurrentPerm_GB) as Table_CurrentPerm_GB
+      from vt_allocated_utilization_per_table
+      group by 1,2,3
+      order by DatabaseName, TableName, LogDate desc
+
+- name: Export Allocated Utilization per Database
+  connect: source
+  export:
+    file: allocated_utilization_per_database.csv
+    sql: |
+      select LogDate, DatabaseName
+      ,Avg(Avg_Allocation_Pct) as Avg_Allocation_Pct
+      ,sum(Use_Cnt) as Use_Cnt
+      ,sum(Request_Cnt) as Request_Cnt
+      ,sum(Allocated_CPU) as Allocated_CPU
+      ,sum(Allocated_IOCnt) as Allocated_IOCnt
+      ,sum(Allocated_IOGB) as Allocated_IOGB
+      ,sum(Allocated_CDS_GB) as Allocated_CDS_GB
+      ,max(Table_CurrentPerm_GB) as Table_CurrentPerm_GB
+      from vt_allocated_utilization_per_table
+      group by 1,2
+      order by DatabaseName, LogDate desc
+
+
+{% for column in ['Allocated_CPU','Allocated_IOCnt','Allocated_IOGB','Allocated_CDS_GB'] %}
+- name: Export TOP 50 most highly utilized databases by {{ column }}
+  connect: source
+  export:
+    file: allocated_utilization_top50_databases_{{ column }}.csv
+    sql: |
+      select top 50 DatabaseName
+      ,sum({{ column }})(bigint) as {{ column }}
+      ,trim(cast(Avg(Avg_Allocation_Pct) as decimal(9,2))*100) as Avg_Allocation_Pct
+      from vt_allocated_utilization_per_table
+      group by 1
+      order by 2 desc
+
+- name: "Chart join frequency volume, with CPU line overlay"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:allocated_utilization_top50_databases_{{ column }}.csv"
+      - "title:Allocated Utilization per Database - {{ siteid }}"
+      - "height:4"
+      - "width:21"
+      - "xrotate:90"
+      - "legendx:2"
+      - "barlogscale:False"
+{% endfor %}

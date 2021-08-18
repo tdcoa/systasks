@@ -1,0 +1,71 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_join_graph' in run.completed %}
+
+### set defaults:
+{% set graph_level  = 'table' if graph_level is not defined else graph_level  %}
+{% set process_chunks = 1 if process_chunks is not defined else process_chunks %}
+
+{% include "vt_datedriver.j2" %}
+
+
+{% for ichunk in range(1, process_chunks+1) %}
+- name: Generate graph edge data into vt_join_graph ({{ ichunk }} of {{ process_chunks }} - {{ graph_level }} level)
+  connect: source
+  execute:
+    sql: |
+      {% if ichunk == 1 %}
+      create volatile table vt_join_graph as (
+      {% else %}
+      insert into vt_join_graph
+      {% endif %}
+          with tblmap as (
+              select QueryID
+              ,{{ "cast(CollectTimeStamp as date format 'YYYY-MM-DD')" if (not pdcr) or td15 else 'LogDate' }}  as LogDate
+              {% if graph_level == 'table' %}
+              ,upper(trim(ObjectDatabaseName)||'.'||trim(ObjectTableName)) AS dbobjectname
+              {% elif graph_level == 'database' %}
+              ,upper(trim(ObjectDatabaseName)) as dbobjectname
+              {% endif %}
+              from {{ dbc.obj }}
+              where Objecttype = 'Tab'
+                and ObjectTableName IS NOT NULL
+                and ObjectColumnName IS NULL
+                and LogDate in(select Calendar_Date from vt_DateDriver where Process_Chunk={{ ichunk }})
+                and (QueryID,LogDate) not in
+                      (Select QueryID, LogDate
+                       from {{ dbc.log }}
+                       where LogDate in(select Calendar_Date from vt_DateDriver where Process_Chunk={{ ichunk }})
+                         and nullifzero(AMPCPUTime+ParserCPUTime) = 0)
+              GROUP BY 1,2,3
+                  )
+          Select src.LogDate
+          ,src.dbobjectname as Join_Source
+          ,tgt.dbobjectname as Join_Target
+          ,count(distinct src.QueryID) as Join_Frequency
+          from tblmap as src
+          join tblmap as tgt
+            on src.QueryID = tgt.QueryID
+           and src.LogDate = tgt.LogDate
+          -- this collapses scenarios (a,a) and (a,b & b,a) down to just (a,b)
+          where Join_Source > Join_Target
+          group by 1,2,3
+      {% if ichunk == 1 %}
+      ) with data
+        primary index(LogDate, Join_Source, Join_Target)
+        on commit preserve rows
+      {% endif %}
+{% endfor %}
+
+- name: Collect stats on table vt_join_graph
+  connect: source
+  execute:
+    sql: |
+      collect stats
+           column(Join_Source, Join_Target)
+          ,column(Join_Source)
+          ,column(Join_Target)
+      on vt_join_graph
+
+
+{{ run.completed.append('vt_join_graph') or '' }}
+{% endif %}

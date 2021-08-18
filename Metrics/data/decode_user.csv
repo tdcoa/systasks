@@ -1,0 +1,27 @@
+UserName,FullName,UserType,Organization,Department,Exclude_VantageUnit_Flag,Exclude_Performance_Flag
+sh186014,Stephen Hilton,Analytic,Customer Success,"Global Strategy, Analytics, Automation",0,0
+VIEWPOINT,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,0
+EXTUSER,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+PDCRTPCD,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+LockLogShredder,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,1
+CPPTAdmin,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+PDCRAdmin,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+PDCRAccess,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+TDAP_Admin,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+SYSDBA,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+DBCMANAGER,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,0
+SYSBACK,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+Sys_Calendar,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+SystemFe,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+SysAdmin,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+Crashdumps,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,1
+TDPUSER,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+DBC,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,0
+TDMaps,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,0
+tdwm,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+External_AP,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,0
+SYSXML,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+console,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
+PUBLIC,Unknown,Teradata Internal,Unknown,Unknown,0,0
+Default,Unknown,Teradata Internal,Unknown,Unknown,0,0
+All,Unknown,Teradata Internal,Unknown,Unknown,0,0

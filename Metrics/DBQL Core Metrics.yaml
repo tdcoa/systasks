@@ -5,26 +5,25 @@ tasks:
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% include "vt_dbql_core.j2" %}
 
-# save_prework   - boolean flag variable to drop prework table (default=true)
-# include_hour   - boolean flag variable to include hour   dimension in vt_dbql_core (default=false)
-# include_user   - boolean flag variable to include user   dimension in vt_dbql_core (default=false)
-# include_wdname - boolean flag variable to include wdname dimension in vt_dbql_core (default=false)
-{% set export_all = False if export_all is not defined else export_all %}
+{% set export_all = True if export_all is not defined else export_all %}
 {% set chart = True if chart is not defined else chart %}
 
-# Let's just blast out the graphs via a loop:
+
+{% if export_all %}
+- name: "Export entire vt_dbql_core (export_all=true)"
+  connect: source
+  export:
+    file: dbql_core.csv
+    sql: Select * from vt_dbql_core order by LogDate, Application_Use, Statement_Bucket
+{% endif %}
+
+
+
+# for CHARTING, let's just blast out the graphs via a loop:
 {% if chart %}
 
-{% set run.dimensions = ['LogDate','Application','Application_Use','Application_Company','Statement_Bucket','Statement_Outcome','UserType','Organization','Department'] %}
-
-
-
-{% for dimension in run.dimensions %}
-
-{% set metricprefixs = ['Request','Statement']%}
-{% for metricprefix in metricprefixs %}
-
-
+{% for dimension in ['Application','Application_Company','Application_Use','Statement_Bucket','Statement_Outcome','UserType','Department','Organization'] %}
+{% for metricprefix in ['Request','Statement'] %}
 
 - name: Export Statement Counts per day for graphing
   connect: source
@@ -32,9 +31,9 @@ tasks:
     file: dbql_core_{{ metricprefix }}_x_{{ dimension }}.csv
     sql: |
       select
-       {{ dimension }} as "Breakout" -- xaxis
-      ,sum({{ metricprefix }}_Total_Cnt) as "Total {{ metricprefix }} Count" -- Bars
-       {% set metricsuffixs = ['SubSecond','Tactical','Error','Spool_Error','TASM_Abort','Abort','NoIO','InMem','PhysIO','AllAmp','Utility']%}
+       coalesce( cast({{ dimension }} as varchar(128)), 'Unknown') as "Breakout" -- xaxis
+      ,sum({{ metricprefix }}_Total_Cnt) as "Total {{ metricprefix }} Count (Bars)" -- Bars
+       {% set metricsuffixs = ['SubSecond','Tactical','Error','Spool_Error','TASM_Abort','Abort','NoIO','InMem','PhysIO','AllAmp','Utility','QueryGrid']%}
        {% for metricsuffix in metricsuffixs %}
       ,sum({{ metricprefix }}_{{ metricsuffix }}_Cnt) (BigInt) as "{{ metricsuffix }} Count" -- Line
        {% endfor %}
@@ -47,20 +46,12 @@ tasks:
     command: chart/barline_xLabels_yBar_yLine.py
     params:
       - "csvfile:dbql_core_{{ metricprefix }}_x_{{ dimension }}.csv"
-      - "title:Count of {{ metricprefix }} by Day, by Type - {{ siteid }}"
+      - "title:Count of {{ metricprefix }} by Day, by {{ dimension }} - {{ siteid }}"
       - "height:4"
       - "width:16"
+      - "logscale:False"
       - "xrotate:90"
 
 {% endfor %}
 {% endfor %}
-{% endif %}
-
-
-{% if export_all %}
-- name: "Export entire vt_dbql_core (export_all=true)"
-  connect: source
-  export:
-    file: dbql_core.csv
-    sql: Select * from vt_dbql_core order by LogDate, Application_Use, Statement_Bucket
 {% endif %}

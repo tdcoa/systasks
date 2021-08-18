@@ -1,0 +1,81 @@
+
+{% macro setup() -%}
+  ## tbd
+  {% set run = namespace(completed=[]) if run is not defined else run %}
+{% endmacro %}
+
+
+{% macro test() -%}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+- name: "Macro imported and called: test()"
+  connect: source
+  execute:
+    sql: Select 'test()' as MacroNameCalled
+{% endmacro %}
+
+
+
+{% macro remove_completed_flag(context, vtname) -%}
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+- name: "Macro imported and called: test()"
+  connect: source
+  execute:
+    sql: Select 'test()' as MacroNameCalled
+{% endmacro %}
+
+
+
+
+###### build a run.includes list of flags for included fields.
+######   these flags can be set via include_flagname or the includes csv list
+{% macro build_include_flags(context, defaults=[]) -%}
+  {% set context.included = [] %}
+
+  {% set include = '' if include is not defined else include %}
+  {% set tests = [{"return":"LogTS",               "validwords":["logts","hour"]}
+                 ,{"return":"UserName",            "validwords":["user","username"]}
+                 ,{"return":"Workload_Definition", "validwords":["wdname","workload","workload_definition","workload_def"]}
+                 ,{"return":"QueryGrid_Flag",      "validwords":["querygrid","querygrid_flag"]}
+                 ,{"return":"SubSecond_Flag",      "validwords":["subsecond","sub_second", "subsecond_flag"]}
+                 ,{"return":"Tactical_Flag",       "validwords":["tactical","tactical_flag"]}
+                 ,{"return":"Exclude_Flag",        "validwords":["exclude_flag","dbexclude_flag","exclusion"]}
+                 ,{"return":"Complexity",          "validwords":["complexity","complexity_score"]}
+                 ,{"return":"QueryID",             "validwords":["queryid"]}
+                 ,{"return":"Buckets",             "validwords":["bucket","metric_bucket","metric_class","metric_classes"]}
+                 ] %}
+
+  {% for include_raw in include.split(',') %}
+    {% set word = include_raw.lower().strip().replace(' ','_') %}
+    {% for test in tests %}
+      {% set t1 = word in test.validwords %}
+      {% set t2 = word[:-1] in test.validwords %}
+      {% set t3 = word.replace("flag","flg") in test.validwords %}
+      {% set t4 = word.replace("_","") in test.validwords %}
+      {% if t1 or t2 or t3 or t4 %}
+        {{ context.included.append(test.return) or '' }}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  ### Manual include_*s
+  {% if include_user            is defined and include_user            %} {{ context.included.append('UserName')            or '' }} {% endif %}
+  {% if include_hour            is defined and include_hour            %} {{ context.included.append('LogTS')               or '' }} {% endif %}
+  {% if include_wdname          is defined and include_wdname          %} {{ context.included.append('Workload_Definition') or '' }} {% endif %}
+  {% if include_querygrid_flag  is defined and include_querygrid_group %} {{ context.included.append('QueryGrid_Flag')      or '' }} {% endif %}
+  {% if include_subsecond_flag  is defined and include_subsecond_group %} {{ context.included.append('SubSecond_Flag')      or '' }} {% endif %}
+  {% if include_dbexclude_flag  is defined and include_dbexclude_flag  %} {{ context.included.append('Exclude_Flag')        or '' }} {% endif %}
+  {% if include_exclude_flag    is defined and include_exclude_flag    %} {{ context.included.append('Exclude_Flag')        or '' }} {% endif %}
+  {% if include_tactical_flag   is defined and include_tactical_group  %} {{ context.included.append('Tactical_Flag')       or '' }} {% endif %}
+  {% if include_complexity      is defined and include_complexity      %} {{ context.included.append('Complexity')          or '' }} {% endif %}
+  {% if include_queryid         is defined and include_queryid         %} {{ context.included.append('QueryID')             or '' }} {% endif %}
+  {% if include_metric_buckets  is defined and include_metric_buckets  %} {{ context.included.append('Buckets')             or '' }} {% endif %}
+  {% if include_metric_classes  is defined and include_metric_classes  %} {{ context.included.append('Buckets')             or '' }} {% endif %}
+
+
+  ### Finally, add defaults if specified
+  {% for default in defaults %}
+    {{ context.included.append(default) or '' }}
+  {% endfor %}
+
+{%- endmacro %}

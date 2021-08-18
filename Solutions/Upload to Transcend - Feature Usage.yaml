@@ -1,0 +1,76 @@
+description: "Runs Feature Usage process and uploads results to Transcend, to STAGE table for Transcend sourcing into all corporate Feature Usage reporting."
+version: 1
+# add this line to skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+
+tasks:
+{% set save_prework  = false %}
+{% set reconcile     = true %}
+{% set gtt_db        = 'APP_TCA_TMP' if gtt_db is not defined else gtt_db %}
+{% set sp_db         = 'APP_TCA_TBL' if sp_db  is not defined else sp_db %}
+{% set dbprefix      = 'DEV_' if dev else '' %}
+
+{% include "vt_feature_usage.j2" %}
+
+- name: Export Feature Usage for Transcend Upload
+  connect: source
+  export:
+    file: feature_usage_upload.csv
+    sql: |
+      select
+           Site_ID
+          ,LogDate
+          ,FeatureName
+          ,BitPos
+          ,UserType
+          ,Organization
+          ,Department
+          ,count(cast(Request_Total_Cnt       as bigint))        as Request_Total_Cnt
+          ,count(cast(Statement_Total_Cnt     as bigint))        as Statement_Total_Cnt
+          ,count(cast(Request_Error_Cnt       as bigint))        as Request_Error_Cnt
+          ,count(cast(Statement_Error_Cnt     as bigint))        as Statement_Error_Cnt
+          ,count(cast(Request_Abort_Cnt       as bigint))        as Request_Abort_Cnt
+          ,count(cast(Statement_Abort_Cnt     as bigint))        as Statement_Abort_Cnt
+          ,count(cast(distinct_cnt_username   as bigint))        as distinct_cnt_username
+          ,sum(  cast(sum_parsercputime       as decimal(38,4))) as sum_parsercputime
+          ,sum(  cast(sum_ampcputime          as decimal(38,4))) as sum_ampcputime
+          ,sum(  cast(sum_totaliocount        as bigint))        as sum_totaliocount
+          ,sum(  cast(sum_reqiokb             as bigint))        as sum_reqiokb
+          ,sum(  cast(sum_reqphysio           as bigint))        as sum_reqphysio
+          ,sum(  cast(sum_reqphysiokb         as bigint))        as sum_reqphysiokb
+          ,sum(  cast(sum_usediota            as bigint))        as sum_usediota
+          ,sum(  cast(sum_impactcpu           as decimal(38,4))) as sum_impactcpu
+          ,sum(  cast(sum_impactio            as bigint))        as sum_impactio
+          ,sum(  cast(sum_lockdelay           as decimal(38,4))) as sum_lockdelay
+          ,sum(  cast(sum_delaytime           as decimal(38,4))) as sum_delaytime
+          ,sum(  cast(sum_minrespholdtime     as decimal(38,4))) as sum_minrespholdtime
+          ,sum(  cast(sum_totalfirstresptime  as decimal(38,4))) as sum_totalfirstresptime
+          ,count(cast(cnt_allmapamp_query     as bigint))        as cnt_allmapamp_query
+          ,avg(  cast(avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
+          ,sum(  cast(sum_numsteps            as bigint))        as sum_numsteps
+          ,sum(  cast(sum_spoolusage          as bigint))        as sum_spoolusage
+          ,sum(  cast(sum_numresultrows       as bigint))        as sum_numresultrows
+      from vt_feature_usage
+      group by
+           Site_ID
+          ,LogDate
+          ,FeatureName
+          ,BitPos
+          ,UserType
+          ,Organization
+          ,Department
+
+
+- name: Import feature_usage_upload.csv into Transcend staging area
+  connect: transcend
+  import:
+    file: feature_usage_upload.csv
+    table: {{ dbprefix }}{{ gtt_db }}.stg_dat_feature
+
+- name: Merge staged data into the core layer by calling SP
+  connect: transcend
+  call:
+    proc: {{ dbprefix }}{{ sp_db }}.sp1_coa_dat_feature
+    params:
+    - Null

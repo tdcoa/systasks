@@ -6,55 +6,108 @@ description: >
   IF (and only if) the below string is included.  If you look at the pre-substitution
   code, you can see that command below.
 
-# include this line to skip duplicitive CVTs: {% set completed = [] %}
-
-# Important: Jinja doesn't understand comments, so template logic embedded into
-# comments is still valid.  It also means you cannot 'comment out' template logic.
-# for example, the logic embedded in the previous paragraph is active.
-
 tasks:
 
-- name: Create vt_dbcinfo the FIRST time
+
+# In order to escape from duplicate runs, each process must set a global namespace
+# called 'run' with an attribute list called "completed".   Creating this
+# namespace.list (run.completed) looks like this:
+
+########## Always include the below line in every process #############
+{% set run = namespace(completed=[]) if run is not defined else run %}
+########## Always include the above line in every process #############
+
+# all subsequent included templates (see below) will look for this
+# namespace.list (run.completed) and skip processing if the vt_name is found.
+# The above single line is REQUIRED if you want your process to skip re-runs.
+# All COA metrics and solutions will include this line.
+
+{% include "vt_site_info.j2" %}  # will build  vt_site_info
+{% include "vt_site_info.j2" %}  # because run.completed exists, this will be skipped
+{% include "vt_site_info.j2" %}  # because run.completed exists, this will be skipped
+
+{% include "vt_datedriver.j2" %}  # will build  vt_datedriver
+{% include "vt_datedriver.j2" %}  # because run.completed exists, this will be skipped
+
+
+# CONFIRM by looking at the Explain screen for Demo108... you should only see
+# ONE of the above vt_site_info.j2 processes (not 3)
+
+- name: "Export vt_site_info v1 (run.completed = {{ run.completed }})"
+  connect: source
+  export:
+    file: demo108_site_info_v1.csv
+    sql: Select * from vt_site_info a
+
+
+
+
+# If you want to RE-RUN ALL processes for some reason, you'll have to do 2 things:
+
+#  1a) clear the run.completed list
+{% set run.completed = [] %}
+
+#  2a) drop any volatile tables created
+- name: "Drop vt_site_info, Clear All (run.completed = {{ run.completed }})"
   connect: source
   execute:
-    sql: |
-      create volatile table vt_dbcinfo as
-      (Select '{{ siteid }}' as Site_ID, info.*
-      from dbc.dbcinfo as info) with data
-      no primary index on commit preserve rows
-# append tablename to our list of completed items:
-# {{ completed.append('vt_dbcinfo') }}
+    sql: drop table vt_site_info
 
-
-
-# we can now opt-out of the entire below section,
-# depending whether the process was previously completed:
-
-# {% if not 'vt_dbcinfo' in completed %}
-- name: Create vt_dbcinfo the SECOND time
+#  2b) drop any volatile tables created
+- name: "Drop vt_datedriver, Clear All (run.completed = {{ run.completed }})"
   connect: source
   execute:
-    sql: |
-      create volatile table vt_dbcinfo as
-      (Select '{{ siteid }}' as Site_ID, info.*
-      from dbc.dbcinfo as info) with data
-      no primary index on commit preserve rows
-
-# {% endif %}
-
-# If you "explain" this job, you'll note the absence
-# of the above SECOND section... i.e., it was excluded
+    sql: drop table vt_datedriver
 
 
-# Here is a real-world example... the statement dimension will
-# maintain it's own state, allowing for repetitive calls,
-# and skipping chunks of code previously run.
-{% include "vt_dim_statement.j2" %}
-{% include "vt_dim_statement.j2" %}
-{% include "vt_dim_statement.j2" %}
-{% include "vt_dim_statement.j2" %}
-{% include "vt_dim_statement.j2" %}
 
-# All the dim_* templates are setup to skip repetitive calls, IF
-# you include this line at the top of every script (in comment is ok):
-# {% set completed = [] %}
+# Now you should be able to successfully re-run the vt_site_info process:
+{% include "vt_site_info.j2" %}  # will build  vt_site_info
+{% include "vt_site_info.j2" %}  # because run.completed exists, this will be skipped
+{% include "vt_site_info.j2" %}  # because run.completed exists, this will be skipped
+
+{% include "vt_datedriver.j2" %}  # will build  vt_datedriver
+{% include "vt_datedriver.j2" %}  # because run.completed exists, this will be skipped
+
+- name: Export vt_site_info v2 (run.completed = {{ run.completed }})
+  connect: source
+  export:
+    file: demo108_site_info_v2.csv
+    sql: Select * from vt_site_info
+
+
+
+
+
+# if you want to RE-RUN JUST ONE process, and not clear the entire run.completed list,
+# you'll have to loop thru the run.completed list and remove any matching entries
+# (this is required because an entry is made for every run completed).   Don't
+# forget to also drop the vt_table from the database.
+
+#  1a) remove only ONE name from the run.completed list
+{% set tmp=[] %}
+{% for vtname in run.completed %}
+  {% if vtname != 'vt_site_info' %}
+    {{ tmp.append(vtname) or '' }}
+  {% endif %}
+{% endfor %}
+{% set run.completed = tmp %}
+
+#  2b) drop the volatile table
+- name: "Drop vt_site_info, Clear vt_site_info (run.completed = {{ run.completed }})"
+  connect: source
+  execute:
+    sql: drop table vt_site_info
+
+# Now you should be able to successfully re-re-run the vt_site_info process:
+{% include "vt_site_info.j2" %}  # will build  vt_site_info
+{% include "vt_site_info.j2" %}  # because run.completed exists, this will be skipped
+{% include "vt_site_info.j2" %}  # because run.completed exists, this will be skipped
+
+# don't rerun "vt_datedriver.j2" or you'll hit errors, since it wasn't dropped from DB
+
+- name: Export vt_site_info v3
+  connect: source
+  export:
+    file: demo108_site_info_v3.csv
+    sql: Select * from vt_site_info

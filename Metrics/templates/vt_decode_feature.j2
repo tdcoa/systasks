@@ -1,0 +1,98 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_tablekind' in run.completed %}
+
+
+# variables
+#  expected: none
+#  optional: decode_from_transcend, custom_decode_folder
+
+- name: Create vt_decode_feature for later aggregations
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_feature
+      (
+       Feature_Name                varchar(128)
+      ,Feature_Category            varchar(128)
+      ,Feature_SubCategory         varchar(128)
+      ,Product_Name                varchar(128)
+      ,Product_Category            varchar(128)
+      ,Solution_Type               varchar(128)
+      ,User_Experience_Level_Name  varchar(128)
+      ,Initiator_Role_Category     varchar(128)
+      ,Objective_Name              varchar(128)
+      ,Feature_Weight              smallint
+      ,Max_Threshold_LOW           integer
+      ,Max_Threshold_MED           bigint
+      ,Feature_CPU_Weight          smallint
+      ,Feature_IO_Weight           smallint
+      ,Feature_Time_Weight         smallint
+      ,Feature_Cnt_Weight          smallint
+      ) unique primary index (Feature_Name)
+        on commit preserve rows
+
+
+{% if decode_from_transcend %}
+- name: "TRANSCEND ONLY: insert into vt_decode_feature from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      Insert into vt_decode_feature
+      Select
+       Feature_Name
+      ,Feature_Category
+      ,Feature_SubCategory
+      ,Product_Name
+      ,Product_Category
+      ,Solution_Type
+      ,User_Experience_Level_Name
+      ,Initiator_Role_Category
+      ,Objective_Name
+      ,Feature_Weight
+      ,Max_Threshold_LOW
+      ,Max_Threshold_MED
+      ,Feature_CPU_Weight
+      ,Feature_IO_Weight
+      ,Feature_Time_Weight
+      ,Feature_Cnt_Weight
+      from mdm_edw_sub.COA_DIM_Feature_VW
+
+{% else %}
+- name: import metadata from .csv into vt_decode_feature
+  connect: source
+  import:
+    file: {{ dim_feature | default (dirs.systasks / "Metrics" / "data" / "decode_feature.csv") }}
+    table: vt_decode_feature
+
+{% endif %}
+
+
+- name: Update vt_decode_feature to turn '' into null
+  connect: source
+  execute:
+    sql: |
+      update vt_decode_feature
+      set
+       Feature_Name               = case when Feature_Name               ='' then null else Feature_Name               end
+      ,Feature_Category           = case when Feature_Category           ='' then null else Feature_Category           end
+      ,Feature_SubCategory        = case when Feature_SubCategory        ='' then null else Feature_SubCategory        end
+      ,Product_Name               = case when Product_Name               ='' then null else Product_Name               end
+      ,Product_Category           = case when Product_Category           ='' then null else Product_Category           end
+      ,Solution_Type              = case when Solution_Type              ='' then null else Solution_Type              end
+      ,User_Experience_Level_Name = case when User_Experience_Level_Name ='' then null else User_Experience_Level_Name end
+      ,Initiator_Role_Category    = case when Initiator_Role_Category    ='' then null else Initiator_Role_Category    end
+      ,Objective_Name             = case when Objective_Name             ='' then null else Objective_Name             end
+
+
+- name: Collect Stats vt_decode_feature
+  connect: source
+  execute:
+    sql: |
+      collect stats
+         column (Feature_Name)
+        ,column (Feature_Category)
+        ,column (Feature_SubCategory)
+      on vt_decode_feature
+
+{% endif %}
+{{ run.completed.append('vt_decode_tablekind') or '' }}

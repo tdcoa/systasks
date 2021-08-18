@@ -1,0 +1,56 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_tablekind' in run.completed %}
+
+
+# variables
+#  expected: none
+#  optional: decode_from_transcend, custom_decode_folder
+
+
+- name: Create vt_decode_tablekind
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_tablekind
+      (TableKind         varchar(1)   character set latin
+      ,CommitOpt         varchar(8)   character set latin
+      ,Description       varchar(128) character set latin -- previously ObjectName
+      ,Object_Group12    varchar(32)  character set latin
+      ,Object_Group09    varchar(32)  character set latin
+      ,Object_Group06    varchar(32)  character set latin
+      ,Object_Group04    varchar(32)  character set latin
+      ) unique primary index (TableKind, CommitOpt)
+      on commit preserve rows
+
+
+
+{% if decode_from_transcend %}
+- name: "TRANSCEND ONLY: insert into vt_decode_tablekind from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_tablekind
+      Select TableKind, CommitOpt, Description
+      ,Object_Group12 ,Object_Group09 ,Object_Group06 ,Object_Group04
+      From TD_Common_View.Decode_TableKind
+{% else %}
+- name: import metadata into vt_decode_tablekind
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_tablekind.csv
+    table: vt_decode_tablekind
+{% endif %}
+
+
+- name: Update to remove any NULLS from CommitOpt
+  connect: source
+  execute:
+    sql: update vt_decode_tablekind set CommitOpt = '' where CommitOpt is null
+
+- name: Collect Stats vt_decode_tablekind
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_tablekind column(TableKind, CommitOpt)
+
+{% endif %}
+{{ run.completed.append('vt_decode_tablekind') or '' }}

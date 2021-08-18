@@ -1,0 +1,22 @@
+IndexType,UniqueFlag,Description,IndexType_Abbr,IndexType_Bucket
+H ,N ,Hash-Ordered All Covering Secondary Index,HOA-SI,Secondary Index
+O ,N ,Valued-Ordered ALL Covering Secondary Index,VOA-SI,Secondary Index
+P ,Y ,Unique Primary Index,UPI,Primary Index
+J ,Y ,Join Index (unique),JI,Join Index
+S ,Y ,Secondary Index (unique),USI,Secondary Index
+A ,N ,Indicates a Primary AMP Index,PA,Primary AMP Index
+1 ,N ,Indicates All the Columns that comprise the First field of the Join Index,Unknown,Join Index
+P ,N ,Non Partitioned Primary Index,UPI,Primary Index
+Q ,N ,Partitioned Primary Index (non-unique),PPI,Partition
+U ,Y ,Unique Secondary with NOT NULL,USI-NN,Secondary Index
+S ,N ,Secondary Index (non-unique),NUSI,Secondary Index
+M ,N ,Multi-Column Statistics,MC-Stats,Statistics
+Q ,Y ,Partitioned Primary Index (unique),PPI,Partition
+2 ,N ,Indicates All the Columns that comprise the Second field of the Join Index,Unknown,Join Index
+D ,N ,Derived Column Partition Statistics,DC-Stats,Statistics
+N ,N ,Hash Index,Hash-SI,Secondary Index
+J ,N ,Join Index (non-unique),JI,Join Index
+I ,N ,Ordering Column of a Composite Secondary Index,OCC-SI,Secondary Index
+V ,N ,Value-Ordered Secondary Index,VO-SI,Secondary Index
+G ,N ,Geospatial Non-Unique Secondary Index,Geo-NUSI,Secondary Index
+K ,Y ,Primary Key,Primary Key,Primary Key

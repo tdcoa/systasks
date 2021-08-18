@@ -1,0 +1,101 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_statement' in run.completed %}
+
+# variables
+#  expected:
+#  optional: decode_from_transcend, custom_decode_folder, statement_bucket_use_count
+
+### ============= ENSURE Statement_Bucket is increment of 3, between 3 and 15 =============
+{% set statement_bucket_use_count = 9 if statement_bucket_use_count is not defined else statement_bucket_use_count %}
+{% if statement_bucket_use_count > 15 %}
+{% set statement_bucket_use_count = 15 %}
+{% elif statement_bucket_use_count < 3 %}
+{% set statement_bucket_use_count = 3 %}
+{% elif statement_bucket_use_count % 3 != 0 %}
+{% set statement_bucket_use_count = ((statement_bucket_use_count / 3) |int) * 3 %}
+{% endif %}
+
+
+- name: Create vt_decode_statement_load
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_decode_statement_load
+      (
+       Statement_Type    varchar(128) character set LATIN
+      ,Statement_Class   varchar(128) character set LATIN
+      ,Statement_Use15   varchar(128) character set LATIN
+      ,Statement_Use12   varchar(128) character set LATIN
+      ,Statement_Use9    varchar(128) character set LATIN
+      ,Statement_Use6    varchar(128) character set LATIN
+      ,Statement_Use3    varchar(128) character set LATIN
+      ,Statement_Outcome varchar(128) character set LATIN
+      ) primary index (Statement_Type)
+      on commit preserve rows
+
+
+
+{% if decode_from_transcend %}
+- name: "TRANSCEND ONLY: insert into vt_decode_statement_load from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_statement_load
+      select
+       Statement_Type
+      ,Statement_Class
+      ,Statement_Bucket --Use15
+      ,Statement_Use12
+      ,Statement_Use9
+      ,Statement_Use6
+      ,Statement_Outcome as Statement_Use3
+      ,case
+       when Statement_Outcome = 'Develop/Support' then 'Data Maintenance'
+       when Statement_Outcome = 'Load/Transform'  then 'Ingest & Prep'
+       when Statement_Outcome = 'Query'  then 'Answers' end as Statement_Outcome
+      from TD_Common_View.Decode_Statement
+
+{% else %}
+- name: import metadata into vt_decode_statement_load
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_statement.csv
+    table: vt_decode_statement_load
+{% endif %}
+
+
+- name: Create final vt_decode_statement
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_statement as(
+        select
+         Statement_Type
+        ,Statement_Class
+        ,Statement_Use{{ statement_bucket_use_count }} as Statement_Bucket
+        ,Statement_Use15
+        ,Statement_Use12
+        ,Statement_Use9
+        ,Statement_Use6
+        ,Statement_Use3
+        ,Statement_Outcome
+        from vt_decode_statement_load
+      ) with Data
+      primary index (statement_type)
+      on commit preserve rows
+
+- name: Collect Stats vt_decode_statement
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_statement column(Statement_Type)
+
+
+{% if save_prework is not true %}
+- name: drop table vt_decode_statement_load
+  connect: source
+  execute:
+    sql: drop table vt_decode_statement_load
+{% endif %}
+
+{% endif %}
+{{ run.completed.append('vt_decode_statement') or '' }}

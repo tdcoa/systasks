@@ -1,0 +1,61 @@
+description: >
+  Demonstrate calling / using the coa_util.j2 macro template.
+
+tasks:
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+
+### you can import & call macros (generic, atomic peices of work)
+### from other files to speed work and reduce complexity.
+### for example, let's import a macro from the "coa_util" file:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.build_include_flags(run, ['Defaults','LogDate']) }}
+
+### The build_include_flags macro will evaluate the various "include" variables
+### and create an "included" list for all metrics that qualify (used in DBQL_Core).
+### There are 2 parms: the namespace (run) and any defaults to always include.
+### This allows for a quick check later in code by looking for:
+
+{% if 'LogDate' in run.included %}
+- name: Do some DATE-specific work here
+  connect: source
+  execute:
+    sql: Select 'LogDate' as SomeProcess
+{% endif %}
+
+{% if 'UserName' in run.included %}
+- name: Do some user-specific work here
+  connect: source
+  execute:
+    sql: Select 'UserName' as SomeProcess
+{% else %}
+- name: "To do user-specific work, include_user = true"
+  connect: source
+  execute:
+    sql: |
+      Select 'Add variable include_user = true' as option1
+             'Add variable include = "user, other includes, etc"' as option2
+{% endif %}
+
+
+- name: Print out all included variables
+  connect: source
+  execute:
+    sql: |
+      Select 'All included columns' as header
+      {% for incl in run.included %}
+       ,'Included: {{incl}}' as {{incl}}
+      {% endfor %}
+
+
+### Calling the macro again will re-run the logic, potentially overwriting results
+{{ macro.build_include_flags(run, ['LogDate']) }}  # removed 'Defaults'
+
+- name: Print out all included variables (after macro rerun)
+  connect: source
+  execute:
+    sql: |
+      Select 'All included columns' as header
+      {% for incl in run.included %}
+       ,'Included: {{incl}}' as {{incl}}
+      {% endfor %}

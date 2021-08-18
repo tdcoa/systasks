@@ -1,7 +1,7 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_dbc_indices_by_database' in run.completed %}
 
-{% include 'vt_dim_indextype.j2' %}
+{% include 'vt_decode_indextype.j2' %}
 
 - name: Create count of indices by database
   connect: source
@@ -11,7 +11,7 @@
       (
         select
            coalesce(Inds.DatabaseName, 'Unused') AS DatabaseName
-          ,coalesce(IK.IndexType_Desc, 'Unknown - ' || Inds.IndexType) AS IndexType_Desc
+          ,coalesce(IK.Description, 'Unknown - ' || Inds.IndexType) AS IndexType_Desc
           ,coalesce(IK.IndexType_Bucket, 'Unknown - ' || Inds.IndexType) AS IndexType_Bucket
           ,Inds.UniqueFlag as Unique_Flag
           ,zeroifnull(Inds.IndexCount) AS Index_Count
@@ -25,7 +25,7 @@
             ,count(distinct trim(databasename)||'.'||trim(tablename)) as DistinctTableCount
             FROM DBC.IndicesV GROUP BY 1,2,3
           ) Inds
-        full outer join vt_dim_indextype AS IK
+        full outer join vt_decode_indextype AS IK
           on IK.IndexType = Inds.IndexType
          and IK.UniqueFlag = Inds.UniqueFlag
       ) with data

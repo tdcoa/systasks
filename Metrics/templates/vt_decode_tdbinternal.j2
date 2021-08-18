@@ -1,0 +1,77 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_tdbinternal' in run.completed %}
+
+
+# variables
+#  expected: none
+#  optional:  save_prework, reconcile, decode_from_transcend, custom_decode_folder
+
+
+- name:  Create vt_decode_tdbinternal_load to catch initial file
+  connect: source
+  execute:
+    sql: |
+      CREATE MULTISET VOLATILE TABLE vt_decode_tdbinternal_load
+      (DatabaseName              varchar(128)  character set latin
+      ,DatabaseUse               varchar(128)  character set latin
+      ,Exclude_VantageUnit_Flag  byteint
+      ,Exclude_Performance_Flag  byteint
+      ,Notes                     varchar(1024) character set latin
+      ) NO PRIMARY INDEX
+      ON COMMIT PRESERVE ROWS;
+
+
+{% if decode_from_transcend %}
+- name: "TRANSCEND ONLY: insert into vt_decode_tdbinternal from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_tdbinternal_load
+      select DatabaseName, DatabaseUse
+      ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag, Notes
+      from td_common_view.Teradata_Database_Exclusions
+{% else %}
+- name: import metadata into vt_decode_tdbinternal_load
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_tdbinternal.csv
+    table: vt_decode_tdbinternal_load
+{% endif %}
+
+
+- name:  Create vt_decode_tdbinternal, enriched with system information
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_tdbinternal
+      as(
+          select
+           v.DatabaseName
+          ,f.DatabaseUse
+          ,f.Exclude_VantageUnit_Flag
+          ,f.Exclude_Performance_Flag
+          ,v.DBKind as DatabaseKind
+          ,v.CommentString
+          ,f.Notes as Exclusion_Notes
+          from dbc.DatabasesV v
+          join vt_decode_tdbinternal_load f
+            on v.DatabaseName = f.DatabaseName
+      ) with data no primary index on commit preserve rows
+
+
+- name: Collect Stats on vt_decode_tdbinternal
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_tdbinternal column(DatabaseName)
+
+
+{% if save_prework is not true %}
+- name: Drop vt_decode_tdbinternal_load
+  connect: source
+  execute:
+    sql: drop table vt_decode_tdbinternal_load
+{% endif %}
+
+
+{% endif %}
+{{ run.completed.append('vt_decode_tdbinternal') or '' }}

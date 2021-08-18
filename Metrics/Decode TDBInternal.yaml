@@ -1,0 +1,105 @@
+description: Print out table vt_decode_tdbinternal, for reconciliation purposes.
+version: 1
+tasks:
+
+{% include "vt_decode_tdbinternal.j2" %}
+
+- name: Export vt_decode_tdbinternal with all data
+  connect: source
+  export:
+    file: decode_tdbinternal.csv
+    sql: Select * from vt_decode_tdbinternal order by DatabaseName
+
+- name: Create Decode subfolder, if missing
+  connect: source
+  script:
+    command: scripts/mkdir.py
+    params:
+      - myDecodes
+
+- name: Export decode_dbexclusion as sample for custom decode file
+  connect: source
+  export:
+    file: myDecodes/decode_dbexclusion.csv
+    sql: |
+      Select DatabaseName, DatabaseUse
+      ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag
+      ,case when Exclusion_Notes='tbd'
+             and coalesce(trim(CommentString),'') <> ''
+            then CommentString else Exclusion_Notes end as Exclusion_Notes
+      from vt_decode_tdbinternal  order by DatabaseName
+
+
+- name: Create comparative summary of internal vs customer databases
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_tdbinternal_summary as(
+      select
+       case when i.DatabaseName is not null then i.DatabaseName else 'Customer' end as DatabaseName
+      ,case when i.DatabaseName is not null then i.DatabaseUse else 'Customer' end as DatabaseUse
+      ,count(Exclude_VantageUnit_Flag) as Exclude_VantageUnit_Flag
+      ,count(Exclude_Performance_Flag) as Exclude_Performance_Flag
+      ,count(distinct d.DatabaseName) as DatabaseCount
+      ,count(distinct t.DatabaseName||'.'||t.TableName) as ObjectCount
+      from dbc.TablesV t
+      join dbc.DatabasesV d
+        on t.DatabaseName = d.DatabaseName
+      left outer join vt_decode_tdbinternal i
+        on i.DatabaseName = d.DatabaseName
+      Group by 1,2
+      ) with data no primary index on commit preserve rows
+
+
+- name: Export full summary of internal vs customer databases
+  connect: source
+  export:
+    file: decode_dbexclusion_summary.csv
+    sql: Select * from vt_decode_tdbinternal_summary order by ObjectCount desc
+
+
+- name: Export comparative aggregate of internal vs customer databases
+  connect: source
+  export:
+    file: decode_dbexclusion_summary1.csv
+    sql: |
+      Select DatabaseName, ObjectCount as "Object Count"
+      from vt_decode_tdbinternal_summary
+      order by ObjectCount desc
+
+- name: Chart TD internal database volume
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:decode_dbexclusion_summary1.csv"
+      - "title:TD Internal Databases (Log Scale) - {{ siteid }}"
+      - "height:6"
+      - "width:18"
+      - "legendy:1"
+      - "xrotate:90"
+      - "barlogscale:True"
+
+
+- name: Export comparative aggregate of internal databases by use
+  connect: source
+  export:
+    file: decode_dbexclusion_summary2.csv
+    sql: |
+      Select DatabaseUse as "Database Use"
+      ,sum(DatabaseCount) as "Database Count"
+      ,sum(ObjectCount) as "Object Count"
+      from vt_decode_tdbinternal_summary
+      where DatabaseName <> 'Customer'
+      group by 1
+      order by 2 desc
+
+- name: Chart TD internal database volume
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:decode_dbexclusion_summary2.csv"
+      - "title:TD Internal Databases by Use - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "legendy:1"
+      - "xrotate:90"

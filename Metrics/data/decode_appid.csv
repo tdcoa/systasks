@@ -1,0 +1,262 @@
+Pattern_Type,AppID_Pattern,Application,Usage,Company,Priority,Data_Source
+Equal,TRNSFRMR,Cognos Business Intelligence,Analytics,IBM,41766043,Transcend
+Equal,MULTITHREADSGENQUEUE,Python,Analytics,Python.org,50100142,Transcend
+Equal,D_UGAP_DATA.PY,Python,Analytics,Python.org,71500141,Transcend
+Equal,UTF,Upgrade Testing Framework,Support,Teradata,83425217,Transcend
+Equal,6.1,Utility Audit Tool,ETL,Teradata,83425218,Transcend
+Like,TECHALERT.CLIENT.SERVICE%,TECHALERT.CLIENT.SERVICE,Support,Teradata,110100208,Transcend
+Like,TERADATA_Database_CHECK%,TERADATA_Database_CHECK,Support,Teradata,110525209,Transcend
+Like,MICROSOFT.POWERBI.ENTERPRISE%,Power BI,Analytics,Microsoft,111600083,Transcend
+Like,Microsoft.MASHUP.CONTAINER%,Power BI,Analytics,Microsoft,112433082,Transcend
+Like,PreViewProcessingService%,SQL Server,ETL,Microsoft,113433088,Transcend
+Like,ReportingServicesService%,SQL Server,ETL,Microsoft,113433089,Transcend
+Like,WINDOWSFORMSAPPLICATION%,Visual Studio,Application,Microsoft,114000107,Transcend
+Like,APPPOOL\CLARITYAPPPOOL%,IIS (Internet Information Services),Application,Microsoft,114600075,Transcend
+Like,APPPOOL\DEFAULTAPPPOOL%,IIS (Internet Information Services),Application,Microsoft,114600076,Transcend
+Like,InformationDesignTool%,Business Objects,Analytics,SAP,115266162,Transcend
+Like,SOCOSENIORADVANTAGE%,Visual Studio,Application,Microsoft,116766106,Transcend
+Like,TeradataStudio%,Studio,Analytics,Teradata,116775204,Transcend
+Like,ACOE_TST_OBIEE_SVC%,Business Intelligence Enterprise Edition,Analytics,Oracle,117633122,Transcend
+Like,BIBUSTKServerMAIN%,Cognos Business Intelligence,Analytics,IBM,118633037,Transcend
+Like,ACOE_BISYSTEMUser%,Business Intelligence Enterprise Edition,Analytics,Oracle,118633121,Transcend
+Like,CONNECTIONServer%,Business Objects,Analytics,SAP,119700161,Transcend
+Like,MSREPORTBUILDER%,SSRS (SQL Server Reporting Services),Analytics,Microsoft,120933100,Transcend
+Like,MINMAXPLANNING%,Oracle Inventory,Application,Oracle,122333133,Transcend
+Like,WEBIRichClient%,Business Objects WebI,Analytics,SAP,122333163,Transcend
+Like,WIReportServer%,Business Objects WebI,Analytics,SAP,122333164,Transcend
+Like,JOBServerCHILD%,Crystal Enterprise,Analytics,SAP,122333165,Transcend
+Like,TDAUTOTUNE%,AutoTune Performance Analyst,Analytics,Teradata,122825183,Transcend
+Like,COLLECTION%,COLLECTION,Support,Teradata,122825185,Transcend
+Like,SCHNITZLER%,SQL Assistant (Deprecated),Analytics,Teradata,122825202,Transcend
+Like,TARAServer%,TARA (Deprecated),ETL,Teradata,122825205,Transcend
+Like,MODELERServer%,SPSS Statistical,Analytics,IBM,123900050,Transcend
+Like,ISService%,ISService,Support,Teradata,125100192,Transcend
+Like,TDLOADEXE%,Load (Unsupported),ETL,Teradata,125100194,Transcend
+Like,TBUILDEXE%,TPT Job Executor,ETL,Teradata,125100211,Transcend
+Like,RSREPORTHOST%,SQL Server,ETL,Microsoft,125733090,Transcend
+Like,DTSDebugHost%,SQL Server Business Intelligence Development Studi,Analytics,Microsoft,125733092,Transcend
+Like,ISServerExec%,SSIS (SQL Server Integration Services),ETL,Microsoft,125733098,Transcend
+Like,DSAPI_SLAVE%,InfoSphere Data Stage,ETL,IBM,127866044,Transcend
+Like,AL_DESIGNER%,Business Objects,Analytics,SAP,127866158,Transcend
+Like,TABPROTOSRV%,Tableau,Analytics,Tableau,127866180,Transcend
+Like,EXECUTOR%,EXECUTOR,ETL,Teradata,127875187,Transcend
+Like,FASTLOAD%,FastLoad (Deprecated),ETL,Teradata,127875190,Transcend
+Like,MULTLOAD%,MultiLoad (Deprecated),ETL,Teradata,127875195,Transcend
+Like,MVC_Tool%,MVC Tool,Support,Teradata,127875196,Transcend
+Like,QUERYMAN%,SQL Assistant (Deprecated),Analytics,Teradata,127875201,Transcend
+Like,TDKERNEL%,TDKERNEL,Support,Teradata,127875206,Transcend
+Like,ORCHDBUTIL%,InfoSphere Data Stage,ETL,IBM,130400045,Transcend
+Like,DTSInstall%,SSIS (SQL Server Integration Services),ETL,Microsoft,130400095,Transcend
+Like,MRPROVIDER%,Visual Studio,Application,Microsoft,130400105,Transcend
+Like,POWERSHELL%,Windows PowerShell,Application,Microsoft,130400110,Transcend
+Like,PAGEServer%,Crystal Enterprise,Analytics,SAP,130400166,Transcend
+Like,CrystalRAS%,Crystal Reports RAS,Analytics,SAP,130400171,Transcend
+Like,CrystalBVM%,Crystal Reports View Manager,Analytics,SAP,130400172,Transcend
+Like,ARCMAIN%,Archive (Deprecated),Backup-Restore,Teradata,131350182,Transcend
+Like,FASTEXP%,FastExport (Deprecated),ETL,Teradata,131350188,Transcend
+Like,TDXODBC%,Linux ODBC Driver,Analytics,Teradata,131350193,Transcend
+Like,OLELOAD%,OLELoad (Deprecated),ETL,Teradata,131350198,Transcend
+Like,CSPPEEK%,PkgPlus,Support,Teradata,131350199,Transcend
+Like,TDWMDIP%,TDWM DIP,Support,Teradata,131350207,Transcend
+Like,TPTLOAD%,TPT Load,ETL,Teradata,131350212,Transcend
+Like,TPTSTRM%,TPT Stream,ETL,Teradata,131350213,Transcend
+Like,HOMESecurity.IMPORTFromNDW.CON%,HOME Security IMPORT From NDW,Analytics,Unknown,132500232,Transcend
+Like,UNIVERSALREPLICATIONNDW.CONSOL%,Universal Replication NDW,ETL,Unknown,132500258,Transcend
+Like,DTSWizard%,SSIS (SQL Server Integration Services),ETL,Microsoft,133433097,Transcend
+Like,NQSServer%,Business Intelligence Enterprise Edition,Analytics,Oracle,133433123,Transcend
+Like,AL_ENGINE%,Business Objects,Analytics,SAP,133433159,Transcend
+Like,WINDDI%,Administrator (Unsupported),Analytics,Teradata,135825181,Transcend
+Like,DSMAIN%,Data Stream Architecture,Backup-Restore,Teradata,135825186,Transcend
+Like,TPTEXP%,TPT Export,ETL,Teradata,135825210,Transcend
+Like,TPTUPD%,TPT Update,ETL,Teradata,135825214,Transcend
+Like,VECOMP%,Visual Explain,Support,Teradata,135825219,Transcend
+Like,CLARITYDATATRANSFERService%,Clarity ETL,Analytics,Clarity,137100019,Transcend
+Like,KREFERENCEDATAPURGEUTILITY%,Kalido MDM,ETL,Magnitude,137100063,Transcend
+Like,IMPADMIN%,Cognos Business Intelligence,Analytics,IBM,137133040,Transcend
+Like,PMDESIGN%,Informatica,ETL,Informatica,137133051,Transcend
+Like,MSACCESS%,Access,Application,Microsoft,137133071,Transcend
+Like,INFOPATH%,InfoPath,Application,Microsoft,137133078,Transcend
+Like,ODBCAD32%,ODBC Administrator 32-Bit,Application,Microsoft,137133079,Transcend
+Like,ODBCAD64%,ODBC Administrator 64-Bit,Application,Microsoft,137133080,Transcend
+Like,POWERPNT%,PowerPoint,Application,Microsoft,137133086,Transcend
+Like,ODBCTE32%,SQL Server,ETL,Microsoft,137133087,Transcend
+Like,SQLSERVR%,SQL Server,ETL,Microsoft,137133091,Transcend
+Like,RUNDLL32%,Windows Command Agent,Application,Microsoft,137133108,Transcend
+Like,OLAPISVR%,Hyperion Essbase,Application,Oracle,137133127,Transcend
+Like,UPSAPPSV%,Hyperion Essbase,Application,Oracle,137133128,Transcend
+Like,EASYView%,Crystal Reports,Analytics,SAP,137133169,Transcend
+Like,DESIGNER%,Crystal Reports Designer,Analytics,SAP,137133170,Transcend
+Like,SPOTFIRE%,Spotfire,Application,TIBCO,137133221,Transcend
+Like,KTRANSACTIONSTAGINGLOADER%,Kalido MDM,ETL,Magnitude,138600065,Transcend
+Like,SERIESNAMETELECASTMAPPING%,SERIES NAME TELECAST MAPPING,Analytics,Unknown,138700250,Transcend
+Like,TRANSDA%,Cognos Business Intelligence,Analytics,IBM,141766042,Transcend
+Like,NLEIACT%,Lotus Enterprise Integrator,ETL,IBM,141766048,Transcend
+Like,SSGODBC%,Informatica,ETL,Informatica,141766053,Transcend
+Like,OUTLOOK%,Outlook,Application,Microsoft,141766081,Transcend
+Like,PowerBI%,Power BI,Analytics,Microsoft,141766084,Transcend
+Like,MSMDSRV%,SSAS (SQL Server Analysis Services),Analytics,Microsoft,141766093,Transcend
+Like,CSCRIPT%,Windows CScript Script Host,Application,Microsoft,141766109,Transcend
+Like,WSCRIPT%,Windows WScript Script Host,Application,Microsoft,141766111,Transcend
+Like,DG4ODBC%,Database Gateway For ODBC,Analytics,Oracle,141766124,Transcend
+Like,DG4TERA%,Database Gateway For Teradata,Analytics,Oracle,141766125,Transcend
+Like,SEGUIDE%,Enterprize Guide,Analytics,SAS,141766173,Transcend
+Like,COMPSRV%,SAS,Analytics,SAS,141766175,Transcend
+Like,TIWIZ%,Index Wizard (Unsupported),Analytics,Teradata,141775191,Transcend
+Like,NPARC%,NPARC (Deprecated),Backup-Restore,Teradata,141775197,Transcend
+Like,TPUMP%,TPump (Deprecated),ETL,Teradata,141775215,Transcend
+Like,WORKBENCH.DATACOLLECTOR%,Work Bench,Analytics,Domo,141800026,Transcend
+Like,KTASKSUBREMOTEWAREHOUSE%,Kalido MDM,ETL,Magnitude,141800064,Transcend
+Like,CSTRACKER.SCHEDULEDTASK%,CSTRACKER.SCHEDULEDTASK,Unknown,Unknown,141900226,Transcend
+Like,MANAGEINVALIDASSOCIATES%,MANAGE INVALID ASSOCIATES,Unknown,Unknown,141900237,Transcend
+Like,CISDATACHANGENOTIFIER%,CISDATACHANGENOTIFIER,Unknown,Unknown,145700223,Transcend
+Like,ACOE_SQLPRO_INFINITY%,SQL Pro Server For SSIS,Analytics,Hankinsoft Developme,147700030,Transcend
+Like,AGINIT%,Netezza,Analytics,IBM,147733049,Transcend
+Like,DOTNET%,.NET,Application,Microsoft,147733070,Transcend
+Like,KERNEL%,Azure Data Studio,Analytics,Microsoft,147733073,Transcend
+Like,DTExec%,SSIS (SQL Server Integration Services),ETL,Microsoft,147733094,Transcend
+Like,DTSRun%,SSIS (SQL Server Integration Services),ETL,Microsoft,147733096,Transcend
+Like,DEVENV%,Visual Studio,Application,Microsoft,147733103,Transcend
+Like,ESSSVR%,Hyperion Essbase,Application,Oracle,147733126,Transcend
+Like,BUSOBJ%,Business Objects,Analytics,SAP,147733160,Transcend
+Like,CRPROC%,Crystal Reports,Analytics,SAP,147733167,Transcend
+Like,OPERATIONS ASSESSMEN%,OPERATIONS ASSESSMENT,Analytics,Unknown,147800247,Transcend
+Like,BTEQ%,BTEQ,ETL,Teradata,150100184,Transcend
+Like,FEXP%,FastExport (Deprecated),ETL,Teradata,150100189,Transcend
+Like,SQLA%,SQL Assistant (Deprecated),Analytics,Teradata,150100203,Transcend
+Like,TSET%,TSET,Support,Teradata,150100216,Transcend
+Like,SOURCEMARTDESIGNER%,Source Mart Designer,Analytics,Health Catalyst,152700031,Transcend
+Like,KGATEKEEPERSERVICE%,Kalido MDM,ETL,Magnitude,152700060,Transcend
+Like,NIELSENFEEDCHECKER%,Feed Checker,Analytics,Nielson,152700119,Transcend
+Like,DUALCABLEXMKTBBREP%,DUAL CABLE XMKT BB REP,Analytics,Unknown,152800228,Transcend
+Like,LIVECABLEXMKTBBREP%,LIVE CABLE XMKT BB REP,Analytics,Unknown,152800235,Transcend
+Like,TVRALLSTREAMSTRACK%,TVR ALL STREAMS TRACK,Analytics,Unknown,152800255,Transcend
+Like,UNICA%,Affininum Campaign,Application,IBM,155666036,Transcend
+Like,COGTR%,Cognos Business Intelligence,Analytics,IBM,155666039,Transcend
+Like,TM1SD%,Cognos Business Intelligence,Analytics,IBM,155666041,Transcend
+Like,PMDTM%,Informatica,ETL,Informatica,155666052,Transcend
+Like,DIAWP%,Azure Data Studio,Analytics,Microsoft,155666072,Transcend
+Like,EXCEL%,Excel,Application,Microsoft,155666074,Transcend
+Like,MSQRY%,Power Query For Excel,Application,Microsoft,155666085,Transcend
+Like,VISIO%,Visio,Application,Microsoft,155666101,Transcend
+Like,IISEX%,Visual Studio,Application,Microsoft,155666104,Transcend
+Like,JDBCE%,JDBC Extracts,ETL,Oracle,155666130,Transcend
+Like,JDBCL%,JDBC Loads,ETL,Oracle,155666131,Transcend
+Like,CRW32%,Crystal Reports,Analytics,SAP,155666168,Transcend
+Like,M_DB.IMPL.GCC4P64%,Ab Initio,ETL,Ab Initio,155700001,Transcend
+Like,SRCLIB_DLL_X64-32%,Alteryx Analytics,Analytics,Alteryx,155700007,Transcend
+Like,IR_ACO_DATALOADER%,Demand Tools - CRM,Analytics,Validity,155700260,Transcend
+Like,CABLEXMKTBBREPORT%,CABLE XMKT BB REPORT,Analytics,Unknown,155800222,Transcend
+Like,MISSINGSENTINELID%,MISSING SENTINEL ID,Unknown,Unknown,155800240,Transcend
+Like,STATUSANDALERTAPP%,STATUS AND ALERT APP,Unknown,Unknown,155800252,Transcend
+Like,M_DB.TER.GCC4P64%,Ab Initio,ETL,Ab Initio,158900002,Transcend
+Like,CSGRAFANASERVICE%,Grafana Labs,Application,Grafana Labs,158900029,Transcend
+Like,KCUSTOMCBELOADER%,Kalido MDM,ETL,Magnitude,158900059,Transcend
+Like,SALESFORCEWEBAPI%,WEB API,Application,SalesForce,158900156,Transcend
+Like,LOADIPSHARETABLE%,LOAD IP SHARE TABLE,Unknown,Unknown,159000236,Transcend
+Like,MONTHLY_KIT_TOOL%,MONTHLY_KIT_TOOL,Unknown,Unknown,159000242,Transcend
+Like,HPMQUERYService%,HPM (Horizon Performance Manager),Application,Penn Medicine,162600135,Transcend
+Like,TSA%,Service Agent,Support,Teradata,162600200,Transcend
+Like,MANAGEDSERVICES%,MANAGED SERVICES,Unknown,Unknown,162700238,Transcend
+Like,QUERYBUILDEREXE%,QUERYBUILDEREXE,Unknown,Unknown,162700249,Transcend
+Like,TVRBBRPTService%,TVR BB RPT Service,Analytics,Unknown,162700256,Transcend
+Like,UVSH%,InfoSphere Data Stage,ETL,IBM,166766047,Transcend
+Like,W3WP%,IIS (Internet Information Services),Application,Microsoft,166766077,Transcend
+Like,SSMS%,SSMS (SQL Server Management Services),ETL,Microsoft,166766099,Transcend
+Like,JAVA%,JAVA,Application,Oracle,166766129,Transcend
+Like,JDBC%,JDBC Queries,Application,Oracle,166766132,Transcend
+Like,TERADATAKERNEL%,Jupyter Notebook,Analytics,Jupyter,166800054,Transcend
+Like,QUERYCHAMELEON%,Nexus,Analytics,Nexus,166800118,Transcend
+Like,MYEVENTSLINEUP%,MY EVENTS LINE UP,Analytics,Unknown,166900244,Transcend
+Like,UNIVERSITYFEED%,UNIVERSITYFEED,Unknown,Unknown,166900259,Transcend
+Like,ACOE_PEGAFCCM%,PEGA Server,Analytics,PEGA,171500134,Transcend
+Like,MIPDataAccess%,MIPDataAccess,Unknown,Unknown,171600239,Transcend
+Like,MISSINGSSR_AD%,MISSING SSR_AD,Unknown,Unknown,171600241,Transcend
+Like,ACOE_ALT_PRI%,Alteryx Analytics,Analytics,Alteryx,177000005,Transcend
+Like,NBCU.COMPASS%,Compass,Analytics,NBCUniversal,177000115,Transcend
+Like,PHOENIXNAVI%,Airflow,Application,Apache,183400011,Transcend
+Like,WRITE_UGAP_%,Airflow,Application,Apache,183400012,Transcend
+Like,EPICSVCHOST%,EPIC,Analytics,EPIC,183400027,Transcend
+Like,HERCULESGUI%,Hercules GUI,Analytics,Hercules,183400033,Transcend
+Like,NODEDBQUERY%,AnalysticsData3Sixty,Analytics,LavaStorm,183400057,Transcend
+Like,KALIDOSHELL%,Kalido MDM,ETL,Magnitude,183400058,Transcend
+Like,NBCU.TVROCS%,TVRocs,Analytics,NBCUniversal,183400116,Transcend
+Like,BMT%,Cognos Business Intelligence,Analytics,IBM,183433038,Transcend
+Like,OSH%,InfoSphere Data Stage,ETL,IBM,183433046,Transcend
+Like,JMP%,JMP Statistical Discovery,Application,SAS,183433174,Transcend
+Like,DUL%,SAS,Analytics,SAS,183433176,Transcend
+Like,SAS%,SAS,Analytics,SAS,183433177,Transcend
+Like,ConsoleApp1%,ConsoleApp1,Unknown,Unknown,183500224,Transcend
+Like,FRO_SERVICE%,FRO_SERVICE,Unknown,Unknown,183500231,Transcend
+Like,MYANALYTICS%,MY ANALYTICS,Unknown,Unknown,183500243,Transcend
+Like,NTA_SERVICE%,NTA_SERVICE,Unknown,Unknown,183500246,Transcend
+Like,Unavailable%,Unavailable,Unknown,Unknown,183500257,Transcend
+Like,ATANASUITE%,Atanasuite,Analytics,Atanasuite,191000016,Transcend
+Like,NODEDBEXEC%,AnalysticsData3Sixty,Analytics,LavaStorm,191000056,Transcend
+Like,KJPSTDTASK%,Kalido MDM,ETL,Magnitude,191000061,Transcend
+Like,ACOE_OMNDS%,Omnia BPM,Analytics,Omnia,191000120,Transcend
+Like,File Logon%,File Logon,Unknown,Unknown,191100229,Transcend
+Like,KEYMETRICS%,KEY METRICS,Unknown,Unknown,191100234,Transcend
+Like,MYTIMEFEED%,MY TIMEFEED,Unknown,Unknown,191100245,Transcend
+Like,ACLSCRIPT%,Audit Command Language,Analytics,ACL Robotics,200100003,Transcend
+Like,JOBRUNNER%,JobRunner,ETL,D3,200100021,Transcend
+Like,DBSSENSOR%,McAfee Database Activity Monitoring,Application,McAfee,200100067,Transcend
+Like,QVCONNECT%,QlikView,Analytics,QlikView,200100145,Transcend
+Like,QUICKFLOW%,QuickFlow,Application,SalesForce,200100155,Transcend
+Like,PLSQLDEV%,PL/SQL Developer,Applicaion,Allround Application,211200004,Transcend
+Like,ECHILOAD%,S3 Transfer,Analytics,Amazon,211200008,Transcend
+Like,RUNAGENT%,BMC,Analytics,BMC,211200017,Transcend
+Like,DIGI2000%,DIGI2000,Analytics,DIGI,211200025,Transcend
+Like,JAMSHOST%,JAMS Scheduler,ETL,HelpSystems,211200032,Transcend
+Like,ECONSULT%,EConsult,Analytics,LA Care,211200055,Transcend
+Like,M8MULPRC%,Micro Strategy,Analytics,Micro Strategy,211200068,Transcend
+Like,MJMULPRC%,Micro Strategy,Analytics,Micro Strategy,211200069,Transcend
+Like,RSession%,R Statistical Software,Analytics,R Foundation,211200151,Transcend
+Like,RAYTHEON%,Inspect Analytics,Analytics,Raytheon,211200154,Transcend
+Like,THYCOTIC%,Thycotic,Analytics,Thycotic,211200220,Transcend
+Like,FRO_FEED%,FRO_FEED,Unknown,Unknown,211300230,Transcend
+Like,TPCBATCH%,TPCBATCH,Unknown,Unknown,211300254,Transcend
+Like,ALTERYX%,Alteryx Analytics,Analytics,Alteryx,225100006,Transcend
+Like,Airflow%,Airflow,Application,Apache,225100010,Transcend
+Like,BRIOQRY%,BrioQry,Analytics,Brio,225100018,Transcend
+Like,DBEAVER%,Universal Database Client,Analytics,DBeaver,225100022,Transcend
+Like,ADEPTRA%,Adeptra,Analytics,FICO,225100028,Transcend
+Like,ACLDA64%,ACL for Win,Analytics,Highbond,225100034,Transcend
+Like,MXSTASK%,Kalido MDM,ETL,Magnitude,225100066,Transcend
+Like,PHANTOM%,PhantomBuster CRM,Analytics,PhantomBuster,225100137,Transcend
+Like,RSCRIPT%,R Statistical Software,Analytics,R Foundation,225100150,Transcend
+Like,CSIFEED%,CSIFEED,Unknown,Unknown,225200225,Transcend
+Like,SERVICE%,SERVICE,Unknown,Unknown,225200251,Transcend
+Like,TITAN2_%,TITAN2 R Package,Unknown,Unknown,225200253,Transcend
+Like,SQLDBX%,SqlDBx IDE,Application,AngStream LLC,243000009,Transcend
+Like,TOMCAT%,Tomcat,Application,Apache,243000014,Transcend
+Like,VISUAL%,Visual Cut,Analytics,Millet Software,243000113,Transcend
+Like,MYSQLD%,MySQL,Analytics,MySQL,243000114,Transcend
+Like,NVTERA%,NetVault,Backup-Restore,NetVault,243000117,Transcend
+Like,PYTHON%,Python,Analytics,Python.org,243000143,Transcend
+Like,WINSQL%,WinSQL,Analytics,WinSQL,243000261,Transcend
+Like,DELMTD%,DELMTD,Application,Unknown,243100227,Transcend
+Like,HTTPD%,HTTP Daemon,Analytics,Apache,266800013,Transcend
+Like,CLINT%,ClintView,Analytics,ClintWorld,266800020,Transcend
+Like,DBVIS%,DBVisualizer,Analytics,DBVis Software,266800023,Transcend
+Like,UWSGI%,Python,Analytics,Python.org,266800144,Transcend
+Like,ERWIN%,ERWin Data Modeling,Application,Quest Software,266800146,Transcend
+Like,RTERM%,R Statistical Software,Analytics,R Foundation,266800152,Transcend
+Like,PB125%,SYBASE,Analytics,SYBASE,266800178,Transcend
+Like,DIAB%,DIAB,Analytics,DIAB Sofware,300100024,Transcend
+Like,KRDL%,Kalido MDM,ETL,Magnitude,300100062,Transcend
+Like,PERL%,Perl,Application,Perl.org,300100136,Transcend
+Like,TOAD%,TOAD For Oracle,Analytics,Quest Software,300100147,Transcend
+Like,RGUI%,R Statistical Software,Analytics,R Foundation,300100149,Transcend
+Like,ISQL%,ISQL - Command-line interactive SQL tool,Analytics,Unknown,300200233,Transcend
+Like,AQT%,Advanced Query Tool,Analytics,AQT,350100015,Transcend
+Like,CUT%,Visual Cut,Analytics,Millet Software,350100112,Transcend
+Like,PHP%,PHP Hypertext Preprocessor,Application,PHP,350100138,Transcend
+Like,PIH%,PIH,Unknown,Unknown,350200248,Transcend
+Like,R%,R Statistical Software,Analytics,R Foundation,433400153,Transcend
+Like,R%,R Statistical Software,Analytics,R Foundation,600100148,Transcend
+Like,%Tableau%,Tableau,Analytics,Tableau,1237133179,Transcend
+Like,%VSHOST%,Visual Studio,Application,Microsoft,1241766102,Transcend
+Like,%FCPROC%,Business Objects,Analytics,SAP,1241766157,Transcend
+Like,%PENTAHO.%,Pentaho Data Integration,ETL,Hitachi,1300100035,Transcend
+Like,%ANACONDA%,Python,Analytics,Python.org,1300100139,Transcend
+Like,%PYT,Python,Analytics,Python.org,1350100140,Transcend

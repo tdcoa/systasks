@@ -1,0 +1,93 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_ntile_ranges' in run.completed %}
+
+{% set ntiles     = 10 if ntiles        is not defined else ntiles %}
+{% set reconcile  = False if reconcile  is not defined else reconcile %}
+
+- name: Create vt_NTile_Ranges for Complexity Metrics
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_NTile_Ranges
+      (LogDate        Date
+      ,Metric         varchar(16)
+      {% for i in range(0,ntiles+1) %}
+      ,pctl_{{ i }}0        decimal(36,6)
+      {% endfor %}
+      ) primary index (LogDate, Metric)
+        on commit preserve rows
+
+
+- name: Create vt_NTile_Prework (save CPU with redundant calls)
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table vt_NTile_Prework as
+      (
+        select LogDate, AMPCPUTime, TotalIOCount, NumSteps
+        from {{ dbc.log }} as d
+        where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+      ) with data
+        no primary index
+        on commit preserve rows
+
+
+- name: "Insert into vt_NTile_Ranges - CPU"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_NTile_Ranges
+      Select LogDate, 'CPU' as Metric
+      {% for i in range(0,ntiles+1) %}
+      ,percentile_disc({{ i /10.0 }}) within group (order by AMPCPUTime) as CPU_Pctl_{{ i }}0
+      {% endfor %}
+      from vt_NTile_Prework d
+      where AMPCPUTime > 0
+      group by LogDate
+
+
+- name: "Insert into vt_NTile_Ranges - IO"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_NTile_Ranges
+      Select LogDate, 'IO' as Metric
+      {% for i in range(0,ntiles+1) %}
+      ,percentile_disc({{ i /10.0 }}) within group (order by TotalIOCount) as IO_Pctl_{{ i }}0
+      {% endfor %}
+      from vt_NTile_Prework d
+      where TotalIOCount > 0
+      group by LogDate
+
+
+- name: "Insert into vt_NTile_Ranges - NumSteps"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_NTile_Ranges
+      Select LogDate, 'NumSteps' as Metric
+      {% for i in range(0,ntiles+1) %}
+      ,percentile_disc({{ i /10.0 }}) within group (order by NumSteps) as Step_Pctl_{{ i }}0
+      {% endfor %}
+      from vt_NTile_Prework d
+      where NumSteps > 0
+      group by LogDate
+
+
+{% if reconcile %}
+- name: "RECONCILE: Export vt_NTile_Ranges"
+  connect: source
+  export:
+    file: reconcile_ntile_ranges.csv
+    sql: Select * from vt_NTile_Ranges order by 1
+{% endif %}
+
+
+- name: "Drop vt_NTile_Prework"
+  connect: source
+  execute:
+    sql: drop table vt_NTile_Prework
+
+
+{% endif %}
+{{ run.completed.append('vt_ntile_ranges') or '' }}

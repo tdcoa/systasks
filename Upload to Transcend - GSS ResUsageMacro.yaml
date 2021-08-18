@@ -1,0 +1,43 @@
+description: >
+     Upload Sizing Data for Global Sales Support (GSS) to run their sizing estimates (aka GSS Resusage Macro).
+     It is important you provide the correct "tdver", "siteid", and "pdcr" variables, to ensure correct sql
+     selection and correct links after data is uploaded to Transcend.
+version: 1
+# add this line to skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+tasks:
+{% set startdate = "DATE-91" if startdate is not defined else startdate %}
+{% set enddate   = "DATE-1 " if enddate   is not defined else enddate   %}
+{% set starttime = 0         if starttime is not defined else starttime %}
+{% set endtime   = 240000    if endtime   is not defined else endtime   %}
+
+{% set upload = True if upload is not defined else upload %}
+{% set stagedb = 'adlste_coa_stg' if stagedb is not defined else stagedb %}
+{% set targetdb = 'adlste_coa' if targetdb is not defined else targetdb %}
+
+{% set filesuffix = 'pdcr' if pdcr else 'dbc' %}
+{% set filesuffix = tdver ~ filesuffix %}
+
+
+
+- name: "Export GSSResUsage SQL for {{ filesuffix }}"
+  connect: source
+  export:
+    file: gssresusage_{{ filesuffix }}--{{ siteid }}.csv
+    sqlfile: sql/gssresusage_{{ filesuffix }}.sql
+
+
+{% if upload %}
+- name: Load data to Transcend
+  connect: transcend
+  import:
+    file: gssresusage_{{ filesuffix }}--{{ siteid }}.csv
+    table: {{ stagedb }}.stg_dat_gssresusage_1620pdcr
+
+- name: Merge staged data into the core layer
+  connect: transcend
+  call:
+    proc: {{ targetdb }}.SP_dat_gssresusage_1620pdcr
+
+{% endif %}

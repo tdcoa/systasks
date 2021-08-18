@@ -1,12 +1,24 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_join_frequency' in run.completed %}
 
-- name: Create map of join frequency to QueryID, for performance
+
+### ============= SET DEFAULT EXECUTION BEHAVIOR =============
+{% set reconcile      = false if reconcile       is not defined else reconcile %}
+{% set save_prework   = false if save_prework    is not defined else save_prework %}
+{% set process_chunks = 3     if process_chunks  is not defined else process_chunks %}
+
+{% include "vt_datedriver.j2" %}
+{% for ichunk in range(1, process_chunks+1) %}
+
+- name: "{{ "Create VT" if ichunk==1 else "Insert Into VT" }} map of join frequency to QueryID map prework, for performance  (chunk {{ ichunk }} of {{ process_chunks }})"
   connect: source
   execute:
     sql: |
-      create volatile table vt_queryid_by_joincount as
-      (
+      {% if ichunk == 1 %}
+      create volatile table vt_queryid_by_joincount as (
+      {% else %}
+      insert into vt_queryid_by_joincount
+      {% endif %}
           Select
            QueryID
           {% if pdcr %}
@@ -19,11 +31,16 @@
           where ObjectColumnName is null
             and ObjectTableName is not null
             and ObjectType in ('Tab', 'Viw')
-            and LogDate1 between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
+            and LogDate1 in(Select Calendar_Date from vt_DateDriver where Process_Chunk =  {{ ichunk }})
           group by 1,2
+      {% if ichunk == 1 %}
       ) with data
       primary index (QueryID, LogDate1) /* Match PI for DBQL */
       on commit preserve rows
+      {% endif %}
+
+{% endfor %}
+
 
 - name: Collect stats on intermediate table vt_queryid_by_joincount
   connect: source
@@ -54,10 +71,12 @@
   execute:
     sql: collect stats on vt_join_frequency column(Join_Label)
 
+{% if not save_prework %}
 - name: Drop intermediate table vt_queryid_by_joincount
   connect: source
   execute:
     sql: drop table vt_queryid_by_joincount
+{% endif %}
 
 {% endif %}
 {{ run.completed.append('vt_join_frequency') or '' }}

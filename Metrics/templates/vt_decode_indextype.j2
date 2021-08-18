@@ -1,0 +1,46 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_indextype' in run.completed %}
+
+# variables
+#  expected: none
+#  optional: decode_from_transcend, custom_decode_folder
+
+
+- name:  Create vt_decode_indextype
+  connect: source
+  execute:
+    sql: |
+      CREATE MULTISET VOLATILE TABLE vt_decode_indextype
+      (IndexType         char(1) character set latin
+      ,UniqueFlag        char(1) character set latin
+      ,Description       varchar(128) character set latin
+      ,IndexType_Abbr    varchar(16) character set latin
+      ,IndexType_Bucket  varchar(128) character set latin
+      ) NO PRIMARY INDEX
+      ON COMMIT PRESERVE ROWS;
+
+
+{% if decode_from_transcend %}
+- name:  "TRANSCEND ONLY: insert into vt_decode_indextype from Transcend Master (will not work on customer system)"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_indextype
+      select IndexType, UniqueFlag, Description, IndexType_Abbr, IndexType_Bucket
+      from td_common_view.Decode_IndexType
+
+{% else %}
+- name: import metadata into vt_decode_indextype
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_indextype.csv
+    table: vt_decode_indextype
+{% endif %}
+
+- name: Collect Stats on vt_decode_indextype
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_indextype column(IndexType)
+
+{% endif %}
+{{ run.completed.append('vt_decode_indextype') or '' }}
