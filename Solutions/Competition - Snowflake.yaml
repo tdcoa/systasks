@@ -31,7 +31,22 @@ tasks:
 
 {% include "vt_concurrency.j2" %}
 
-- name: Export concurrency for Snowflake PPTx
+
+- name: Export concurrency, for PPTx
+  connect: source
+  export:
+    file: sf--concurrency.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(Concurrency_Avg) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Average" --2
+      ,cast(cast(avg(Concurrency_80Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 80th Percentile"
+      ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
+      ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
+      from vt_concurrency ;
+
+
+- name: Export concurrency for graphing (all)
   connect: source
   export:
     file: sf--concurrency2.csv
@@ -55,7 +70,7 @@ tasks:
       - "height:6"
 
 
-- name: Export concurrency for Snowflake PPTx
+- name: Export concurrency for graphing (2 lines only)
   connect: source
   export:
     file: sf--concurrency1.csv
@@ -272,23 +287,6 @@ tasks:
   connect: source
   execute:
     sql: drop table vt_disk_space_by_table
-
-
-
-{% include "vt_concurrency.j2" %}
-
-- name: Export concurrency for Snowflake pptx
-  connect: source
-  export:
-    file: sf--concurrency.csv
-    sql: |
-      select
-       '{{ siteid }}' as Site_ID
-      ,cast(cast(avg(Concurrency_Avg) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Average" --2
-      ,cast(cast(avg(Concurrency_80Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 80th Percentile"
-      ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
-      ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
-      from vt_concurrency ;
 
 
 

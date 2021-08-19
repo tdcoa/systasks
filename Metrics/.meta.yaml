@@ -1,74 +1,85 @@
 tasklists:
 
+  Allocated Utilization per Table:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Allocated_Utilization_per_Table.aspx
+
   Concurrency:
-    tags: [concurrency, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Concurrency.aspx
 
   DBC Column Summary:
-    tags: [DBC, Column, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Column_Summary.aspx
 
   DBC Constraint:
-    tags: [DBC, Constraint, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Constraint.aspx
 
   DBC Indices by Database:
-    tags: [DBC, Indices, Database, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Indices_by_Database.aspx
 
-
   DBC Object Count:
-    tags: [DBC, Object, Count, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Object_Count.aspx
 
   DBQL Core Metrics Daily:
-    tags: [DBQL_Core, DBQL, Core, Metrics, Daily, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBQL_Core_Metrics_Daily.aspx
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBQL_Core_Metrics.aspx
 
-  Dim App:
-    tags: [Dim, App, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_App.aspx
+  Decode App:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_App.aspx
 
-  Dim IndexType:
-    tags: [Dim, IndexType, Index, Type, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_IndexType.aspx
+  Decode Other Types:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_Other_Types.aspx
 
-  Dim Statement:
-    tags: [Dim, Statement, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_Statement.aspx
+  Decode Statement:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_Statement.aspx
 
-  Dim TableKind:
-    tags: [Dim, TableKind, Table, Kind, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_TableKind.aspx
+  Decode TDInternal Databases:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_TDBInternal.aspx
 
-  Dim TDInternal Databases:
-    tags: [Dim, TD, Internal, TDInternal, Database, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_TDInternal_Databases.aspx
-
-  Dim User:
-    tags: [Dim, User, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Dim_User.aspx
+  Decode User:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_User.aspx
 
   Disk Space by Table:
-    tags: [Disk, Space, Table, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Disk_Space_by_Table.aspx
 
+  Feature Usage:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Feature_Usage.aspx
+
   Join Frequency:
-    tags: [Join, Frequency, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Join_Frequency.aspx
 
+  Join Graph:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Join_Graph.aspx
+
+  Queries by RunTime Bucket:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Queries_by_RunTime_Bucket.aspx
+
   Site Info:
-    tags: [Site, Info, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Site_Info.aspx
 
   Statement Count by Table:
-    tags: [Statement, Count, Table, performance, bigquery]
+    tags: []
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Statement_Count_by_Table.aspx
 
-  Transfer Bytes In-Out:
-    tags: [System, Transfer, Bytes, in, out, performance, bigquery]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Transfer_Bytes_In_Out.aspx
+  System CPU by Day:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_System_CPU_by_Day.aspx
 
-  Queries by RunTime Bucket:
-    tags: [System, query, queries, performance]
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Queries_by_RunTime_Bucket.aspx
+  Transfer Bytes In-Out:
+    tags: []
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Transfer_Bytes_In_Out.aspx

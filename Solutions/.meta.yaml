@@ -1,0 +1,29 @@
+tasklists:
+
+  Competition - BigQuery:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Competition_BigQuery.aspx
+    tags: [demo]
+
+  Competition - Snowflake:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Competition_Snowflake.aspx
+    tags: [demo]
+
+  Consulting - AutoTune Check:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Consulting_AutoTune_Check.aspx
+    tags: [demo]
+
+  Download All Decode Tables (Trascend Only):
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Download_All_Decode_Tables.aspx
+    tags: [demo]
+
+  Upload to Transcend - DBQL_Core:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Upload_to_Transcend_DBQL_Core.aspx
+    tags: [demo]
+
+  Upload to Transcend - Feature Usage:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Upload_to_Transcend_Feature_Usage.aspx
+    tags: [demo]
+
+  Vantage Health Check:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Vantage_Health_Check.aspx
+    tags: [demo]

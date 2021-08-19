@@ -1,7 +1,0 @@
-description: "This sample illustrates how to download the existing DIM_xxx.csv file from source, but then copy, save, and modify a local copy for custom setups."
-tasks:
-
-- name: Copy Contents from Input to Output
-  copy:
-    files:
-      - {{ dim_user | default (dirs.systasks / "Metrics" / "data" / "dim_user.csv") }}

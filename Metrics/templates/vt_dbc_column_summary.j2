@@ -3,7 +3,7 @@
 
 {% set td15 = True  if tdver[:2]=='15' else False %}
 
-{% include "vt_dim_datatype.j2" %}
+{% include "vt_decode_datatype.j2" %}
 
 - name:  Create vt_dbc_column_summary
   connect: source
@@ -90,7 +90,7 @@
           WHERE ColumnType IS NOT NULL
           GROUP BY 1,2,3,4,5,6
        ) C
-        FULL OUTER JOIN vt_dim_datatype DT
+        FULL OUTER JOIN vt_decode_datatype DT
          ON DT.DataType = C.ColumnType
         {% if td15 %}
         AND coalesce(DT.StorageFormat,'') = coalesce(C.StorageFormat,'')

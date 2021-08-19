@@ -1,8 +1,33 @@
 tasklists:
-  Demo 1:
-    doc: https://github.com/tdcoa/systasks/wiki/demo1
-    tags: [dbql, demo]
 
-  Demo 2:
-    doc: https://github.com/tdcoa/systasks/wiki/demo2
+  Demo 101 - The Basics:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_101_The_Basics.aspx
+    tags: [demo]
+
+  Demo 102 - Including Other Templates:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_102_Including_Other_Templates.aspx
+    tags: [demo]
+
+  Demo 103 - Variables:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_103_Variables.aspx
+    tags: [demo]
+
+  Demo 104 - Pointing to Local Decode Files:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_104_Pointing_to_Local_Decode_Files.aspx
+    tags: [demo]
+
+  Demo 108 - Dealing with Repeated CVT:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_108_Dealing_with_Repeated_CVT.aspx
+    tags: [demo]
+
+  Demo 201 - Looping Date Ranges:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_201_Looping_Date_Ranges.aspx
+    tags: [demo]
+
+  Demo 202 - coa_util Macros:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Demo_202_coa_util_Macros.aspx
+    tags: [demo]
+
+  Test Connectivity:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Test_Connectivity.aspx
     tags: [demo]
