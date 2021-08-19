@@ -17,9 +17,9 @@ tasks:
 # with no indenting, for simplicity.
 
 # Let's build several Dimension tables:
-{% include 'vt_dim_statement.j2' %}
-{% include 'vt_dim_app.j2' %}
-{% include 'vt_dim_user.j2' %}
+{% include 'vt_decode_statement.j2' %}
+{% include 'vt_decode_app.j2' %}
+{% include 'vt_decode_user.j2' %}
 
 # Let's also calculate concurrency:
 {% include 'vt_concurrency.j2' %}

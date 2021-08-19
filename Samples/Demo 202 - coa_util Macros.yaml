@@ -29,12 +29,11 @@ tasks:
   execute:
     sql: Select 'UserName' as SomeProcess
 {% else %}
-- name: "To do user-specific work, include_user = true"
+- name: "To do NON-user-specific work"
   connect: source
   execute:
     sql: |
-      Select 'Add variable include_user = true' as option1
-             'Add variable include = "user, other includes, etc"' as option2
+      Select 'Non-User Work' as SomeProcess
 {% endif %}
 
 

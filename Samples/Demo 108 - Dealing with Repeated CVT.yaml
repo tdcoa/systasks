@@ -2,7 +2,7 @@ description: >
   Demonstrate how to escape multiple CVT calls to avoid 'table exists' error."
   This is done by creating a list object called 'completed' (see code comment below)
   at the beginning of your process and adding any vt_name that you may want to test
-  and exclude later. All dim_templates use this approach to disallow repetitive runs
+  and exclude later. All decode_templates use this approach to disallow repetitive runs
   IF (and only if) the below string is included.  If you look at the pre-substitution
   code, you can see that command below.
 
@@ -13,9 +13,11 @@ tasks:
 # called 'run' with an attribute list called "completed".   Creating this
 # namespace.list (run.completed) looks like this:
 
+
 ########## Always include the below line in every process #############
 {% set run = namespace(completed=[]) if run is not defined else run %}
 ########## Always include the above line in every process #############
+
 
 # all subsequent included templates (see below) will look for this
 # namespace.list (run.completed) and skip processing if the vt_name is found.
