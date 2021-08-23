@@ -4,7 +4,7 @@ version: 1
 {% set run = namespace(completed=[]) if run is not defined else run %}
 
 # set master default for start/end date in this solution to 6wks, unless otherwise defined
-{% set startdate   = 'DATE-43' if startdate is not defined else startdate %}
+{% set startdate   = 'DATE-42' if startdate is not defined else startdate %}
 {% set enddate = 'DATE-1' if enddate is not defined else enddate %}
 
 
@@ -231,7 +231,7 @@ tasks:
       Where DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
 
 
-{% include "vt_disk_space_by_table.j2" %}
+{% include "vt_disk_space.j2" %}
 
 - name: Export disk space summary
   connect: source
@@ -249,10 +249,10 @@ tasks:
        as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
       from(
           Select DatabaseName, TableName -- Avg away LogDate
-          ,Avg(CurrentPerm_GB) as CurrentPerm_GB
+          ,Avg(Table_CurrentPerm_GB) as CurrentPerm_GB
           ,Avg(Database_MaxPerm_GB) as Database_MaxPerm_GB
           ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
-          from vt_disk_space_by_table
+          from vt_disk_space
           group by DatabaseName, TableName ) a
 
 - name: Export count of tables over 10gb, on average over time period
@@ -263,10 +263,10 @@ tasks:
       SELECT '{{ siteid }}' as Site_ID
       ,cast(cast(coalesce(count(*), 0) as format 'ZZZ,ZZZ,ZZ9') as varchar(32))  AS tbl10GB
       from (Select DatabaseName, TableName -- get avg size per table
-            ,cast(avg(CurrentPerm_GB) as decimal(32,2)) as CurrentPerm_GB
-            from vt_disk_space_by_table
-            where CurrentPerm_GB >= 10
+            ,cast(avg(Table_CurrentPerm_GB) as decimal(32,2)) as CurrentPerm_GB
+            from vt_disk_space
             group by 1,2) a
+      where CurrentPerm_GB >= 10
 
 - name: Export list of all tables over 10gb, on average over time period
   connect: source
@@ -277,16 +277,16 @@ tasks:
       ,DataBaseName, TableName
       ,cast(cast(CurrentPerm_GB as format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) AS "CurrentPerm GB"
       from (Select DatabaseName, TableName -- get avg size per table
-           ,cast(avg(CurrentPerm_GB) as decimal(32,2)) as CurrentPerm_GB
-           from vt_disk_space_by_table
-           where CurrentPerm_GB >= 10
+           ,cast(avg(Table_CurrentPerm_GB) as decimal(32,2)) as CurrentPerm_GB
+           from vt_disk_space
            group by 1,2) a
+      where CurrentPerm_GB >= 10
       ORDER BY CurrentPerm_GB DESC
 
-- name: DROP volatile table to save spool - vt_disk_space_by_table
+- name: DROP volatile table to save spool - vt_disk_space
   connect: source
   execute:
-    sql: drop table vt_disk_space_by_table
+    sql: drop table vt_disk_space
 
 
 

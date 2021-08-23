@@ -1,0 +1,19 @@
+description: "Export Disk Space by Table (vt_disk_space)"
+version: 1
+tasks:
+
+{% include "vt_disk_space.j2" %}
+
+
+- name: "Export vt_disk_space summary for reconciliation (at 2M row/mth, default output is summary)"
+  connect: source
+  export:
+    file: disk_space.csv
+    sql: |
+      Select * from vt_disk_space
+      {% if all_dates %}
+      -- display all dates
+      {% else %}
+      qualify LogDate = max(LogDate)over()
+      {% endif %}
+      Order by Table_System_Fill_Pct desc
