@@ -64,7 +64,7 @@ Archive/Restore,SQL Engine,Backup and Restore,Vantage Database,Vantage,Business 
 Teradata Pivot,SQL Engine,Advanced SQL,Vantage Database,Vantage,In-database Analytics,,TBD,Run SQL,10,0,0,1,1,1,1
 DBQL STEP Logging,SQL Engine,Usage Analysis,Vantage Database,Vantage,Administration,,TBD,Understand my usage,0,0,0,1,1,1,1
 InList Rewrite Threshold Exceeded,SQL Engine,Performance - Optimizer,Vantage Database,Vantage,Performance,,TBD,Optimize Performance,0,576,21272,1,1,1,1
-"Financial Services, Insurance Industry Data Model",Data Model,"Financial Services, Insurance Industry",Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
+"Financial Services & Insurance Industry Data Model",Data Model,"Financial Services & Insurance Industry",Industry Data Models,Data Models,Accelerator,,TBD,Model my data,0,0,0,1,1,1,1
 Dataset Data Type Storage Format CSV,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,10,1,5,1,1,1,1
 Character LOB,SQL Engine,Advanced Data Types,Vantage Database,Vantage,In-database Analytics,,TBD,Load Data,5,31,2848,1,1,1,1
 JACS Auto Composition,,,,,,,TBD,,0,1,4,1,1,1,1

@@ -1,5 +1,5 @@
 UserName,FullName,UserType,Organization,Department,Exclude_VantageUnit_Flag,Exclude_Performance_Flag
-sh186014,Stephen Hilton,Analytic,Customer Success,"Global Strategy, Analytics, Automation",0,0
+sh186014,Stephen Hilton,Analytic,Customer Success,"Global Strategy Analytics Automation",0,0
 VIEWPOINT,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,1,0
 EXTUSER,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
 PDCRTPCD,FullName Unknown,Teradata Internal,Organization Unknown,Department Unknown,0,0
