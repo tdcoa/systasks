@@ -1,5 +1,5 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
-{% if not 'vt_decode_tablekind' in run.completed %}
+{% if not 'vt_decode_feature' in run.completed %}
 
 
 # variables
@@ -95,4 +95,4 @@
       on vt_decode_feature
 
 {% endif %}
-{{ run.completed.append('vt_decode_tablekind') or '' }}
+{{ run.completed.append('vt_decode_feature') or '' }}

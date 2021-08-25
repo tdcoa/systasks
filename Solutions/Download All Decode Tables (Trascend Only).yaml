@@ -11,7 +11,18 @@ version: 1
 
 tasks:
 
+
+{% include "vt_decode_tablekind.j2" %}
+
+- name: "Export vt_decode_tablekind.csv"
+  connect: source
+  export:
+    file: decode_tablekind.csv
+    sql: select * from vt_decode_tablekind order by 1
+
+
 {% include "vt_decode_feature.j2" %}
+
 - name: "Export vt_decode_feature.csv"
   connect: source
   export:
@@ -57,14 +68,6 @@ tasks:
   export:
     file: decode_indextype.csv
     sql: select * from vt_decode_indextype
-
-
-{% include "vt_decode_tablekind.j2" %}
-- name: "Export vt_decode_tablekind.csv"
-  connect: source
-  export:
-    file: decode_tablekind.csv
-    sql: select * from vt_decode_tablekind order by 1
 
 
 {% include "vt_decode_user.j2" %}
