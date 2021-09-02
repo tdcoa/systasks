@@ -278,6 +278,15 @@
         on dat.Feature_Name = dim.Feature_Name
 
 
+- name: "Update vt_feature_usage to normalize 'NOS Metadata Subquery Feedback'"
+  connect: source
+  execute:
+    sql: |
+      update vt_feature_usage
+      set   FeatureName = 'NOS Metadata Subquery Feedback'
+      where FeatureName = 'Native Object Store Metadata Subquery Feedback'
+
+
 {% if reconcile %}
 - name: Reconcile vt_feature_usage_prework and vt_feature_usage
   connect: source
@@ -297,6 +306,8 @@
   execute:
     sql: drop table vt_feature_usage_prework
 {% endif %}
+
+
 
 
 {% endif %}  ## end TD15 flag
