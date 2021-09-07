@@ -343,8 +343,8 @@
         ,sum(cast(NumResultRows                  as bigint))            as Returned_Row_Cnt
         ,cast(avg(NumOfActiveAMPs (float)      ) as decimal(32,4)) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as decimal(38,4)) as QueryGrid_Bytes
-        ,zeroifnull(cast(sum(ReqPhysIO_)   as float) / cast(nullifzero(sum(TotalIOCount_)) as float)) as CacheMiss_CntPct
-        ,zeroifnull(cast(sum(ReqPhysIOKB_) as float) / cast(nullifzero(sum(ReqIOKB_))      as float)) as CacheMiss_SizePct
+        ,zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as CacheMiss_CntPct
+        ,zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as CacheMiss_SizePct
         ,case
          when CacheMiss_CntPct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_CntPct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
@@ -427,7 +427,7 @@
             ,zeroifnull(cast(smry.QuerySeconds as decimal(38,2))) as TotalExec_Sec
             ,0 as TransferTime_Sec
             ,0 as QueryGrid_Flag
-            ,case when (cast(QueryCount as float) / cast(TotalExec_Sec as float)) <= 1.00000 then 1 else 0 end as SubSecond_Flag
+            ,zeroifnull(case when (cast(QueryCount as float) / nullifzero(cast(TotalExec_Sec as float))) <= 1.00000 then 1 else 0 end) as SubSecond_Flag
             ,SubSecond_Flag as Tactical_Flag
 
             /* ====== Metrics: CPU & IO ====== */
@@ -553,8 +553,8 @@
         ,sum(cast(NumResultRows                  as bigint))            as Returned_Row_Cnt
         ,cast(avg(NumOfActiveAMPs (float)      ) as decimal(32,4)) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as decimal(38,4)) as QueryGrid_Bytes
-        ,zeroifnull(cast(sum(ReqPhysIO_)   as float) / cast(nullifzero(sum(TotalIOCount_)) as float)) as CacheMiss_CntPct
-        ,zeroifnull(cast(sum(ReqPhysIOKB_) as float) / cast(nullifzero(sum(ReqIOKB_))      as float)) as CacheMiss_SizePct
+        ,zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as CacheMiss_CntPct
+        ,zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as CacheMiss_SizePct
         ,case
          when CacheMiss_CntPct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_CntPct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
