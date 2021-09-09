@@ -22,7 +22,7 @@ tasks:
 # for CHARTING, let's just blast out the graphs via a loop:
 {% if chart %}
 
-{% for dimension in ['Application','Application_Company','Application_Use','Statement_Bucket','Statement_Outcome','UserType','Department','Organization'] %}
+{% for dimension in ['Application','Application_Company','Application_Use','Statement_Bucket','Statement_Outcome','UserType','Department','Organization','LogDate'] %}
 {% for metricprefix in ['Request','Statement'] %}
 
 - name: Export Statement Counts per day for graphing
@@ -51,6 +51,7 @@ tasks:
       - "width:16"
       - "logscale:False"
       - "xrotate:90"
+      - "legendy:-0.3"
 
 {% endfor %}
 {% endfor %}
