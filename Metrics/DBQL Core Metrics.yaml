@@ -50,8 +50,9 @@ tasks:
       - "height:4"
       - "width:16"
       - "logscale:False"
-      - "xrotate:90"
-      - "legendy:-0.3"
+      - "xrotate:{{ xrotate | default ('90') }}"
+      - "legendy:{{ legendy | default ('-0.3') }}"
+      - "legendx:{{ legendx | default ('0.5') }}"
 
 {% endfor %}
 {% endfor %}
