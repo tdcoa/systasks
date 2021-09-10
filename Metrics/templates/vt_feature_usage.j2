@@ -169,13 +169,13 @@
           ,dbql.UserType
           ,dbql.Organization
           ,dbql.Department
-          ,count(cast(dbql.Request_Total_Cnt       as bigint))        as Request_Total_Cnt
-          ,count(cast(dbql.Statement_Total_Cnt     as bigint))        as Statement_Total_Cnt
-          ,count(cast(dbql.Request_Error_Cnt       as bigint))        as Request_Error_Cnt
-          ,count(cast(dbql.Statement_Error_Cnt     as bigint))        as Statement_Error_Cnt
-          ,count(cast(dbql.Request_Abort_Cnt       as bigint))        as Request_Abort_Cnt
-          ,count(cast(dbql.Statement_Abort_Cnt     as bigint))        as Statement_Abort_Cnt
-          ,count(cast(dbql.distinct_cnt_username   as bigint))        as distinct_cnt_username
+          ,sum(cast(dbql.Request_Total_Cnt         as bigint))        as Request_Total_Cnt
+          ,sum(cast(dbql.Statement_Total_Cnt       as bigint))        as Statement_Total_Cnt
+          ,sum(cast(dbql.Request_Error_Cnt         as bigint))        as Request_Error_Cnt
+          ,sum(cast(dbql.Statement_Error_Cnt       as bigint))        as Statement_Error_Cnt
+          ,sum(cast(dbql.Request_Abort_Cnt         as bigint))        as Request_Abort_Cnt
+          ,sum(cast(dbql.Statement_Abort_Cnt       as bigint))        as Statement_Abort_Cnt
+          ,sum(cast(dbql.distinct_cnt_username     as bigint))        as distinct_cnt_username
           ,sum(  cast(dbql.sum_parsercputime       as decimal(38,4))) as sum_parsercputime
           ,sum(  cast(dbql.sum_ampcputime          as decimal(38,4))) as sum_ampcputime
           ,sum(  cast(dbql.sum_totaliocount        as bigint))        as sum_totaliocount
