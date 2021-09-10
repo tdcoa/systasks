@@ -26,31 +26,31 @@ tasks:
           ,UserType
           ,Organization
           ,Department
-          ,count(cast(Request_Total_Cnt       as bigint))        as Request_Total_Cnt
-          ,count(cast(Statement_Total_Cnt     as bigint))        as Statement_Total_Cnt
-          ,count(cast(Request_Error_Cnt       as bigint))        as Request_Error_Cnt
-          ,count(cast(Statement_Error_Cnt     as bigint))        as Statement_Error_Cnt
-          ,count(cast(Request_Abort_Cnt       as bigint))        as Request_Abort_Cnt
-          ,count(cast(Statement_Abort_Cnt     as bigint))        as Statement_Abort_Cnt
-          ,count(cast(distinct_cnt_username   as bigint))        as distinct_cnt_username
-          ,sum(  cast(sum_parsercputime       as decimal(38,4))) as sum_parsercputime
-          ,sum(  cast(sum_ampcputime          as decimal(38,4))) as sum_ampcputime
-          ,sum(  cast(sum_totaliocount        as bigint))        as sum_totaliocount
-          ,sum(  cast(sum_reqiokb             as bigint))        as sum_reqiokb
-          ,sum(  cast(sum_reqphysio           as bigint))        as sum_reqphysio
-          ,sum(  cast(sum_reqphysiokb         as bigint))        as sum_reqphysiokb
-          ,sum(  cast(sum_usediota            as bigint))        as sum_usediota
-          ,sum(  cast(sum_impactcpu           as decimal(38,4))) as sum_impactcpu
-          ,sum(  cast(sum_impactio            as bigint))        as sum_impactio
-          ,sum(  cast(sum_lockdelay           as decimal(38,4))) as sum_lockdelay
-          ,sum(  cast(sum_delaytime           as decimal(38,4))) as sum_delaytime
-          ,sum(  cast(sum_minrespholdtime     as decimal(38,4))) as sum_minrespholdtime
-          ,sum(  cast(sum_totalfirstresptime  as decimal(38,4))) as sum_totalfirstresptime
-          ,count(cast(cnt_allmapamp_query     as bigint))        as cnt_allmapamp_query
-          ,avg(  cast(avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
-          ,sum(  cast(sum_numsteps            as bigint))        as sum_numsteps
-          ,sum(  cast(sum_spoolusage          as bigint))        as sum_spoolusage
-          ,sum(  cast(sum_numresultrows       as bigint))        as sum_numresultrows
+          ,sum(cast(Request_Total_Cnt       as bigint))        as Request_Total_Cnt
+          ,sum(cast(Statement_Total_Cnt     as bigint))        as Statement_Total_Cnt
+          ,sum(cast(Request_Error_Cnt       as bigint))        as Request_Error_Cnt
+          ,sum(cast(Statement_Error_Cnt     as bigint))        as Statement_Error_Cnt
+          ,sum(cast(Request_Abort_Cnt       as bigint))        as Request_Abort_Cnt
+          ,sum(cast(Statement_Abort_Cnt     as bigint))        as Statement_Abort_Cnt
+          ,sum(cast(distinct_cnt_username   as bigint))        as distinct_cnt_username
+          ,sum(cast(sum_parsercputime       as decimal(38,4))) as sum_parsercputime
+          ,sum(cast(sum_ampcputime          as decimal(38,4))) as sum_ampcputime
+          ,sum(cast(sum_totaliocount        as bigint))        as sum_totaliocount
+          ,sum(cast(sum_reqiokb             as bigint))        as sum_reqiokb
+          ,sum(cast(sum_reqphysio           as bigint))        as sum_reqphysio
+          ,sum(cast(sum_reqphysiokb         as bigint))        as sum_reqphysiokb
+          ,sum(cast(sum_usediota            as bigint))        as sum_usediota
+          ,sum(cast(sum_impactcpu           as decimal(38,4))) as sum_impactcpu
+          ,sum(cast(sum_impactio            as bigint))        as sum_impactio
+          ,sum(cast(sum_lockdelay           as decimal(38,4))) as sum_lockdelay
+          ,sum(cast(sum_delaytime           as decimal(38,4))) as sum_delaytime
+          ,sum(cast(sum_minrespholdtime     as decimal(38,4))) as sum_minrespholdtime
+          ,sum(cast(sum_totalfirstresptime  as decimal(38,4))) as sum_totalfirstresptime
+          ,count(cast(cnt_allmapamp_query   as bigint))        as cnt_allmapamp_query
+          ,avg(cast(avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
+          ,sum(cast(sum_numsteps            as bigint))        as sum_numsteps
+          ,sum(cast(sum_spoolusage          as bigint))        as sum_spoolusage
+          ,sum(cast(sum_numresultrows       as bigint))        as sum_numresultrows
       from vt_feature_usage
       group by
            Site_ID
