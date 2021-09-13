@@ -20,11 +20,14 @@ tasks:
     file: feature_usage_x_{{ feature_column }}.csv
     sql: |
       select {{ feature_column }}
-      ,sum(Request_Total_Cnt) as "Feature Count"
-      ,sum(sum_parsercputime+sum_ampcputime)/nullifzero(sum(Request_Total_Cnt)) as "Average CPU Seconds"
+      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) as "Feature Count"
+      ,sum(   cast(sum_parsercputime as decimal(38,2))
+            + cast(sum_ampcputime    as decimal(38,2))
+          ) / nullifzero("Feature Count") as "Average CPU Seconds"
       from vt_Feature_Usage
       group by 1
       order by 2 desc
+
 
 - name: "Chart (linear): {{ feature_column }}"
   chart:

@@ -3,7 +3,7 @@
 
 ### ============= SET DEFAULT EXECUTION BEHAVIOR =============
 {% set td15           = True  if tdver[:2]=='15'                else False %}
-
+{% set process_chunks = 1     if process_chunks is not defined  else process_chunks %}
 
 - name: "Create vt_feature_usage (empty)"
   connect: source
@@ -70,6 +70,7 @@
   ## to prevent down-stream processes from failing.
   ## if not on 15, then do all work
 
+{% include "vt_datedriver.j2" %}
 {% include "vt_decode_feature.j2" %}
 {% include "vt_decode_user.j2" %}
 
@@ -77,7 +78,55 @@
   connect: source
   execute:
     sql: |
-      create volatile table vt_feature_usage_prework  as(
+      CREATE VOLATILE TABLE vt_feature_usage_prework
+       (
+         Site_ID                VARCHAR(12) CHARACTER SET UNICODE NOT CASESPECIFIC
+        ,LogDate                DATE FORMAT 'YYYY/MM/DD'
+        ,Feature_Name           VARCHAR(512) CHARACTER SET LATIN NOT CASESPECIFIC
+        ,BitPos                 INTEGER
+        ,UserName               VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+        ,UserType               VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+        ,Organization           VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+        ,Department             VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC
+        ,Request_Total_Cnt      BIGINT
+        ,Statement_Total_Cnt    BIGINT
+        ,Request_Error_Cnt      BIGINT
+        ,Statement_Error_Cnt    BIGINT
+        ,Request_Abort_Cnt      BIGINT
+        ,Statement_Abort_Cnt    BIGINT
+        ,distinct_cnt_username  BIGINT
+        ,sum_parsercputime      DECIMAL(38,4)
+        ,sum_ampcputime         DECIMAL(38,4)
+        ,sum_totaliocount       BIGINT
+        ,sum_reqiokb            BIGINT
+        ,sum_reqphysio          BIGINT
+        ,sum_reqphysiokb        BIGINT
+        ,sum_usediota           BIGINT
+        ,sum_impactcpu          DECIMAL(38,4)
+        ,sum_impactio           BIGINT
+        ,sum_lockdelay          DECIMAL(38,4)
+        ,sum_delaytime          DECIMAL(38,4)
+        ,sum_minrespholdtime    DECIMAL(38,4)
+        ,sum_totalfirstresptime DECIMAL(38,4)
+        ,cnt_allmapamp_query    INTEGER
+        ,avg_allmapamp_pe       FLOAT
+        ,sum_numsteps           BIGINT
+        ,sum_spoolusage         BIGINT
+        ,sum_numresultrows      BIGINT
+        ) PRIMARY INDEX ( LogDate ,Feature_Name ,UserName )
+          ON COMMIT PRESERVE ROWS
+
+# -----------------------------------------------
+# ----- Loop Logic for filling vt_feature_usage_prework -----
+# -----------------------------------------------
+
+{% for ichunk in range(1, process_chunks+1) %}
+
+- name: "Insert into vt_feature_usage_prework (chunk {{ ichunk }} of {{ process_chunks }})"
+  connect: source
+  execute:
+    sql: |
+      Insert into vt_feature_usage_prework
       with dbql as
         (
           select
@@ -151,7 +200,7 @@
                   ,sum(NumResultRows) as sum_numresultrows
 
                   From {{ dbc.log }} as dbql
-                  where LogDate between {{ startdate | default('DATE-31') }} and {{ enddate | default('DATE-1') }}
+                  where LogDate in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
                   and featureusage is not null
                   group by UserName
                   ,LogDate
@@ -206,9 +255,9 @@
           ,dbql.UserType
           ,dbql.Organization
           ,dbql.Department
-      ) with data
-      primary index (LogDate, Feature_Name, UserName)
-      on commit preserve rows
+
+{% endfor %}
+
 
 - name: Collect Stats on vt_feature_usage_prework
   connect: source
