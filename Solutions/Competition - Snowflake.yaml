@@ -343,12 +343,12 @@ tasks:
       select
        '{{ siteid }}' as Site_ID
        ,cast(cast(sum(case when Object_Group12 = 'Table' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Count"
-       ,cast(cast(sum(case when Object_Name = 'Join Index' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Join Index Count"
-       ,cast(cast(sum(case when Object_Name = 'Queue Table' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queue Table Count"
+       ,cast(cast(sum(case when Object_Name like all ('%Index%','%Join%') then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Join Index Count"
+       ,cast(cast(sum(case when Object_Name like '%Queue%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queue Table Count"
        ,cast(cast(sum(Set_Table_Count) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SET Table Count"
        ,cast(cast(cast(sum(Set_Table_Count) as decimal(18,4)) / "Table Count" * 100 as decimal(9,2) format 'ZZ9.99') as varchar(8))||'%' as "Set Table Pct"
-       ,cast(cast(sum(case when Object_Name like 'Global Temp%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Global Temp Table Count"
-      FROM vt_dbc_object_count
+       ,cast(cast(sum(case when Object_Name like '%Global Temp%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Global Temp Table Count"
+      FROM vt_dbc_object_count   
       WHERE DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
 
 

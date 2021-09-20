@@ -1,17 +1,16 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_dbc_constraint' in run.completed %}
 
-
 - name: Create vt_dbc_constraint, showing all constraints by table
   connect: source
   execute:
     sql: |
       CREATE MULTISET VOLATILE TABLE vt_dbc_constraint
       (
-       DatabaseName   VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC,
-       TableName      VARCHAR(128) CHARACTER SET UNICODE NOT CASESPECIFIC,
-       ConstraintType VARCHAR(30)  CHARACTER SET UNICODE NOT CASESPECIFIC,
-       Details        VARCHAR(255) CHARACTER SET UNICODE NOT CASESPECIFIC
+       DatabaseName   VARCHAR(128)   CHARACTER SET UNICODE NOT CASESPECIFIC,
+       TableName      VARCHAR(128)   CHARACTER SET UNICODE NOT CASESPECIFIC,
+       ConstraintType VARCHAR(30)    CHARACTER SET UNICODE NOT CASESPECIFIC,
+       Details        VARCHAR(20000) CHARACTER SET UNICODE NOT CASESPECIFIC
       )
       primary index (TableName)
       ON COMMIT PRESERVE ROWS;
@@ -27,9 +26,13 @@
                 CASE WHEN IndexType IN ('U','P','Q') THEN 'Unique'
                      WHEN IndexType IN ('K') THEN 'Primary Key'
                 END (VARCHAR(30)) AS ConstraintType,
+                {% if rowsize_64k %}
+                cast(null as varchar(20000)) as Details
+                {% else %}
                 TRIM(TRAILING ','
                      FROM XMLAGG(ColumnName || ','
-                     ORDER BY ColumnPosition)(VARCHAR(255))) AS Details
+                     ORDER BY ColumnPosition)(VARCHAR(20000))) AS Details
+                {% endif %}
           FROM  DBC.IndicesV
           WHERE IndexType IN ('K','U','P','Q')
             AND UniqueFlag = 'Y'
