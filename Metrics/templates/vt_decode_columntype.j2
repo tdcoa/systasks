@@ -6,6 +6,7 @@
 #  expected: none
 #  optional: decode_from_transcend, custom_decode_folder
 
+{% set td15 = true  if tdver[:2]=='15' else false %}
 
 - name:  "Create vt_decode_columntype"
   connect: source
@@ -14,7 +15,7 @@
       create multiset volatile table  vt_decode_columntype
       (ColumnType     char(2)      character set latin  -- was DataType
       ,StorageFormat  varchar(8)   character set latin
-      ,Description    varchar(128) character set latin
+      ,Description    varchar(128) character set latin -- was DataTypeDesc
       ,ColumnCategory varchar(32)  character set latin
       ) no primary index
       on commit preserve rows
@@ -34,6 +35,50 @@
   import:
     file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_columntype.csv
     table: vt_decode_columntype
+{% endif %}
+
+
+{% if td15 %}
+- name: "TD15.x - need to remove newer column types from decode_columntype"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_decode_columntype_deletes as
+      (select * from vt_decode_columntype
+       qualify count(ColumnType)over(partition by ColumnType) <>1
+      ) with data no primary index on commit preserve rows
+
+- name: "TD15.x - delete newer column types"
+  connect: source
+  execute:
+    sql: |
+      delete from vt_decode_columntype
+      where ColumnType in (select ColumnType from vt_decode_columntype_deletes)
+
+- name: "TD15.x - add back corresponding older column types"
+  connect: source
+  execute:
+    sql: |
+      insert into vt_decode_columntype
+      select distinct ColumnType, '' as StorageFormat, ColumnCategory as Description, ColumnCategory
+      from vt_decode_columntype_deletes
+
+- name: "TD15.x - update all StorageFormats to be empty-string"
+  connect: source
+  execute:
+    sql: update vt_decode_columntype set StorageFormat = ''
+
+- name: "TD15.x - drop intermediary table"
+  connect: source
+  execute:
+    sql: drop table vt_decode_columntype_deletes
+
+{% else %}
+- name: "Update all StorageFormats to be empty-string (for optimal joins)"
+  connect: source
+  execute:
+    sql: update vt_decode_columntype set StorageFormat = '' where StorageFormat is null
+
 {% endif %}
 
 - name:  "Collect Stats vt_decode_columntype"

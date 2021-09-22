@@ -3,7 +3,7 @@
 
 {% set td15 = True  if tdver[:2]=='15' else False %}
 
-{% include "vt_decode_datatype.j2" %}
+{% include "vt_decode_columntype.j2" %}
 
 - name:  Create vt_dbc_column_summary
   connect: source
@@ -11,8 +11,8 @@
     sql: |
       create volatile table vt_dbc_column_summary as
       ( SELECT
-         COALESCE(DT.DataTypeDesc, 'Unknown') AS Data_Type
-        ,COALESCE(DT.ColumnCategory || C.Column_Type_Ext, DT.DataTypeDesc, 'Unknown - ' || C.ColumnType) AS Column_Type
+         COALESCE(DT.Description, 'Unknown') AS Data_Type
+        ,COALESCE(DT.ColumnCategory || C.Column_Type_Ext, DT.Description, 'Unknown - ' || C.ColumnType) AS Column_Type
         ,C.IdColType AS Identity_Column_Type
         ,COALESCE(DT.ColumnCategory || C.Column_Category_Ext, DT.ColumnCategory , 'Unknown - ' || C.ColumnType) AS Column_Category
         ,C.ColumnFormatted as Column_Formatted
@@ -21,7 +21,7 @@
              SELECT
                ColumnType
               ,IdColType
-              ,COALESCE({{ 'null' if td15 else 'StorageFormat' }}, '') AS StorageFormat
+              ,COALESCE({{ "''" if td15 else 'StorageFormat' }}, '') AS StorageFormat
               ,CASE WHEN ColumnFormat IS NOT NULL THEN 'Y' ELSE 'N' END AS ColumnFormatted
               ,CASE ColumnType
                  WHEN 'BF' THEN       '(' || TRIM(ColumnLength (FORMAT '-(9)9')) || ')'
@@ -90,11 +90,9 @@
           WHERE ColumnType IS NOT NULL
           GROUP BY 1,2,3,4,5,6
        ) C
-        FULL OUTER JOIN vt_decode_datatype DT
-         ON DT.DataType = C.ColumnType
-        {% if td15 %}
-        AND coalesce(DT.StorageFormat,'') = coalesce(C.StorageFormat,'')
-        {% endif %}
+        FULL OUTER JOIN vt_decode_columntype DT
+         ON DT.ColumnType    = C.ColumnType
+        AND DT.StorageFormat = C.StorageFormat
       )with data
       no primary index on commit preserve rows
 
