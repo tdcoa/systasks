@@ -427,7 +427,7 @@
             ,zeroifnull(cast(smry.QuerySeconds as decimal(38,2))) as TotalExec_Sec
             ,0 as TransferTime_Sec
             ,0 as QueryGrid_Flag
-            ,zeroifnull(case when (cast(QueryCount as float) / nullifzero(cast(TotalExec_Sec as float))) <= 1.00000 then 1 else 0 end) as SubSecond_Flag
+            ,zeroifnull(case when (cast(TotalExec_Sec as float) / nullifzero(cast(QueryCount as float))) <= 1.00000 then 1 else 0 end) as SubSecond_Flag
             ,SubSecond_Flag as Tactical_Flag
 
             /* ====== Metrics: CPU & IO ====== */
