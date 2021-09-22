@@ -1,0 +1,43 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_decode_datatype' in run.completed %}
+
+# variables
+#  expected:
+#  optional: decode_from_transcend, custom_decode_folder
+
+- name:  "Create vt_decode_datatype"
+  connect: source
+  execute:
+    sql: |
+      create multiset volatile table  vt_decode_datatype
+      (DataType       char(2)      character set latin
+      ,StorageFormat  varchar(8)   character set latin
+      ,DataTypeDesc   varchar(128) character set latin
+      ,ColumnCategory varchar(32)  character set latin
+      ) no primary index
+      on commit preserve rows
+
+{% if decode_from_transcend %}
+- name: import metadata into vt_decode_datatype
+  connect: source
+  execute:
+    sql: |
+     insert into vt_decode_datatype
+     select * from adlste_SalesTech.decode_datatype
+
+{% else %}
+
+- name: import metadata into vt_decode_datatype
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_datatype.csv
+    table: vt_decode_datatype
+{% endif %}
+
+- name:  "Collect Stats vt_decode_datatype"
+  connect: source
+  execute:
+    sql: collect stats on vt_decode_datatype column(DataType, StorageFormat)
+
+{% endif %}
+{{ run.completed.append('vt_decode_datatype') or '' }}
