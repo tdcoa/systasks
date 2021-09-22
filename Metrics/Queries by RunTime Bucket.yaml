@@ -5,6 +5,7 @@ version: 1
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% set reconcile = true if reconcile is not defined else reconcile %}
 {% set export_all = true if export_all is not defined else export_all %}
+{% set td15 = True if tdver[:2]=='15' else False %}
 
 tasks:
 
@@ -72,7 +73,54 @@ tasks:
       - "height:6"
 
 
-{% if tdver | int >= 16  %}
+{% if td15 %}
+- name: "export Queries by Runtime by Bucket"
+  connect: source
+  export:
+    file: queries_by_runtime_bucket_unpivot.csv
+    sql: |
+      select cast('RT < 1 sec'   as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT < 1 sec")   as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 1-5 sec'   as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 1-5 sec")   as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 5-10 sec'  as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 5-10 sec")  as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 10-30 sec' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 10-30 sec") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 30-60 sec' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 30-60 sec") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 1-5 min'   as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 1-5 min")   as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 5-10 min'  as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 5-10 min")  as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 10-30 min' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 10-30 min") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 30-60 min' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 30-60 min") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT > 1 hour'  as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT > 1 hour")  as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+
+{% else %}
+
 - name: "export Queries by Runtime by Bucket"
   connect: source
   export:
@@ -105,8 +153,7 @@ tasks:
                when Runtime_Bucket = 'RT 10-30 min' then 8
                when Runtime_Bucket = 'RT 30-60 min' then 9
                when Runtime_Bucket = 'RT > 1 hour'  then 10 end
-
-
+{% endif %}
 
 - name: Chart Queries by Runtime by Bucket
   chart:
@@ -129,8 +176,6 @@ tasks:
       - "xrotate:90"
       - "barlogscale:True"
       - "pngfile:queries_by_runtime_unpivot_log.png"
-
-{% endif %}
 
 
 {% if export_all %}
