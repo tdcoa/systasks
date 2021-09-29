@@ -2,6 +2,7 @@ description: Generates daily CPU numbers, broken out by DBS, OS, Wait, and Idle,
 version: 1
 tasks:
 
+{% set logts = true %} # turn on option to have system_cpu generate per 10min increment
 {% include "vt_system_cpu_by_day.j2" %}
 
 - name: Export System CPU for Chart
@@ -10,22 +11,63 @@ tasks:
     file: system_cpu_by_day.csv
     sql: |
       select LogDate
-      ,cast(CPU_Idle   as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU Idle %--#AFAFAF"
-      ,cast(CPU_IOWait as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU IOWait %--#BD9200"
-      ,cast(CPU_OS     as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU OS %--#43A9BD"
-      ,cast(CPU_DBS    as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU DBS %--#142CF6"
-      ,cast(CPU_Total  as decimal(18,4)) / cast(CPU_Total as decimal(18,4)) * 100 as "CPU Total %--#F01D1D"
+      ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#AFAFAF"
+      ,cast(sum(CPU_IOWait ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#BD9200"
+      ,cast(sum(CPU_OS     ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
+      ,cast(sum(CPU_DBS    ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
+      ,cast(sum(CPU_Total  ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Total %--#F01D1D"
       from vt_System_CPU_by_Day
+      group by 1
 
-- name: Chart System CPU
+- name: Chart System CPU - Line chart by Day
   chart:
     command: chart/line_xDate_yElse.py
     params:
       - file:system_cpu_by_day.csv
+      - pngfile:system_cpu_by_day_line.png
       - title:System CPU - {{ siteid }}
       - height:6
       - width:12
 
+- name: Chart System CPU - Stacked Bars by Day
+  chart:
+    command: chart/bar_xLabel_yElseStack.py
+    params:
+      - csvfilepath:system_cpu_by_day.csv
+      - pngfilepath:system_cpu_by_day_stacked.png
+      - title:System CPU - {{ siteid }}
+      - ycolumns:[4,3,2,1]
+      - height:6
+      - width:12
+      - ylabel:CPU Percent to Total
+      - "xlabel:"
+      - legendxy:(0.5, -0.2)
+
+
+- name: Export System CPU for Heatmap
+  connect: source
+  export:
+    file: system_cpu_by_day_heatmap.csv
+    sql: |
+      select LogDate as "Date", LogHr as "Hour"
+      ,cast(cast(sum(CPU_DBS + CPU_OS + CPU_IOWait) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+
+
+- name: Chart System CPU - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_cpu_by_day_heatmap.csv
+      - pngfilepath:system_cpu_by_day_heatmap.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:12
+      - "xlabel:"
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
 
 - name: Export Read/Write CPU by Day of Week for charting
   connect: source
