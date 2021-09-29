@@ -9,6 +9,15 @@
       (
         Select '{{ siteid }}' as Site_ID
         ,cast(TheDate as format 'Y4-MM-DD') as LogDate
+        {% if logts %}
+        ,cast(theTime/100 as int)-(LogHr*100) as LogMin
+        ,cast(theTime/10000 as int) as LogHr
+        ,cast(
+         cast(cast(theDate as date format 'yyyy-mm-ddb') as char(11)) ||
+         cast(cast(LogHr as int format '99:') as char(3)) ||
+         cast(cast(LogMin as int format '99') as char(2)) || ':00'
+         as timestamp(0)) as LogTS
+        {% endif %}
         ,SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
         ,cast(max(NodeType) as varchar(10)) as Node_Type
         ,cast(count(distinct NodeID) as smallint) as Node_Cnt
@@ -24,6 +33,7 @@
         from {{ dbc.spma }}
         where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
         Group by LogDate
+        {{ ',LogTS, LogHr, LogMin' if logts else '' }}
       ) with data
         unique primary index (LogDate)
         on commit preserve rows
