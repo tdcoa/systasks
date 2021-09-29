@@ -1,0 +1,29 @@
+{"defined_args":[
+  {"name":   "csvfilepath",  "aliases": ["csvfile", "file"]          ,"type": "str",        "default": "<<no default>>"   ,"notes":"only required arg, name of file to fill dataframe/chart"   }
+ ,{"name":   "pngfilepath",  "aliases": ["pngfile"]                  ,"type": "str",        "default": "<<csvfilepath:replace(.csv:.png)>>" ,"notes":"if not supplied, will use csv filename as .png"   }
+ ,{"name":   "title",        "aliases": []                           ,"type": "str",        "default": ""                 ,"notes":""   }
+ ,{"name":   "width",        "aliases": []                           ,"type": "int",        "default": "16"               ,"notes":""   }
+ ,{"name":   "height",       "aliases": []                           ,"type": "int",        "default": "9"                ,"notes":""   }
+ ,{"name":   "xrotate",      "aliases": ["rotatex"]                  ,"type": "int",        "default": "90"               ,"notes":""   }
+ ,{"name":   "xticksize",    "aliases": []                           ,"type": "int",        "default": "8"                ,"notes":""   }
+ ,{"name":   "xlabelflex",   "aliases": []                           ,"type": "float",      "default": "1"                ,"notes":"remove some x labels to prevent over-crowding. 1=best guess, lower=fewer labels, 0 disables."}
+ ,{"name":   "xcolumns",     "aliases": ["xaxis", "xcolumn", "xcol"] ,"type": "list-int",   "default": "[0]"              ,"notes":""   }
+ ,{"name":   "ycolumns",     "aliases": ["yaxis", "ycolumn", "ycol"] ,"type": "list-int",   "default": ""                 ,"notes":""   }
+ ,{"name":   "xlabel",       "aliases": []                           ,"type": "str",        "default": "<<column name>>"  ,"notes":""   }
+ ,{"name":   "ylabel",       "aliases": []                           ,"type": "str",        "default": " "                ,"notes":""   }
+ ,{"name":   "ymin",         "aliases": ["ylim","yintercept"]        ,"type": "int",        "default": "<<none>>"         ,"notes":"y intercept of x.  If none, allow charting to make best guess."   }
+ ,{"name":   "ynumberformat","aliases": ["yformat"]                  ,"type": "str",        "default": "byte"             ,"notes":"yaxis label format, can be byte or number or none"   }
+ ,{"name":   "labelsize",    "aliases": ["rotatex"]                  ,"type": "int",        "default": "12"               ,"notes":""   }
+ ,{"name":   "logscale",     "aliases": []                           ,"type": "bool",       "default": "False"            ,"notes":"shift chart to logscale"}
+ ,{"name":   "legendxy",     "aliases": []                           ,"type": "tuple-float","default": "(0.5, -0.3)"      ,"notes":"relative position (0-1) of legend box.  0.5, 0.5 would be middle of chart."   }
+ ,{"name":   "legendcolumns","aliases": ["ncol","legendcol"]         ,"type": "int",        "default": "5"                ,"notes":"how many horizontal columns in legend box"   }
+ ,{"name":   "border",       "aliases": ["spines"]                   ,"type": "bool",       "default": "False"            ,"notes":"show chart borders"   }
+ ,{"name":   "colors",       "aliases": ["color"]                    ,"type": "list",       "default": ""                 ,"notes":"list of colors to add to the front of color unused list"   }
+ ,{"name":   "sort",         "aliases": []                           ,"type": "tuple",      "default": "(-1, desc)"       ,"notes":"column index, asc/desc.  skipped if index <0"}
+ ,{"name":   "dfpivot",      "aliases": ["pivot"]                    ,"type": "bool",       "default": "False"            ,"notes":"perform pivot operation. xcolumn must have exactly 1 entry (unique row), ycolumn exactly 2 (column to pivot to new columns, data)."}
+ ,{"name":  "heatmapcolorcount", "aliases":[]                        ,"type":"int",         "default": "5"                ,"notes":"number of colors (from colors) to pull into heatmaps."}
+ ,{"name":  "annotate",      "aliases":[]                            ,"type":"bool",        "default": "True"             ,"notes":"indicates whether to annotate charts where that is applicable, like heatmaps."}
+],
+ "implemented_types":["str", "int", "bool", "float", "dict", "list", "list-int", "list-float", "tuple", "tuple-int", "tuple-float"]
+,"default_colors": ["#27C1BD","#636363","#EC8D1A","#038DAC","#EEA200","purple","green", "orange", "red","blue","yellow","brown"]
+}
