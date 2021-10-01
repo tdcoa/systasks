@@ -68,6 +68,8 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
 
 - name: Export Read/Write CPU by Day of Week for charting
   connect: source
