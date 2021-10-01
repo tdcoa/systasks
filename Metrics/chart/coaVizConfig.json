@@ -21,8 +21,10 @@
  ,{"name":   "colors",       "aliases": ["color"]                    ,"type": "list",       "default": ""                 ,"notes":"list of colors to add to the front of color unused list"   }
  ,{"name":   "sort",         "aliases": []                           ,"type": "tuple",      "default": "(-1, desc)"       ,"notes":"column index, asc/desc.  skipped if index <0"}
  ,{"name":   "dfpivot",      "aliases": ["pivot"]                    ,"type": "bool",       "default": "False"            ,"notes":"perform pivot operation. xcolumn must have exactly 1 entry (unique row), ycolumn exactly 2 (column to pivot to new columns, data)."}
- ,{"name":  "heatmapcolorcount", "aliases":[]                        ,"type":"int",         "default": "5"                ,"notes":"number of colors (from colors) to pull into heatmaps."}
  ,{"name":  "annotate",      "aliases":[]                            ,"type":"bool",        "default": "True"             ,"notes":"indicates whether to annotate charts where that is applicable, like heatmaps."}
+ ,{"name":  "heatmapcolorcount", "aliases":[]                        ,"type":"int",         "default": "5"                ,"notes":"number of colors (from colors) to pull into heatmaps."}
+ ,{"name":  "heatmapmin",    "aliases":[]                            ,"type":"int",         "default": "<<min of data>>"  ,"notes":"lower bound for color in heatmaps."}
+ ,{"name":  "heatmapmax",    "aliases":[]                            ,"type":"int",         "default": "<<max of data>>"  ,"notes":"upper bound for color in heatmaps."}
 ],
  "implemented_types":["str", "int", "bool", "float", "dict", "list", "list-int", "list-float", "tuple", "tuple-int", "tuple-float"]
 ,"default_colors": ["#27C1BD","#636363","#EC8D1A","#038DAC","#EEA200","purple","green", "orange", "red","blue","yellow","brown"]

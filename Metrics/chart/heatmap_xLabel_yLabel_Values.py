@@ -21,12 +21,23 @@ try:
     coldata = data.dfy.iloc[:,1].name
     dfh = data.dfmain.groupby(by=colaxis)[coldata].sum().unstack().fillna(0)
 
+    # set min/max values for color, if not defined already 
+    if str(arg.heatmapmin).lower().strip() == '<<min of data>>':
+        log.debug('heatmapmin not set, so defaulting to the minimum value found across all data')
+        arg.heatmapmin = int(dfh.min().min())
+        log.debug('heatmapmin set to %i' %arg.heatmapmin)
+
+    if str(arg.heatmapmax).lower().strip() == '<<max of data>>':
+        log.debug('heatmapmax not set, so defaulting to the maximum value found across all data')
+        arg.heatmapmax = int(dfh.max().max())
+        log.debug('heatmapmax set to %i' %arg.heatmapmax)
+
     # define custom colormap:
     log.debug('Applying Colors to HeatMap\nNOTE: Heatmaps apply colors per value, not series, so we reset here to recover used custom colors')
     data.colors.reset()
     colorlist = list(data.colors.getnextcolors( arg.heatmapcolorcount ))
     cmap = clr.LinearSegmentedColormap.from_list("", colorlist)
-    sns.heatmap(dfh.T, cmap=cmap, annot=arg.annotate, fmt='.0f', vmin=0, vmax=100, annot_kws={'fontsize': 10})
+    sns.heatmap(dfh.T, cmap=cmap, annot=arg.annotate, fmt='.0f', vmin=arg.heatmapmin, vmax=arg.heatmapmax, annot_kws={'fontsize': 10})
     plt.gca().tick_params(axis='y', labelrotation = 0)
 
     # turn off unwanted options:
