@@ -12,7 +12,7 @@ tasks:
 
 {% include "vt_site_info.j2" %}
 
-- name: "Export Site and CSM information (if available) for BigQuery pptx title slide"
+- name: "Export Site and CSM information (if available) for pptx title slide"
   connect: source
   export:
     file: bq--intro.csv
@@ -25,7 +25,7 @@ tasks:
 {% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
 
-- name: Export queries per day for graphing in BigQuery pptx
+- name: Export queries per day for graphing in  pptx
   connect: source
   export:
     file: bq--daily_query_throughput.csv
@@ -47,7 +47,7 @@ tasks:
       - "height:4"
       - "width:16"
 
-- name: Export User Counts for BigQuery pptx
+- name: Export User Counts for  pptx
   connect: source
   export:
     file: bq--user_counts.csv
@@ -63,7 +63,7 @@ tasks:
         on d.UserName = u.UserName
 
 
-- name: Export App_ID categorized counts for BigQuery pptx
+- name: Export App_ID categorized counts for  pptx
   connect: source
   export:
     file: bq--appid_counts.csv
@@ -77,7 +77,7 @@ tasks:
       from vt_dbql_core
 
 
-- name: Export query count analysis for BigQuery pptx
+- name: Export query count analysis for  pptx
   connect: source
   export:
     file: bq--query_counts.csv
@@ -125,7 +125,7 @@ tasks:
       ) d1
 
 
-- name: Export App_Bucket row/record counts for BigQuery pptx
+- name: Export App_Bucket row/record counts for  pptx
   connect: source
   export:
     file: bq--appid_detail.csv
@@ -222,7 +222,7 @@ tasks:
 
 {% include "vt_concurrency.j2" %}
 
-- name: Export concurrency for BigQuery pptx
+- name: Export concurrency for  pptx
   connect: source
   export:
     file: bq--concurrency.csv
@@ -325,7 +325,9 @@ tasks:
   export:
     file: bq--tablecount_over_1500_dml.csv
     sql: |
-      Select LogDate, Count(TableName) as "Table Count--#27C1BD"
+      Select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+       ,Count(TableName) as "Table Count--#27C1BD"
       from vt_statement_count_by_table
       where Request_Count > 1500
         and Statement_Class = 'DML'
@@ -351,7 +353,9 @@ tasks:
        '{{ siteid }}' as Site_ID
       ,cast(cast(avg(TableCount) as INT format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as TableCount
       from (
-          Select LogDate, Count(TableName) as TableCount
+          Select
+           LogDate
+           ,Count(TableName) as TableCount
           from vt_statement_count_by_table
           where Request_Count > 1500
             and Statement_Class = 'DML'
@@ -383,7 +387,8 @@ tasks:
   export:
     file: bq--data_transfer.csv
     sql: |
-      SELECT LogDate
+      SELECT
+      cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
       ,SUM(Inbound_Bytes)  as "Inbound Bytes--#27C1BD"
       ,SUM(Outbound_Bytes) as "Outbound Bytes--#636363"
       FROM vt_transfer_bytes_in_out

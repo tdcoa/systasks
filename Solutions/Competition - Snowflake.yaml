@@ -22,7 +22,7 @@ tasks:
 
 
 
-- name: "Export Site and CSM information (if available) for Snowflake pptx title slide"
+- name: "Export Site and CSM information (if available) for  pptx title slide"
   connect: source
   export:
     file: sf--intro.csv
@@ -51,7 +51,8 @@ tasks:
   export:
     file: sf--concurrency2.csv
     sql: |
-      select LogDate
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
       ,Avg(Concurrency_Avg) as "Average--#10890A"
       ,Avg(Concurrency_80Pctl) as "80th Percentile--#9C9700"
       ,Avg(Concurrency_95Pctl) as "95th Percentile--#7E0606"
@@ -75,7 +76,8 @@ tasks:
   export:
     file: sf--concurrency1.csv
     sql: |
-      select LogDate
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
       ,Avg(Concurrency_95Pctl) as "95th Percentile--#636363"
       ,MAX(Concurrency_Peak) as "Absolute Peak--#27C1BD"
       from vt_concurrency
@@ -95,7 +97,7 @@ tasks:
 
 
 
-- name: Export queries per day for graphing in Snowflake pptx
+- name: Export queries per day for graphing in  pptx
   connect: source
   export:
     file: sf--daily_query_throughput.csv
@@ -117,7 +119,7 @@ tasks:
       - "height:4"
       - "width:16"
 
-- name: Export User Counts for Snowflake pptx
+- name: Export User Counts for  pptx
   connect: source
   export:
     file: sf--user_counts.csv
@@ -133,7 +135,7 @@ tasks:
         on d.UserName = u.UserName
 
 
-- name: Export App_ID categorized counts for Snowflake pptx
+- name: Export App_ID categorized counts for  pptx
   connect: source
   export:
     file: sf--appid_counts.csv
@@ -147,7 +149,7 @@ tasks:
       from vt_dbql_core
 
 
-- name: Export query count analysis for Snowflake pptx
+- name: Export query count analysis for  pptx
   connect: source
   export:
     file: sf--query_counts.csv
@@ -195,7 +197,7 @@ tasks:
       ) d1
 
 
-- name: Export App_Bucket row/record counts for Snowflake pptx
+- name: Export App_Bucket row/record counts for  pptx
   connect: source
   export:
     file: sf--appid_detail.csv
@@ -348,7 +350,7 @@ tasks:
        ,cast(cast(sum(Set_Table_Count) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SET Table Count"
        ,cast(cast(cast(sum(Set_Table_Count) as decimal(18,4)) / "Table Count" * 100 as decimal(9,2) format 'ZZ9.99') as varchar(8))||'%' as "Set Table Pct"
        ,cast(cast(sum(case when Object_Name like '%Global Temp%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Global Temp Table Count"
-      FROM vt_dbc_object_count   
+      FROM vt_dbc_object_count
       WHERE DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
 
 
@@ -399,7 +401,8 @@ tasks:
   export:
     file: sf--data_transfer.csv
     sql: |
-      SELECT LogDate
+      SELECT
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
       ,SUM(Inbound_Bytes)  as "Inbound Bytes--#27C1BD"
       ,SUM(Outbound_Bytes) as "Outbound Bytes--#636363"
       FROM vt_transfer_bytes_in_out
