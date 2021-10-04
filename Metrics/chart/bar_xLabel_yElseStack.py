@@ -13,14 +13,14 @@ try:
 
     ### ========== START CHART-SPECIFIC CODE ========== ###
 
-    # iterate thru all columns in dfY and iterate / generate line data:
+    # iterate thru all columns in dfY and iterate / generate bar data:
     bottom = [0 for z in data.dfy.iloc[:,0]]
     for itr, col in enumerate(data.dfy.columns):
         ydata = list(data.dfy.loc[:,col])
         plt.bar(data.dfx.iloc[:,0],
                  ydata,
                  label = data.dfy.loc[:,col].name,
-                 color = data.colormap['dfy'][col],   # make line and color
+                 color = data.colormap['dfy'][col],
                  zorder = int(1/(itr+1)*100),
                  linestyle = '-',
                  linewidth = 2,

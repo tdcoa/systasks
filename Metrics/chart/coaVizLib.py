@@ -70,17 +70,14 @@ def Postwork(log, arg, data, plt):
             i+=1
 
     # apply any x/y label slice logic:
-    s1 = None
-    s2 = None
-    s3 = None
-    log.debug('xlabelslicer: %s' %str(arg.xlabelslicer))    
+    log.debug('xlabelslicer: %s' %str(arg.xlabelslicer))
     if arg.xlabelslicer != [0,0]:
         s1 = None if arg.xlabelslicer[0] == 0 else int(arg.xlabelslicer[0])
         s2 = None if (len(arg.xlabelslicer)<2 or arg.xlabelslicer[1] == 0) else int(arg.xlabelslicer[1])
         s3 = None if (len(arg.xlabelslicer)<3 or arg.xlabelslicer[2] == 0) else int(arg.xlabelslicer[2])
         log.debug('slicing xlabel by positions: %s, %s' %(str(s1), str(s2)))
-    new_labels = [i.get_text().strip()[s1:s2:s3] for i in plt.gca().xaxis.get_ticklabels()]
-    plt.gca().xaxis.set_ticklabels(new_labels)
+        new_labels = [i.get_text().strip()[s1:s2:s3] for i in plt.gca().xaxis.get_ticklabels()]
+        plt.gca().xaxis.set_ticklabels(new_labels)
 
     # set legend if called for
     if arg.legendxy != (0,0):

@@ -10,7 +10,7 @@ tasks:
   export:
     file: system_cpu_by_day.csv
     sql: |
-      select cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "LogDate"
+      select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#AFAFAF"
       ,cast(sum(CPU_IOWait ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#BD9200"
       ,cast(sum(CPU_OS     ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
@@ -80,7 +80,7 @@ tasks:
     file: system_cpu_by_day_heatmap.csv
     sql: |
       select
-       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "LogDate"
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,LogHr as "Hour"
       ,cast(cast(sum(CPU_DBS + CPU_OS + CPU_IOWait) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
       from vt_System_CPU_by_Day
