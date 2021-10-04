@@ -45,6 +45,7 @@ def Postwork(log, arg, data, plt):
     log.info('Performing POSTWORK for coaViz processes: %s' %arg.title)
 
     # turn off borders, set xaxis items to grey
+    log.debug('turning off spines (box around graph)')
     ax = plt.gca()
     ax.spines['right'].set_visible(arg.border)
     ax.spines['left'].set_visible( arg.border)
@@ -55,6 +56,7 @@ def Postwork(log, arg, data, plt):
     # toggle LOGSCALE
     ax.set_ylim(ymin = arg.ymin)
     if arg.logscale:
+        log.debug('setting y axis scale to LOG')
         ax.set_yscale('log')
         if arg.ymin == 0: ax.set_ylim(ymin = 0.1 if arg.ymin==0 else arg.ymin )
 
@@ -62,13 +64,30 @@ def Postwork(log, arg, data, plt):
     x = 0 if arg.xlabelflex==0 else int(len(data.dfx) / arg.width / (8/arg.xticksize) / (4 * arg.xlabelflex))
     i = 0
     if x > 1:
+        log.debug('hiding every %i of the xlabels, to prevent over-crowding' %x)
         for label in plt.gca().xaxis.get_ticklabels():
             label.set_visible(i%x==0)
             i+=1
 
-    # ax.yaxis.set_major_formatter(formatter) # format y axis numeric formats
+    # apply any x/y label slice logic:
+    s1 = None
+    s2 = None
+    s3 = None
+    log.debug('xlabelslicer: %s' %str(arg.xlabelslicer))    
+    if arg.xlabelslicer != [0,0]:
+        s1 = None if arg.xlabelslicer[0] == 0 else int(arg.xlabelslicer[0])
+        s2 = None if (len(arg.xlabelslicer)<2 or arg.xlabelslicer[1] == 0) else int(arg.xlabelslicer[1])
+        s3 = None if (len(arg.xlabelslicer)<3 or arg.xlabelslicer[2] == 0) else int(arg.xlabelslicer[2])
+        log.debug('slicing xlabel by positions: %s, %s' %(str(s1), str(s2)))
+    new_labels = [i.get_text().strip()[s1:s2:s3] for i in plt.gca().xaxis.get_ticklabels()]
+    plt.gca().xaxis.set_ticklabels(new_labels)
+
+    # set legend if called for
     if arg.legendxy != (0,0):
+        log.debug('drawing legend')
         plt.legend(loc = 'center', bbox_to_anchor = arg.legendxy, ncol = arg.legendcolumns)
+
+    log.info('saving file: %s' %arg.pngfilepath)
     plt.savefig(arg.pngfilepath, transparent=True,bbox_inches='tight')
 
     return plt
@@ -237,7 +256,6 @@ class coaArg():
         s2l = self.__str2list__
         try:
             if finaltype == 'str':        return str(val)
-            #if finaltype == 'int':        return int(val)
             if finaltype == 'int':        return (None if val==None else int(val))
             if finaltype == 'bool':       return (False if str(val).strip().lower()[:1] in ['f','0'] else True)
             if finaltype == 'float':      return float(val)
