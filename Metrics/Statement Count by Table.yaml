@@ -26,6 +26,16 @@ tasks:
       qualify LogDate = max(LogDate) over(partition by Statement_Bucket)
       order by LogDate desc, Statement_Bucket asc
 
+{%if export_all %}
+- name: "Export all data from export (can be large)"
+  connect: source
+  export:
+    file: table_detail_by_statement.csv
+    sql: |
+      select * from  vt_statement_count_by_table
+      order by LogDate desc, Statement_Bucket asc
+{% endif %}
+
 
 - name: "Export number of tables that exceed 1500 DML (ins/del/upd/merge) per day, for charting"
   connect: source
