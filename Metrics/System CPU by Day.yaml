@@ -86,6 +86,7 @@ tasks:
       ,cast(cast(sum(CPU_DBS + CPU_OS + CPU_IOWait) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
+      order by 1,2
 
 - name: Chart System CPU - Heatmap Days x Hour
   chart:
@@ -114,6 +115,7 @@ tasks:
       ,cast(cast(sum(CPU_DBS + CPU_OS + CPU_IOWait) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
+      order by 1,2
 
 - name: Chart System CPU - Heatmap Day of Week x Hour
   chart:
