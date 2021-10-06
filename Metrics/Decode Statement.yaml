@@ -9,16 +9,3 @@ tasks:
   export:
     file: decode_statement.csv
     sql: Select * from vt_decode_statement order by 2,1
-
-- name: Create Decode subfolder, if missing
-  connect: source
-  script:
-    command: scripts/mkdir.py
-    params:
-      - myDecodes
-
-- name: Export decode_statement for myDecodes
-  connect: source
-  export:
-    file: myDecodes/decode_statement.csv
-    sql: Select * from vt_decode_statement order by 2,1

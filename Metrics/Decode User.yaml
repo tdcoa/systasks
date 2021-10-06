@@ -12,18 +12,3 @@ tasks:
       select hashrow(UserName), u.*
       from vt_decode_user as u
       order by Organization, Department, UserName
-
-- name: Create Decode subfolder, if missing
-  connect: source
-  script:
-    command: scripts/mkdir.py
-    params:
-      - myDecodes
-
-- name: Export decode_user as sample for custom decode file
-  connect: source
-  export:
-    file: myDecodes/decode_user.csv
-    sql: |
-      Select * from vt_decode_user
-      order by Organization, Department, UserName

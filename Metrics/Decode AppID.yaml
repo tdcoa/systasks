@@ -28,47 +28,6 @@ tasks:
       from vt_decode_appid
       order by Priority
 
-- name: Create Decode subfolder, if missing
-  connect: source
-  script:
-    command: scripts/mkdir.py
-    params:
-      - myDecodes
-
-- name: Export decode_appid as sample for custom decode file
-  connect: source
-  export:
-    file: myDecodes/decode_appid.csv
-    sql: |
-      Select * from
-      (
-          select distinct
-          Pattern_Type
-          ,AppID_Pattern
-          ,Application
-          ,Usage
-          ,Company
-          ,cast(Priority as bigint) * 1000 as Priority
-          ,'Custom File'(varchar(128)) as Data_Source
-          from vt_decode_appid
-          where Pattern_Type <> 'None'
-            union all
-          select distinct
-          'Equal' as Pattern_Type
-          ,AppID
-          ,Application
-          ,Usage
-          ,Company
-          ,(cast(Priority as bigint)+row_number()over(order by AppID)) * 100  as Priority
-          ,'Custom File - Unknown' as Data_Source
-          from vt_decode_appid
-          where Pattern_Type = 'None' and AppID_Export <> 'Invalid Character'
-            union all
-          select * from vt_decode_appid_load
-      ) a
-      qualify Priority = min(Priority)over(partition by AppID_Pattern)
-      order by 6
-
 
 - name:  "Drop interim vt_decode_appid_load"
   connect: source

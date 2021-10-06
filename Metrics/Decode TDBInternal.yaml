@@ -10,25 +10,6 @@ tasks:
     file: decode_tdbinternal.csv
     sql: Select * from vt_decode_tdbinternal order by DatabaseName
 
-- name: Create Decode subfolder, if missing
-  connect: source
-  script:
-    command: scripts/mkdir.py
-    params:
-      - myDecodes
-
-- name: Export decode_dbexclusion as sample for custom decode file
-  connect: source
-  export:
-    file: myDecodes/decode_dbexclusion.csv
-    sql: |
-      Select DatabaseName, DatabaseUse
-      ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag
-      ,case when Exclusion_Notes='tbd'
-             and coalesce(trim(CommentString),'') <> ''
-            then CommentString else Exclusion_Notes end as Exclusion_Notes
-      from vt_decode_tdbinternal  order by DatabaseName
-
 
 - name: Create comparative summary of internal vs customer databases
   connect: source

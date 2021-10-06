@@ -6,14 +6,6 @@ description: >
 version: 1
 tasks:
 
-- name: Create Decode subfolder, if missing
-  connect: source
-  script:
-    command: scripts/mkdir.py
-    params:
-      - myDecodes
-
-
 
 {% include "vt_decode_columntype.j2" %}
 
@@ -22,15 +14,6 @@ tasks:
   export:
     file: decode_columntype.csv
     sql:  Select * from vt_decode_columntype order by 1
-
-- name: Export decode_columntype as sample for custom decode file
-  connect: source
-  export:
-    file: myDecodes/decode_columntype.csv
-    sql: |
-      select ColumnType, StorageFormat, Description, ColumnCategory
-      from vt_decode_columntype
-
 
 
 {% include "vt_decode_tablekind.j2" %}
@@ -41,16 +24,6 @@ tasks:
     file: decode_tablekind.csv
     sql:  Select * from vt_decode_tablekind order by 1
 
-- name: Export decode_tablekind as sample for custom decode file
-  connect: source
-  export:
-    file: myDecodes/decode_tablekind.csv
-    sql: |
-      select TableKind, CommitOpt, Description
-      ,Object_Group12 ,Object_Group09 ,Object_Group06 ,Object_Group04
-      from vt_decode_tablekind
-
-
 
 {% include "vt_decode_indextype.j2" %}
 
@@ -60,11 +33,3 @@ tasks:
     file: decode_indextype.csv
     sql: |
       Select * from vt_decode_indextype
-
-- name: Export decode_indextype as sample for custom decode file
-  connect: source
-  export:
-    file: myDecodes/decode_indextype.csv
-    sql: |
-      Select IndexType, UniqueFlag, Description, IndexType_Abbr, IndexType_Bucket
-      from vt_decode_indextype
