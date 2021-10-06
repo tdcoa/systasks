@@ -49,8 +49,8 @@ tasks:
     file: system_cpu_by_dayofweek.csv
     sql: |
       Select cast(cast(LogDate as date format'e4') as varchar(16)) as dayofweek
-      ,sum(CPU_OS+CPU_DBS) as "Aggregate CPU Seconds"
-      ,sum(HostWrite_KB)*1000 as "Write Bytes"
+      ,cast(sum(CPU_OS+CPU_DBS)    as decimal(38,0)) as "Aggregate CPU Seconds"
+      ,cast(sum(HostWrite_KB)*1000 as decimal(38,0)) as "Write Bytes"
       from vt_System_CPU_by_Day
       group by 1
       order by case
