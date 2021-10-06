@@ -11,13 +11,13 @@
     sql: |
       create volatile table vt_decode_appid_load
       (
-       Pattern_Type       varchar(32)
-      ,AppID_Pattern      varchar(128)
-      ,Application        varchar(128)
-      ,Usage              varchar(128)
-      ,Company            varchar(128)
+       Pattern_Type       varchar(32)  character set unicode
+      ,AppID_Pattern      varchar(128) character set unicode
+      ,Application        varchar(128) character set unicode
+      ,Usage              varchar(128) character set unicode
+      ,Company            varchar(128) character set unicode
       ,Priority           integer
-      ,Data_Source        varchar(32)
+      ,Data_Source        varchar(32)  character set unicode
       )
       unique primary index (Priority)
       on commit preserve rows
