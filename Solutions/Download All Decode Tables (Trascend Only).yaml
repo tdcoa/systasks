@@ -35,7 +35,7 @@ tasks:
   connect: source
   export:
     file: decode_appid.csv
-    sql: select * from vt_decode_appid_load -- order by Priority asc
+    sql: select * from vt_decode_appid_load order by Priority asc
 
 
 {% include "vt_decode_statement.j2" %}
