@@ -1,11 +1,20 @@
-select
- 'TD16v2.0_PDCR' (named "Version")
+replace macro systemfe.gss_resusage_td160
+( BEGINDATE (DATE, DEFAULT DATE)
+, ENDDATE (DATE, DEFAULT DATE)
+, BEGINTIME (INT, DEFAULT 0)
+, ENDTIME (INT, DEFAULT 240000)
+)
+AS (
+sel
+'TD16v1.72' (named "Version")
 ,spma_dt.LogDate (named "LogDate")
 ,cast(spma_dt.LogDay as char(3)) (named "LogDOW")
 ,spma_dt.LogTime (named "LogTime")
 ,cast((spma_dt.LogDate || ' ' || spma_dt.LogTime) as timestamp(0)) (named "Timestamp")
 ,extract(hour from "Timestamp") (named "Hour")
 ,extract(minute from "Timestamp") / 10 * 10 (named "Minute10")
+,extract(minute from "Timestamp") (named "Minute")
+,extract(second from "Timestamp") (named "Seconds")
 ,SPMAInterval (named "RSSInterval")
 
 /* System data */
@@ -21,34 +30,33 @@ end (Named "AMPS")
 ,WM_COD (Named "WMCOD")
 ,IO_COD (Named "IOCOD")
 
+,cast(((case
+when ( NodeGen in ('6800','6800H','1800','2800','680'))  then 5.35 * CPUs
+when ( NodeGen in ('6750','6750H','6750P','6750HX','6750X','675','675HDD','2750','2755','1750')) then 5 * CPUs
+when ( NodeGen in ('6700','6700H','2700','1700','670H','6700HDD') and CPUs = 32) then 167.74
+when ( NodeGen in ('6700','6700C','670C') and CPUs = 16) then 99.19
+when ( NodeGen in ('6690','6690H','2690') and CPUs = 24) then 132.25
+when ( NodeGen in ('6680','6650H','6650','5650H','5650','4650','2650','1650') and CPUs = 24) then 129.03
+when ( NodeGen in ('6650C','6650','5650C','5650','560C') and CPUs = 12 ) then 68.38
+when ( NodeGen in ('5600H','5600','560H','4600','2580','1600','1580') and CPUs = 16) then 86.02
+when ( NodeGen in ('5600C','5600','560C') and CPUs = 8) then 45.59
+when ( NodeGen in ('5550','2550','1550') and CPUs = 8) then 50.89
+when ( NodeGen in ('5550','5555') and CPUs = 4) then 27.63
+when ( NodeGen in ('5500H','5500','2500') and CPUs = 4) then 31.72
+when ( NodeGen in ('5500C','5500') and CPUs = 2) then 16.81
+when NodeGen = '5450' then 13.36
+when NodeGen = '5400' then 11.72
+when NodeGen in ('5380','4980') then 8.80
+when NodeGen in ('5350','4950') then 6.13
+when NodeGen in ('5300','4900') then 4.68
+else 0
+end) ) as decimal(5,2)) (named "NodeT")
+
 /*** end grouping fields ***/
 
-,cast(((case
-when ( NodeGen in ('7000','7010','2850')) then 0.06 * CPUs
-when ( NodeGen in ('6800','6800H','6805H','6805','1800','2800','680','7200P'))  then 0.062 * CPUs
-when ( NodeGen in ('6750','6750H','6750P','6750HX','6750X','675','675HDD','2750','2755','1750')) then 0.058 * CPUs
-when ( NodeGen in ('6700','6700H','2700','1700','670H','6700HDD','200CL') and CPUs = 32) then 0.063 * CPUs
-when ( NodeGen in ('6700C','670C') and CPUs = 16) then 1.2
-when ( NodeGen in ('6690','6690H','2690') and CPUs = 24) then 1.54
-when ( NodeGen in ('6680','6650H','6650','5650H','5650','4650','2650','1650') and CPUs = 24) then 1.5
-when ( NodeGen in ('6650C','6650','5650C','5650','560C') and CPUs = 12 ) then 0.80
-when ( NodeGen in ('5600H','5600','560H','4600','2580','1600','1580') and CPUs = 16) then 1
-when ( NodeGen in ('5600C','5600','560C') and CPUs = 8) then 0.52
-else 0.06 * CPUs 		/* else default to approx recent generation CPUPower */
-end) ) as decimal(5,2)) (named "NodeCPUPower")
-
-,NodeCPUPower * NumNodes * AvgCPUBusy / 100 (format 'ZZ,ZZ9.9') (Named "ConsumedCPUPower")
-
-,case when CPUs/2 < (.2 * (ConsumedTCPU) + .8 * (ConsumedTIO / 350 / CPUs / 2)) then CPUs/2
-	else (.2 * (ConsumedTCPU) + .8 * (ConsumedTIO / 350 / CPUs / 2))
-	end (named "ConsumedTCore")
-
-,NumNodes * CPUs / 2 * AvgCPUBusy / 100 (format 'ZZ,ZZ9.9') (Named "ConsumedTCPU")
-
-,TtlMBSecGen (format 'ZZ,ZZ9.9') (Named "ConsumedTIO")
-,TtlReadMBSecGen  (format 'ZZ,ZZ9.9') (Named "ConsumedTIORd")
-,TtlWriteMBSecGen  (format 'ZZ,ZZ9.9') (Named "ConsumedTIOWr")
-
+, ( (0.005 * (TtlPosReadSecGen + TtlPreReadSecGen + 2*TtlWriteSecGen)) +
+(TtlReadMBSecGen + 2*TtlWriteMBSecGen)/150 ) / .8 (format 'ZZ,ZZ9.9')(named "D")
+,NodeT * NumNodes * AvgCPUBusy / 100 /.8 (format 'ZZ,ZZ9.9') (Named "T")
 ,min(MemSizeGB) (Named "MinMemSizeGB")
 ,max(MemSizeGB) (Named "MaxMemSizeGB")
 ,count(distinct(spma_dt.NodeID)) (Named "NumNodes")
@@ -246,32 +254,6 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,zeroifnull(sum(SSDTotWriteResp / nullifzero(SSDWrites)) * 10) (format 'Z,ZZ9.9') (named "AvgSSDWriteResp")
 ,max(SSDWriteRespMax) * 10 (format 'Z,ZZ9.9') (named "MaxSSDWriteResp")
 
-,sum(WISSDReadKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgWISSDReadMBSecNode_SPDSK")
-,max(WISSDReadKB) / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "MaxWISSDReadMBSecNode_SPDSK")
-,sum(WISSDWriteKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgWISSDWriteMBSecNode_SPDSK")
-,max(WISSDWriteKB) / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "MaxWISSDWriteMBSecNode_SPDSK")
-,sum(WISSDReads) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "AvgWISSDReadsSecNode_SPDSK")
-,max(WISSDReads) / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "MaxWISSDReadsSecNode_SPDSK")
-,sum(WISSDWrites) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "AvgWISSDWritesSecNode_SPDSK")
-,max(WISSDWrites) / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "MaxWISSDWritesSecNode_SPDSK")
-,zeroifnull(sum(WISSDTotReadResp / nullifzero(WISSDReads)) * 10) (format 'Z,ZZ9.9') (named "AvgWISSDReadResp")
-,max(WISSDReadRespMax) * 10 (format 'Z,ZZ9.9') (named "MaxWISSDReadResp")
-,zeroifnull(sum(WISSDTotWriteResp / nullifzero(WISSDWrites)) * 10) (format 'Z,ZZ9.9') (named "AvgWISSDWriteResp")
-,max(WISSDWriteRespMax) * 10 (format 'Z,ZZ9.9') (named "MaxWISSDWriteResp")
-
-,sum(RISSDReadKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgRISSDReadMBSecNode_SPDSK")
-,max(RISSDReadKB) / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "MaxRISSDReadMBSecNode_SPDSK")
-,sum(RISSDWriteKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgRISSDWriteMBSecNode_SPDSK")
-,max(RISSDWriteKB) / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "MaxRISSDWriteMBSecNode_SPDSK")
-,sum(RISSDReads) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "AvgRISSDReadsSecNode_SPDSK")
-,max(RISSDReads) / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "MaxRISSDReadsSecNode_SPDSK")
-,sum(RISSDWrites) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "AvgRISSDWritesSecNode_SPDSK")
-,max(RISSDWrites) / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "MaxRISSDWritesSecNode_SPDSK")
-,zeroifnull(sum(RISSDTotReadResp / nullifzero(RISSDReads)) * 10) (format 'Z,ZZ9.9') (named "AvgRISSDReadResp")
-,max(RISSDReadRespMax) * 10 (format 'Z,ZZ9.9') (named "MaxRISSDReadResp")
-,zeroifnull(sum(RISSDTotWriteResp / nullifzero(RISSDWrites)) * 10) (format 'Z,ZZ9.9') (named "AvgRISSDWriteResp")
-,max(RISSDWriteRespMax) * 10 (format 'Z,ZZ9.9') (named "MaxRISSDWriteResp")
-
 /* Logical CPU */
 
 ,sum(TotalPECPUBusy) / NumNodes / CPUs / RSSInterval (format 'ZZ9.9') (named "AvgPECPUBusy")
@@ -301,35 +283,45 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,sum(CompDBs) / NumNodes / RSSInterval (named "CompDBsSecNode_SVPR")
 ,sum(UnCompDBs) / NumNodes / RSSInterval (named "UnCompDBsSecNode_SVPR")
 
-,sum(CompCPUMS) (named "COMPCPU")
-,sum(UnCompCPUMS) (named "UNCOMPCPU")
-
 ,sum(CompCPUMS) / 10 / NumNodes / CPUs / RSSInterval  (named "PctCPUComp")
 ,sum(UnCompCPUMS) / 10 / NumNodes / CPUs / RSSInterval  (named "PctCPUUnComp")
 
 ,zeroifnull(PreCompMBSecNode_SVPR / nullifzero(PostCompMBSecNode_SVPR)) (named "CompRatioComp_SVPR")
 ,zeroifnull(PostUnCompMBSecNode_SVPR / nullifzero(PreUnCompMBSecNode_SVPR)) (named "CompRatioUnComp_SVPR")
 
-/* comp1 & 2 estimates only valid when BLC already being used
-	estimate using 25 ms/mb compress, 3.5 ms/mb uncompress */
+/* comp1 & 2 estimates only valid when BLC already being used */
 
-,zeroifnull(PctCPUComp) / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) (named "TtlTCPUComp_Est1")
-,zeroifnull(PctCPUUnComp) / 100 * NumNodes  * CPUs / 2 / (PMCOD / 100)   (named "TtlTCPUUnComp_Est1")
+,zeroifnull(PctCPUComp) / 100 * NodeT * NumNodes / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyCompNodes_Est1")
+,zeroifnull(PctCPUUnComp) / 100 * NodeT * NumNodes / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyUnCompNodes_Est1")
 
-,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2")
-,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2")
+,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.16 / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyCompNodes_Est2")
+,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.021 / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyUnCompNodes_Est2")
 
-,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3")
-,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3")
+/* others go off of reads/writes & assumes 3x compression */
+
+,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.20 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyCompNodes_Est3")
+,LogPermReadMBSecNode_SVPR * NumNodes * 0.026 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyUnCompNodes_Est3")
+
+,TtlPhyPermWriteMBSecNode_SVPR * NumNodes * 0.20 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyCompNodes_Est4")
+
+,(AvgWriteMBSecNode - TtlPhySpoolWriteMBSecNode_SVPR) * NumNodes * 0.20 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyCompNodes_Est5")
 
 ,zeroifnull(sum(CompCPUMS) / NumNodes / RSSInterval / nullifzero(PreCompMBSecNode_SVPR))  (named "CPUMSMBComp")
 ,zeroifnull(sum(UnCompCPUMS) / NumNodes / RSSInterval / nullifzero(PostUnCompMBSecNode_SVPR))  (named "CPUMSMBUnComp")
 
+,case when NodeGen in ('2690','2700','2750','2800') then TtlBentleyCompNodes_Est2 else TtlBentleyCompNodes_Est3 end (named "TtlBentleyCompNodes_Est")
+,case when NodeGen in ('2690','2700','2750','2800') then TtlBentleyUnCompNodes_Est2 else TtlBentleyUnCompNodes_Est3 end (named "TtlBentleyUnCompNodes_Est")
+
+/* for reference -- legacy compression cost estimates */
+
+,TtlPhyPermWriteMBSecNode_SVPR * NumNodes * .64 (named "OrigCompEst")
+,LogPermReadMBSecNode_SVPR * NumNodes * .064 (named "OrigUnCompEst")
+
 /* NCS Node sizing */
 
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes")
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode")
-,MaxGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "MaxTCPUForNCSNode")
+,AvgGTW_PECPUBusy / 100 * NodeT * NumNodes / (PMCOD / 100) * 1.2 / 100 / 160 (named "TtlBentleyNCSNodes") -- 6800C -like NCS node, 6700C is 2x this.
+,AvgGTW_PECPUBusy / 100 * NodeT / (PMCOD / 100) * 1.2 / 100 (named "AvgGTW_PENCSNode")
+,MaxGTW_PECPUBusy / 100 * NodeT / (PMCOD / 100) * 1.2 / 100 (named "MaxGTW_PENCSNode")
 
 ,sum(NtwReadKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgNtwReadMBSecNode")
 ,max(NtwReadKB) / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "MaxNtwReadMBSecNode")
@@ -339,8 +331,6 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 ,sum(NtwReadKB) / RSSInterval / 1024.0 (format 'Z,ZZZ,ZZ9.9') (named "TotalNtwReadMBSecNode")
 ,sum(NtwWriteKB) / RSSInterval / 1024.0 (format 'Z,ZZZ,ZZ9.9') (named "TotalNtwWriteMBSecNode")
-
-,'{{ siteid | default("UNKNOWN") }}' as Site_ID
 
 from dbc.dbcinfo info,
 (
@@ -403,12 +393,12 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,sum(HostReadKB) (named "NtwReadKB")
 ,sum(HostWriteKB) (named "NtwWriteKB")
 
-from PDCRINFO.ResUsageSpma_hst
-WHERE ( ( THEDATE = {{ startdate }} AND THETIME >= {{ starttime | default(0) }} ) OR
-( THEDATE > {{ startdate }} ) )
+from dbc.resusagespma
+WHERE ( ( THEDATE = :BEGINDATE AND THETIME >= :BEGINTIME ) OR
+( THEDATE > :BEGINDATE ) )
 AND
-( ( THEDATE = {{ enddate }} AND THETIME <= {{ endtime | default(240000) }} ) OR
-( THEDATE < {{ enddate }} ) )
+( ( THEDATE = :ENDDATE AND THETIME <= :ENDTIME ) OR
+( THEDATE < :ENDDATE ) )
 group by 1,2,3,4,5,6,7,8,9,10,11,12
 
 ) spma_dt left join
@@ -524,12 +514,12 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,sum(VHPhysicalDBRead) (named "VHAcqReads")
 ,sum(VHPhysicalDBReadKB) (named "VHAcqReadKB")
 
-from PDCRINFO.ResUsageSvpr_hst
-WHERE ( ( THEDATE = {{ startdate }} AND THETIME >= {{ starttime | default(0) }} ) OR
-( THEDATE > {{ startdate }} ) )
+from dbc.resusagesvpr
+WHERE ( ( THEDATE = :BEGINDATE AND THETIME >= :BEGINTIME ) OR
+( THEDATE > :BEGINDATE ) )
 AND
-( ( THEDATE = {{ enddate }} AND THETIME <= {{ endtime | default(240000) }} ) OR
-( THEDATE < {{ enddate }} ) )
+( ( THEDATE = :ENDDATE AND THETIME <= :ENDTIME ) OR
+( THEDATE < :ENDDATE ) )
 
 group by 1,2,3,4
 
@@ -562,38 +552,20 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,max(case when PdiskType = 'SSD' then ReadRespMax else 0 END) (named "SSDReadRespMax")
 ,max(case when PdiskType = 'SSD' then WriteRespMax else 0 END) (named "SSDWriteRespMax")
 
-/* add RI/WI SSD breakdown */
-
-,sum(case when PdiskType = 'WSSD' then ReadKB else 0 END) (named "WISSDReadKB")
-,sum(case when PdiskType = 'WSSD' then WriteKB else 0 END) (named "WISSDWriteKB")
-,sum(case when PdiskType = 'WSSD' then ReadCnt else 0 END) (named "WISSDReads")
-,sum(case when PdiskType = 'WSSD' then WriteCnt else 0 END) (named "WISSDWrites")
-,sum(case when PdiskType = 'WSSD' then ReadRespTot else 0 END) (named "WISSDTotReadResp")
-,sum(case when PdiskType = 'WSSD' then WriteRespTot else 0 END) (named "WISSDTotWriteResp")
-,max(case when PdiskType = 'WSSD' then ReadRespMax else 0 END) (named "WISSDReadRespMax")
-,max(case when PdiskType = 'WSSD' then WriteRespMax else 0 END) (named "WISSDWriteRespMax")
-
-,sum(case when PdiskType = 'RSSD' then ReadKB else 0 END) (named "RISSDReadKB")
-,sum(case when PdiskType = 'RSSD' then WriteKB else 0 END) (named "RISSDWriteKB")
-,sum(case when PdiskType = 'RSSD' then ReadCnt else 0 END) (named "RISSDReads")
-,sum(case when PdiskType = 'RSSD' then WriteCnt else 0 END) (named "RISSDWrites")
-,sum(case when PdiskType = 'RSSD' then ReadRespTot else 0 END) (named "RISSDTotReadResp")
-,sum(case when PdiskType = 'RSSD' then WriteRespTot else 0 END) (named "RISSDTotWriteResp")
-,max(case when PdiskType = 'RSSD' then ReadRespMax else 0 END) (named "RISSDReadRespMax")
-,max(case when PdiskType = 'RSSD' then WriteRespMax else 0 END) (named "RISSDWriteRespMax")
-
-from PDCRINFO.ResUsageSpdsk_hst
-WHERE ( ( THEDATE = {{ startdate }} AND THETIME >= {{ starttime | default(0) }} ) OR
-( THEDATE > {{ startdate }} ) )
+from dbc.resusagespdsk
+WHERE ( ( THEDATE = :BEGINDATE AND THETIME >= :BEGINTIME ) OR
+( THEDATE > :BEGINDATE ) )
 AND
-( ( THEDATE = {{ enddate }} AND THETIME <= {{ endtime | default(240000) }} ) OR
-( THEDATE < {{ enddate }} ) )
+( ( THEDATE = :ENDDATE AND THETIME <= :ENDTIME ) OR
+( THEDATE < :ENDDATE ) )
 group by 1,2,3,4
 
 ) spdsk_dt
 on spma_dt.LogDate = spdsk_dt.LogDate
 and spma_dt.LogTime = spdsk_dt.LogTime
 and spma_dt.nodeid = spdsk_dt.nodeid
-where  info.infokey (NOT CS) = 'VERSION' (NOT CS)
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+where  info.infokey (NOT CS) = 'VERSION'
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
 order by 5,14,17,18
+;
+);
