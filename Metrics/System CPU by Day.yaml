@@ -44,7 +44,20 @@ tasks:
       - legendxy:(0.5, -0.2)
 
 
-- name: Export Read/Write CPU by Day of Week for charting
+- name: Chart System CPU - Stacked Horz Bars by Day
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - csvfilepath:system_cpu_by_day.csv
+      - pngfilepath:system_cpu_by_day_stacked_horz.png
+      - title:System CPU - {{ siteid }}
+      - xcolumns:[4,3,2,1]
+      - height:6
+      - width:12
+      - legendxy:(0.5, -0.2)
+
+
+- name: Export CPU by Day of Week for charting
   connect: source
   export:
     file: system_cpu_by_dayofweek.csv
