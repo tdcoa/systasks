@@ -1,0 +1,108 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_system_io_by_day' in run.completed %}
+
+{% set td15 = true  if tdver[:2]=='15' else false %}
+{% set percentiles = [1000, 995, 990, 980, 950, 900, 800 ] %}
+
+- name:  "Create vt_system_io_by_day"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_system_io_by_day as
+      (
+        Select '{{ siteid }}' as Site_ID
+        ,cast(TheDate as format 'Y4-MM-DD') as LogDate
+        {% if logts %}
+        ,cast(theTime/100 as int)-(LogHr*100) as LogMin
+        ,cast(theTime/10000 as int) as LogHr
+        ,cast(
+         cast(cast(theDate as date format 'yyyy-mm-ddb') as char(11)) ||
+         cast(cast(LogHr as int format '99:') as char(3)) ||
+         cast(cast(LogMin as int format '99') as char(2)) || ':00'
+         as timestamp(0)) as LogTS
+        {% endif %}
+        ,SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
+        ,cast(max(NodeType) as varchar(10)) as Node_Type
+        ,cast(count(distinct NodeID) as smallint) as Node_Cnt
+        ,cast(max(NCPUs) as smallint) as vCPU_per_Node
+
+        /* Read/Writes I/O */
+        ,sum(FileAcqReads+FilePreReads+FileWrites)(BIGINT) as IOs
+        ,sum(FileAcqReads+FilePreReads)(BIGINT) as IOs_Read
+        ,sum(FileWrites)(BIGINT) as IOs_Write
+        ,sum(FileAcqReadKB+FilePreReadKB+FileWriteKB)(BIGINT) as IOKB
+        ,sum(FileAcqReadKB+FilePreReadKB)(BIGINT) as IOKB_Read
+        ,sum(FileWriteKB)(BIGINT) as IOKB_Write
+
+        /*  IOTA Metrics  */
+        {% if td15 %}
+        ,0 as MaxIOTA_cntB
+        ,0 as UsedIOTA_cntB
+        ,0 as IOTA_Pct
+        {% else %}
+        ,sum(cast(UsedIOTA/1e9 as BIGINT)) as UsedIOTA_cntB
+        ,sum(cast(FullPotentialIOTA/1e9 as BIGINT)) as MaxIOTA_cntB
+        ,cast(UsedIOTA_cntB as decimal(38,4)) / zeroifnull(MaxIOTA_cntB) as IOTA_Pct
+        {% endif %}
+
+        /* Max Observed Ranges */
+        {% for pctl in percentiles %}
+        ,(IOs_OMP{{ pctl }}_busy_pct + IOKB_OMP{{ pctl }}_busy_pct)/2 as ObservedMax{{ pctl }}_IOBusy_pct
+        ,ObservedMax{{ pctl }}_IOBusy_pct - IOTA_Pct as OMP{{ pctl }}_Reconcile
+        {% endfor %}
+
+        /* Percentile Observations */
+        {% for metric in ['IOs','IOs_Read','IOs_Write','IOKB','IOKB_Read','IOKB_Write'] %}
+        /* {{ metric }} */
+        {% for pctl in percentiles %}
+        ,_{{ metric }}_{{ pctl }}pctl * count(*) as {{ metric }}_{{ pctl }}pctl
+        ,cast({{ metric }} as decimal(38,4)) / nullifzero({{ metric }}_{{ pctl }}pctl) as {{ metric }}_OMP{{ pctl }}_busy_pct
+        {% endfor %}
+        {% endfor %}
+
+        ,SUM(HostReadKB) as HostRead_KB
+        ,SUM(HostWriteKB) as HostWrite_KB
+        from {{ dbc.spma }}
+        cross join (
+            Select count(distinct TheDate) as DayCount
+            {% for pctl in percentiles %}
+            /*  {{ pctl }} */
+            ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY (FileAcqReads+FilePreReads)            )(BIGINT) as    _IOs_Read_{{ pctl }}pctl
+            ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY FileWrites                             )(BIGINT) as   _IOs_Write_{{ pctl }}pctl
+            ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY FileAcqReads+FilePreReads+FileWrites   )(BIGINT) as         _IOs_{{ pctl }}pctl
+            ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY (FileAcqReadKB+FilePreReadKB)          )(BIGINT) as   _IOKB_Read_{{ pctl }}pctl
+            ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY FileWriteKB                            )(BIGINT) as  _IOKB_Write_{{ pctl }}pctl
+            ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY FileAcqReadKB+FilePreReadKB+FileWriteKB)(BIGINT) as        _IOKB_{{ pctl }}pctl
+            {% endfor %}
+            from PDCRInfo.ResUsageSpma_Hst
+            where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+        ) pctl
+
+        where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+        Group by LogDate
+        {{ ',LogTS, LogHr, LogMin' if logts else '' }}
+      ) with data
+        primary index (LogDate)
+        on commit preserve rows
+
+- name:  "Collect Stats"
+  connect: source
+  execute:
+    sql: collect stats on vt_system_io_by_day column(LogDate)
+
+# one of the few required Reconcile documents...
+- name: "Reconcile IOTA% to all various Observed Max calculations"
+  connect: source
+  export:
+    file: reconcile_system_io_observed_max_levels.csv
+    sql: |
+      select
+       cast(cast(avg(IOTA_Pct     )*100 as decimal(9,2) format '-Z9.99%')as varchar(8)) "IOTA%"
+       {% for pctl in percentiles %}
+      ,cast(cast(avg(OMP{{ pctl }}_Reconcile)*100 as decimal(9,2) format '-Z9.99%')as varchar(8)) "ObservedMax Difference from IOTA at {{ pctl /1000 }} Percentile"
+      {% endfor %}
+      from vt_system_io_by_day
+
+
+{% endif %}
+{{ run.completed.append('vt_system_io_by_day') or '' }}

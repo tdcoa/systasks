@@ -1,0 +1,141 @@
+description: Generates daily IO numbers, broken out by Read and Write, for KB, Count, IOTAs, along with a number of Observed Max IO calculatoins, by varying percentiles.
+version: 1
+{% set run = namespace(completed=[]) if run is not defined else run %}
+
+tasks:
+{% set logts = true %} # turn on option to have system_cpu generate per 10min increment
+{% set io_percentile = 990 if  io_percentile is not defined else io_percentile %}
+{% set td15 = true  if tdver[:2]=='15' else false %}
+
+
+{% include "vt_system_io_by_day.j2" %}
+
+
+# Line Chart:
+- name: Export System IO for Line Chart
+  connect: source
+  export:
+    file: system_IO_BusyPct_allPctl.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      {% if not td15 %}
+      ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      {% endif %}
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:system_IO_BusyPct_allPctl.csv
+      - title:System IO% Busy, IOTA and Max Observed - {{ siteid }}
+      - height:6
+      - width:12
+
+
+## Heatmaps:
+- name: Export System IO for Heatmap
+  connect: source
+  export:
+    file: system_io_by_day_heatmap.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "LogDate"
+      ,LogHr as "Hour"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100 as decimal(38,2)) as "IOTA Busy%"
+      from vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+
+- name: Export System IO by Day of Week for HeatMap
+  connect: source
+  export:
+    file: system_io_by_dayofweek_heatmap.csv
+    sql: |
+      Select
+       cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+      ,LogHr as "Hour"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100 as decimal(38,2)) as "IOTA Busy%"
+      from vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_io_by_dayofweek_heatmap.csv
+      - pngfilepath:system_io_by_dayofweek_heatmap_maxobserved.png
+      - title:System IO Busy (Max Observed {{ io_percentile /1000 }}pctl) - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% if not td15 %}
+- name: Chart System IOTA - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_io_by_dayofweek_heatmap.csv
+      - pngfilepath:system_io_by_dayofweek_heatmap_iota.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+{% endif %}
+
+- name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_io_by_day_heatmap.csv
+      - pngfilepath:system_io_by_day_heatmap_maxobserved.png
+      - title:System IO Busy (Max Observed {{ io_percentile /1000 }}pctl) - {{ siteid }}
+      - height:6
+      - width:12
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% if not td15 %}
+- name: Chart System IOTA Busy - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_io_by_day_heatmap.csv
+      - pngfilepath:system_io_by_day_heatmap_iota.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:12
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+{% endif %}
