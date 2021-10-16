@@ -514,7 +514,8 @@ class coaData():
 
         # assign default column positions, if missing
         if ycolumns == []: ycolumns = list(set([x for x in range(len(df.columns))]) - set(xcolumns)) # default: all columns not in xcolumns
-
+        if xcolumns == []: xcolumns = [0]  # defaults to first column
+        
         # pivot, if requested
         if self.args.dfpivot:
             df = self.autopivot(df, xcolumns, ycolumns)

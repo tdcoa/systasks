@@ -14,7 +14,7 @@
  ,{"name":   "xlabelslicer", "aliases": ["xslice","xlabelslice"]     ,"type": "list-int",   "default": "[0,0]"            ,"notes":"list of slicer positions [first,second] for xlabel, where 0 == empty (aka [0,0] == [:]"  }
  ,{"name":   "ymin",         "aliases": ["ylim","yintercept"]        ,"type": "int",        "default": "<<none>>"         ,"notes":"y intercept of x.  If none, allow charting to make best guess."   }
  ,{"name":   "ynumberformat","aliases": ["yformat"]                  ,"type": "str",        "default": "byte"             ,"notes":"yaxis label format, can be byte or number or none"   }
- ,{"name":   "labelsize",    "aliases": ["rotatex"]                  ,"type": "int",        "default": "12"               ,"notes":""   }
+ ,{"name":   "labelsize",    "aliases": []                           ,"type": "int",        "default": "12"               ,"notes":""   }
  ,{"name":   "logscale",     "aliases": []                           ,"type": "bool",       "default": "False"            ,"notes":"shift chart to logscale"}
  ,{"name":   "legendxy",     "aliases": []                           ,"type": "tuple-float","default": "(0.5, -0.3)"      ,"notes":"relative position (0-1) of legend box.  0.5, 0.5 would be middle of chart."   }
  ,{"name":   "legendcolumns","aliases": ["ncol","legendcol"]         ,"type": "int",        "default": "5"                ,"notes":"how many horizontal columns in legend box"   }
