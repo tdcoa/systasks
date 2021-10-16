@@ -92,3 +92,13 @@ tasks:
   export:
     file: decode_user.csv
     sql: select * from vt_decode_user order by Organization,Department,UserType
+
+
+- name: "Fix CSV for BTEQ consumption"
+  connect: source
+  script:
+    command: scripts/bteqfix_csv.py
+    params:
+      - decode_user.csv
+      - decode_appid.csv
+      - decode_feature.csv
