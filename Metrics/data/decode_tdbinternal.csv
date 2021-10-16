@@ -17,7 +17,7 @@ dbcmanager,System Administration,1,0,tbd
 dbcmngr,System Administration,1,0,tbd
 dbqrymgr,System Administration,1,0,tbd
 default,Aliases,0,0,tbd
-edwdecoded,Services App,0,0,tbd
+edwdecoded,Services App,1,0,tbd
 external_ap,Extensibility,1,0,tbd
 extUser,Aliases,0,0,tbd
 locklogshredder,System Administration,1,1,tbd
