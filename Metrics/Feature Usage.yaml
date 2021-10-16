@@ -10,7 +10,106 @@ tasks:
 {% include "vt_feature_usage.j2" %}
 
 # Let's just blast out the graphs via a loop:
+
+
 {% if chart %}
+
+# produce list of all Features by count:
+- name: "Create vt_feature_usage_detail for detailed graphing"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_feature_usage_detail as (
+      with dat as
+          (   select FeatureName
+              ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
+              ,sum(   cast(sum_parsercputime as decimal(38,2))
+                    + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+              ,1 as ActiveFlag
+              from vt_Feature_Usage
+              group by 1)
+      , dim as
+          (
+              select Feature_Name as FeatureName from vt_decode_feature where DBQL_FeatureInfo_Flag = 'Y'
+          )
+      Select
+       coalesce(dat.FeatureName, dim.FeatureName)                  as "Feature"
+      ,cast(coalesce(Average_Daily_Use_Count, 0) as BigInt)        as "Average Daily Use Count"
+      ,cast(coalesce(Average_CPU_Seconds_per_Query, 0) as BigInt)  as "Average CPU Seconds per Query"
+      ,coalesce(dat.ActiveFlag, 0) as ActiveFlag
+      from dat
+      right outer join dim
+       on dim.FeatureName = dat.FeatureName
+      ) with data primary index ("Feature") on commit preserve rows
+
+
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: feature_usage_x_Feature.csv
+    sql: Select * from vt_feature_usage_detail order by 2 asc
+
+- name: "Chart for charting: ALL detailed Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:feature_usage_x_Feature.csv"
+      - "title:Average Count Usage by Feature - {{ siteid }}"
+      - "height:25"
+      - "width:5"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+- name: "Export for charting: all ACTIVE Features by Name"
+  connect: source
+  export:
+    file: feature_usage_x_Feature_active.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 asc
+
+- name: "Chart for charting: all ACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:feature_usage_x_Feature_active.csv"
+      - "title:Average Count Usage by Active Feature - {{ siteid }}"
+      - "height:20"
+      - "width:5"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+
+- name: "Export for charting: all INACTIVE Features by Name"
+  connect: source
+  export:
+    file: feature_usage_x_Feature_inactive.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 0 order by 2 asc
+
+- name: "Chart for charting: all INACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:feature_usage_x_Feature_inactive.csv"
+      - "title:Average Count Usage by Inactive Feature - {{ siteid }}"
+      - "height:10"
+      - "width:3"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+
+
+
 {% set feature_columns = ['Feature_Category','Feature_SubCategory','Product_Name','Product_Category','Solution_Type','User_Experience_Level_Name','Initiator_Role_Category','Objective_Name','Department','UserType','Organization'] %}
 {% for feature_column in feature_columns %}
 
