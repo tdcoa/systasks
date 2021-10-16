@@ -133,11 +133,11 @@
         /* ====== Metrics: CPU & IO ====== */
         ,CPU_Total_Sec                 DECIMAL(18,4) compress (null, 0)
         ,CPU_AMP_Sec                   DECIMAL(18,4) compress (null, 0)
-        ,IO_Total_CntM                 DECIMAL(18,4) compress (null, 0)
-        ,IO_Physical_CntM              DECIMAL(18,4) compress (null, 0)
-        ,IO_Total_GB                   DECIMAL(18,4) compress (null, 0)
-        ,IO_Physical_GB                DECIMAL(18,4) compress (null, 0)
-        ,IOTA_Used_CntB                DECIMAL(18,4) compress (null, 0)
+        ,IO_Total_CntM                 DECIMAL(38,4) compress (null, 0)
+        ,IO_Physical_CntM              DECIMAL(38,4) compress (null, 0)
+        ,IO_Total_GB                   DECIMAL(38,4) compress (null, 0)
+        ,IO_Physical_GB                DECIMAL(38,4) compress (null, 0)
+        ,IOTA_Used_CntB                DECIMAL(38,4) compress (null, 0)
 
         /* ====== Metrics: Other ====== */
         ,Spool_GB                      DECIMAL(18,4) compress (null, 0)
@@ -332,11 +332,11 @@
         /* ====== Metrics: CPU & IO ====== */
         ,sum(cast(CPU_Total_Sec           as decimal(18,4))) as CPU_Total_Sec
         ,sum(cast(CPU_AMP_Sec             as decimal(18,4))) as CPU_AMP_Sec
-        ,sum(cast(TotalIOCount_ / 1e6     as bigint))        as IO_Total_CntM
-        ,sum(cast(ReqPhysIO_    / 1e6     as bigint))        as IO_Physical_CntM
-        ,sum(cast(ReqIOKB_      / 1e6     as decimal(18,4))) as IO_Total_GB
-        ,sum(cast(ReqPhysIOKB_  / 1e6     as decimal(18,4))) as IO_Physical_GB
-        ,sum(cast(UsedIota_     / 1e9     as bigint))        as IOTA_Used_CntB
+        ,sum(cast(TotalIOCount_ / 1e6     as decimal(38,4))) as IO_Total_CntM
+        ,sum(cast(ReqPhysIO_    / 1e6     as decimal(38,4))) as IO_Physical_CntM
+        ,sum(cast(ReqIOKB_      / 1e6     as decimal(38,4))) as IO_Total_GB
+        ,sum(cast(ReqPhysIOKB_  / 1e6     as decimal(38,4))) as IO_Physical_GB
+        ,sum(cast(UsedIota_     / 1e9     as decimal(38,4))) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
         ,sum(cast(SpoolUsage /1e9                as decimal(32,4)))     as Spool_GB
@@ -542,11 +542,11 @@
         /* ====== Metrics: CPU & IO ====== */
         ,sum(cast(CPU_Total_Sec             as decimal(18,4))) as CPU_Total_Sec
         ,sum(cast(CPU_AMP_Sec               as decimal(18,4))) as CPU_AMP_Sec
-        ,sum(cast(TotalIOCount_ / 1e6       as bigint))        as IO_Total_CntM
-        ,sum(cast(ReqPhysIO_    / 1e6       as bigint))        as IO_Physical_CntM
-        ,sum(cast(ReqIOKB_      / 1e6       as decimal(18,4))) as IO_Total_GB
-        ,sum(cast(ReqPhysIOKB_  / 1e6       as decimal(18,4))) as IO_Physical_GB
-        ,sum(cast(UsedIota_     / 1e9       as bigint))        as IOTA_Used_CntB
+        ,sum(cast(TotalIOCount_ / 1e6       as decimal(38,4))) as IO_Total_CntM
+        ,sum(cast(ReqPhysIO_    / 1e6       as decimal(38,4))) as IO_Physical_CntM
+        ,sum(cast(ReqIOKB_      / 1e6       as decimal(38,4))) as IO_Total_GB
+        ,sum(cast(ReqPhysIOKB_  / 1e6       as decimal(38,4))) as IO_Physical_GB
+        ,sum(cast(UsedIota_     / 1e9       as decimal(38,4))) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
         ,sum(cast(SpoolUsage /1e9                as decimal(32,4)))     as Spool_GB
