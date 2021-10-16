@@ -10,6 +10,7 @@ tasks:
 
 {% include "vt_allocated_utilization_per_table.j2" %}
 
+{% if export_all %}
 - name: Export Allocated Utilization per Table
   connect: source
   export:
@@ -27,6 +28,7 @@ tasks:
       from vt_allocated_utilization_per_table
       group by 1,2,3
       order by DatabaseName, TableName, LogDate desc
+{% endif %}
 
 - name: Export Allocated Utilization per Database
   connect: source
