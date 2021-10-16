@@ -12,22 +12,35 @@
     sql: |
       create volatile table vt_decode_feature
       (
-       Feature_Name                varchar(128)
-      ,Feature_Category            varchar(128)
-      ,Feature_SubCategory         varchar(128)
-      ,Product_Name                varchar(128)
-      ,Product_Category            varchar(128)
-      ,Solution_Type               varchar(128)
-      ,User_Experience_Level_Name  varchar(128)
-      ,Initiator_Role_Category     varchar(128)
-      ,Objective_Name              varchar(128)
-      ,Feature_Weight              smallint
-      ,Max_Threshold_LOW           integer
-      ,Max_Threshold_MED           bigint
-      ,Feature_CPU_Weight          smallint
-      ,Feature_IO_Weight           smallint
-      ,Feature_Time_Weight         smallint
-      ,Feature_Cnt_Weight          smallint
+        FEATURE_ID                   INTEGER
+       ,PRODUCT_NAME                 VARCHAR(100)
+       ,FEATURE_NAME                 VARCHAR(100)
+       ,DBS_VERSION                  VARCHAR(11)
+       ,FEATURE_BITPOS               SMALLINT
+       ,FEATURE_SUBCATEGORY          VARCHAR(100)
+       ,FEATURE_CATEGORY             VARCHAR(100)
+       ,PRODUCT_CATEGORY             VARCHAR(100)
+       ,OBJECTIVE_NAME               VARCHAR(100)
+       ,SOLUTION_TYPE                VARCHAR(100)
+       ,BUSINESS_VALUE_DESC          VARCHAR(100)
+       ,USER_EXPERIENCE_LEVEL_NAME   VARCHAR(100)
+       ,INITIATOR_ROLE_CATEGORY      VARCHAR(64)
+       ,ENABLED_THRU                 VARCHAR(64)
+       ,DBQL_FEATUREINFO_FLAG        VARCHAR(3)
+       ,FEATURE_DATASOURCE           VARCHAR(32)
+       ,MBO_IND                      SMALLINT
+       ,DIFFERENTIATOR_IND           SMALLINT
+       ,FEATURE_WEIGHT               SMALLINT
+       ,FEATURE_NOTES                VARCHAR(1000)
+       ,FEATURE_SQL_URL              VARCHAR(1024)
+       ,PLAYBOOK_URL                 VARCHAR(1024)
+       ,RUN_ID                       INTEGER
+       ,MAX_THRESHOLD_LOW            INTEGER
+       ,MAX_THRESHOLD_MED            INTEGER
+       ,FEATURE_CPU_WEIGHT           SMALLINT
+       ,FEATURE_IO_WEIGHT            SMALLINT
+       ,FEATURE_TIME_WEIGHT          SMALLINT
+       ,FEATURE_CNT_WEIGHT           SMALLINT
       ) unique primary index (Feature_Name)
         on commit preserve rows
 
@@ -39,22 +52,35 @@
     sql: |
       Insert into vt_decode_feature
       Select
-       Feature_Name
-      ,Feature_Category
-      ,Feature_SubCategory
-      ,Product_Name
-      ,Product_Category
-      ,Solution_Type
-      ,User_Experience_Level_Name
-      ,Initiator_Role_Category
-      ,Objective_Name
-      ,Feature_Weight
-      ,Max_Threshold_LOW
-      ,Max_Threshold_MED
-      ,Feature_CPU_Weight
-      ,Feature_IO_Weight
-      ,Feature_Time_Weight
-      ,Feature_Cnt_Weight
+        FEATURE_ID                   -- INTEGER
+       ,PRODUCT_NAME                 -- VARCHAR(100)
+       ,FEATURE_NAME                 -- VARCHAR(100)
+       ,DBS_VERSION                  -- VARCHAR(11)
+       ,FEATURE_BITPOS               -- SMALLINT
+       ,FEATURE_SUBCATEGORY          -- VARCHAR(100)
+       ,FEATURE_CATEGORY             -- VARCHAR(100)
+       ,PRODUCT_CATEGORY             -- VARCHAR(100)
+       ,OBJECTIVE_NAME               -- VARCHAR(100)
+       ,SOLUTION_TYPE                -- VARCHAR(100)
+       ,BUSINESS_VALUE_DESC          -- VARCHAR(100)
+       ,USER_EXPERIENCE_LEVEL_NAME   -- VARCHAR(100)
+       ,INITIATOR_ROLE_CATEGORY      -- VARCHAR(64)
+       ,ENABLED_THRU                 -- VARCHAR(64)
+       ,DBQL_FEATUREINFO_FLAG        -- VARCHAR(3)
+       ,FEATURE_DATASOURCE           -- VARCHAR(32)
+       ,MBO_IND                      -- SMALLINT
+       ,DIFFERENTIATOR_IND           -- SMALLINT
+       ,FEATURE_WEIGHT               -- SMALLINT
+       ,FEATURE_NOTES                -- VARCHAR(1000)
+       ,FEATURE_SQL_URL              -- VARCHAR(1024)
+       ,PLAYBOOK_URL                 -- VARCHAR(1024)
+       ,RUN_ID                       -- INTEGER
+       ,MAX_THRESHOLD_LOW            -- INTEGER
+       ,MAX_THRESHOLD_MED            -- INTEGER
+       ,FEATURE_CPU_WEIGHT           -- SMALLINT
+       ,FEATURE_IO_WEIGHT            -- SMALLINT
+       ,FEATURE_TIME_WEIGHT          -- SMALLINT
+       ,FEATURE_CNT_WEIGHT           -- SMALLINT
       from mdm_edw_sub.COA_DIM_Feature_VW
 
 {% else %}
