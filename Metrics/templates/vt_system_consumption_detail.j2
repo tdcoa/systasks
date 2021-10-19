@@ -1,0 +1,46 @@
+{% set completed = [] if completed is not defined else completed %}
+{% if not 'vt_SPMADetailData' in completed %}
+
+- name:  "Create vt_SPMADetailData"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_SPMADetailData as
+      (
+          SELECT
+            '{{ siteid }}'  as "SiteID"
+            ,TheDate (FORMAT 'YYYY-MM-DD') AS "Log_Date"
+            ,Extract(Hour from TheTime) AS "Log_Hour"
+            ,Extract(Minute from TheTime) AS "Log_Minute"
+            ,TheTime AS "Log_Time"
+            ,NodeType as NodeType
+            ,cast((thedate(format'YYYY-MM-DD'))||' '||cast(thetime as char(2))||':'||cast(((extract(minute from TheTime))(format'99')) as char(2))||':00' as timestamp(0)) as "Sys_Time"
+            ,cast(max(NCPUs) as smallint) as vCPU_per_Node
+            ,COUNT(distinct NodeID) NodeCount
+            ,SUM(Secs) SecondCount
+            ,AVG((((CPUUServ (DECIMAL(38,6))) + CPUUExec)/NULLIFZERO((NCPUs (DECIMAL(38,6)))))/(Secs (DECIMAL(38,6)))) AS AvgCPUPct
+            ,SUM(FilePreReadKB) as "File_Pre_Read_KB"
+            ,SUM(FileAcqReadKB) as "File_Acq_Read_KB"
+            ,SUM(FileWriteKB)   as "File_Write_KB"
+            ,sum(cast(FullPotentialIOTA/1e9 as decimal(18,0))) as MaxIOTA_cntB
+            ,sum(cast(CPUIdle   as decimal(18,0))) as CPU_Idle
+            ,sum(cast(CPUIOWait as decimal(18,0))) as CPU_IOWait
+            ,sum(cast(CPUUServ  as decimal(18,0))) as CPU_OS
+            ,sum(cast(CPUUExec  as decimal(18,0))) as CPU_DBS
+            ,CPU_Idle+CPU_IOWait+CPU_OS+CPU_DBS as CPU_Total
+            ,SUM(HostReadKB) as HostRead_KB
+            ,SUM(HostWriteKB) as HostWrite_KB
+          FROM {{ dbc.spma }}
+          where TheDate between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+          group by 1,2,3,4,5,6,7
+      ) with data
+         primary index (Log_Time)
+        on commit preserve rows
+
+- name:  "Collect Stats"
+  connect: source
+  execute:
+    sql: collect stats on vt_SPMADetailData column("Log_Date")
+
+{% endif %}
+{{ completed.append('vt_SPMADetailData') or '' }}
