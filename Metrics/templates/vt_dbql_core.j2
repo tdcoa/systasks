@@ -143,17 +143,17 @@
         ,Spool_GB                      DECIMAL(18,4) compress (null, 0)
         ,Returned_Row_Cnt              BIGINT        compress (null, 0)
         ,NumOfActiveAMPs_Avg           DECIMAL(18,4) compress (null, 0)
-        ,QueryGrid_Bytes               DECIMAL(38,8) compress (null, 0)
-        ,CacheMiss_IOCnt_Pct           DECIMAL(18,8) compress (null, 0)
-        ,CacheMiss_IOGB_Pct            DECIMAL(18,8) compress (null, 0)
-        ,CacheMiss_IOCnt_Score         DECIMAL(18,8) compress (null, 0)
-        ,CacheMiss_IOGB_Score          DECIMAL(18,8) compress (null, 0)
+        ,QueryGrid_Bytes               DECIMAL(38,4) compress (null, 0)
+        ,CacheMiss_IOCnt_Pct           DECIMAL(18,4) compress (null, 0)
+        ,CacheMiss_IOGB_Pct            DECIMAL(18,4) compress (null, 0)
+        ,CacheMiss_IOCnt_Score         DECIMAL(18,4) compress (null, 0)
+        ,CacheMiss_IOGB_Score          DECIMAL(18,4) compress (null, 0)
         ,Total_AMPs                    SMALLINT
         ,AMP_Use01_Flag                BIGINT  compress (null, 0)
-        ,AMP_Use02_Flag                INTEGER compress (null, 0)
-        ,AMP_LT10pct_Flag              INTEGER compress (null, 0)
-        ,AMP_LT50pct_Flag              INTEGER compress (null, 0)
-        ,AMP_All_Flag                  INTEGER compress (null, 0)
+        ,AMP_Use02_Flag                BIGINT  compress (null, 0)
+        ,AMP_LT10pct_Flag              BIGINT  compress (null, 0)
+        ,AMP_LT50pct_Flag              BIGINT  compress (null, 0)
+        ,AMP_All_Flag                  BIGINT  compress (null, 0)
 
         /* ====== Audit Fields ====== */
         ,Insert_TS                     TIMESTAMP(0)
@@ -339,28 +339,28 @@
         ,sum(cast(UsedIota_     / 1e9     as decimal(38,4))) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
-        ,sum(cast(SpoolUsage /1e9                as decimal(32,4)))     as Spool_GB
+        ,sum(cast(SpoolUsage /1e9                as decimal(38,4)))     as Spool_GB
         ,sum(cast(NumResultRows                  as bigint))            as Returned_Row_Cnt
-        ,cast(avg(NumOfActiveAMPs (float)      ) as decimal(32,4)) as NumOfActiveAMPs_Avg
+        ,cast(avg(NumOfActiveAMPs (float)      ) as decimal(38,4)) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as decimal(38,4)) as QueryGrid_Bytes
-        ,zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as CacheMiss_CntPct
-        ,zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as CacheMiss_SizePct
-        ,case
+        ,cast(zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as decimal(18,4)) as CacheMiss_CntPct
+        ,cast(zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as decimal(18,4)) as CacheMiss_SizePct
+        ,cast(case
          when CacheMiss_CntPct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_CntPct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
          else cast((CacheMiss_CntPct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
-          end as CacheMiss_CntScore
-        ,case
+          end as Decimal(18,4)) as CacheMiss_CntScore
+        ,cast(case
          when CacheMiss_SizePct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_SizePct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
          else cast((CacheMiss_SizePct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
-          end as CacheMiss_SizeScore
+          end as Decimal(18,4)) as CacheMiss_SizeScore
         ,Total_AMPs
         ,zeroifnull(sum(cast(AMP_Use01_Flag   as BigInt)))  as AMP_Use01_Flag
-        ,zeroifnull(sum(cast(AMP_Use02_Flag   as integer))) as AMP_Use02_Flag
-        ,zeroifnull(sum(cast(AMP_LT10pct_Flag as integer))) as AMP_LT10pct_Flag
-        ,zeroifnull(sum(cast(AMP_LT50pct_Flag as integer))) as AMP_LT50pct_Flag
-        ,zeroifnull(sum(cast(AMP_All_Flag     as integer))) as AMP_All_Flag
+        ,zeroifnull(sum(cast(AMP_Use02_Flag   as BigInt))) as AMP_Use02_Flag
+        ,zeroifnull(sum(cast(AMP_LT10pct_Flag as BigInt))) as AMP_LT10pct_Flag
+        ,zeroifnull(sum(cast(AMP_LT50pct_Flag as BigInt))) as AMP_LT50pct_Flag
+        ,zeroifnull(sum(cast(AMP_All_Flag     as BigInt))) as AMP_All_Flag
 
         /* ====== Audit Fields ====== */
         ,current_Timestamp(0) as Insert_TS

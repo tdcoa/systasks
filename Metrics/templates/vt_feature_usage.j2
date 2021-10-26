@@ -61,6 +61,8 @@
       ) primary index(LogDate, UserName, FeatureName)
         on commit preserve rows
 
+# let's always generate this, as it may be expected as part of this template
+{% include "vt_decode_feature.j2" %}
 
 
 {% if not td15 %}
@@ -71,7 +73,6 @@
   ## if not on 15, then do all work
 
 {% include "vt_datedriver.j2" %}
-{% include "vt_decode_feature.j2" %}
 {% include "vt_decode_user.j2" %}
 
 - name: Create vt_feature_usage_prework by date, user, and feature

@@ -74,7 +74,7 @@
             ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY FileWriteKB                            )(BIGINT) as  _IOKB_Write_{{ pctl }}pctl
             ,percentile_disc( {{ pctl /1000.000 }} ) WITHIN GROUP (ORDER BY FileAcqReadKB+FilePreReadKB+FileWriteKB)(BIGINT) as        _IOKB_{{ pctl }}pctl
             {% endfor %}
-            from PDCRInfo.ResUsageSpma_Hst
+            from {{ dbc.spma }} -- PDCRInfo.ResUsageSpma_Hst
             where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
         ) pctl
 
