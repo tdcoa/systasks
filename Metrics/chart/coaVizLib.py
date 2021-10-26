@@ -5,6 +5,8 @@ import logging, sys, pandas as pd, time, json, numpy
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
+
+
 def getJsonFilePath( filepathstring:str ) -> Path:
     return Path(Path(filepathstring).parent / 'coaVizConfig.json')
 
@@ -90,6 +92,19 @@ def Postwork(log, arg, data, plt):
     return plt
 
 
+def make_empty_chart(filepath:Path, msg:str = ''):
+    """create an empty graph, with optional words written. Mostly aimed at creating a file during errors."""
+    import matplotlib.pyplot as plt
+    fig= plt.figure()
+    fig.set_figheight(12)
+    fig.set_figwidth(16)
+    ax = fig.add_subplot()
+    ax.text(0.01, 0.1, msg, fontfamily='Courier')
+    fig.savefig(filepath)
+
+
+
+
 @dataclass
 class coaLog():
     """Class for setting up logging as needed for coaVizLib."""
@@ -133,6 +148,7 @@ class coaLog():
         hlvl = self.__getloglevel__(loglevel)
         ts = self.timestamp
         hlogfilepath = str(logfilepath).replace(r'{time}', ts).replace(r'{ts}', ts).replace(r'{timestamp}', ts)
+        self.logfilename = hlogfilepath
 
         if hlogfilepath == '':
             handler = logging.StreamHandler()
@@ -511,11 +527,14 @@ class coaData():
         self.log.info('loading data into dataframes from file: %s' %csvfilepath)
         df = pd.read_csv(csvfilepath)
         self.log.info('data file loaded to "dfmain" with %i columns and %i rows' %(len(df.columns),len(df)))
+        if len(df)==0:
+            msg = '\n%s\nDATAFRAME HAD NO ROWS... this is likely to end poorly.\n%s' %('-'*50, '_'*50)
+            self.log.error(msg)
 
         # assign default column positions, if missing
         if ycolumns == []: ycolumns = list(set([x for x in range(len(df.columns))]) - set(xcolumns)) # default: all columns not in xcolumns
         if xcolumns == []: xcolumns = [0]  # defaults to first column
-        
+
         # pivot, if requested
         if self.args.dfpivot:
             df = self.autopivot(df, xcolumns, ycolumns)

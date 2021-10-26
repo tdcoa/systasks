@@ -1,10 +1,13 @@
 import coaVizLib, sys, os
 from pathlib import Path
 
+version = 1.1
+
 try:
     # setup visualization environment:
     coaLog = coaVizLib.coaLog('i')
-    coaLog.addhandler('program debug log', 'd', Path(Path(os.getcwd()) / '{time} - Chart_Detail.log'))
+    logfilename = '{time}-v%s - heatmap_xLabel_yLabel_Values.log' %str(version).replace('.','_')
+    coaLog.addhandler('program debug log', 'd', Path(Path(os.getcwd()) / logfilename ))
     log = coaLog.log
     arg = coaVizLib.coaArg(log, sys.argv[1:], coaVizLib.getJsonFilePath(sys.argv[0]))
     data = coaVizLib.coaData(log, arg)
@@ -21,7 +24,7 @@ try:
     coldata = data.dfy.iloc[:,1].name
     dfh = data.dfmain.groupby(by=colaxis)[coldata].sum().unstack().fillna(0)
 
-    # set min/max values for color, if not defined already 
+    # set min/max values for color, if not defined already
     if str(arg.heatmapmin).lower().strip() == '<<min of data>>':
         log.debug('heatmapmin not set, so defaulting to the minimum value found across all data')
         arg.heatmapmin = int(dfh.min().min())
@@ -45,8 +48,15 @@ try:
     arg.legendxy = (0,0)
     ### ========== END CHART-SPECIFIC CODE ========== ###
 
-
     plt = coaVizLib.Postwork(log, arg, data, plt)
 
-except Exception as ex:
-    log.exception('ERROR OCCURED DURING CHART GENERATION, SKIPPING...')
+except Exception as e:
+    msg = 'ERROR OCCURED DURING CHART GENERATION of file: %s\n%s' %(str(arg.pngfilepath), str(e))
+    if len(data.dfmain)==0:
+        msg = msg + '\n\nNOTE: DataFrame ("%s") contained no data, maybe you want to check that out.\n\n' %str(arg.csvfilepath)
+    msg = msg + 'Final argument list, for your reading pleasure\n  (for more detail, see log file: "%s"):\n\n%s' %(coaLog.logfilename, arg.dictdisplay(arg.__dict__))
+
+    log.error(msg)
+    coaVizLib.make_empty_chart(str(arg.pngfilepath), msg)
+finally:
+    sys.exit(0)
