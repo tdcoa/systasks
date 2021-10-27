@@ -59,7 +59,7 @@
             AND LogDate2 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
             and LogDate2 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
             {% endif %}
-          GROUP BY 1,2,3,4
+          GROUP BY 1,2,3,4 {{ ',5' if not pdcr or td15 else '' }}
           ),
       io as (
           SELECT thedate as LogDate
