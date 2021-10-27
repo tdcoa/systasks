@@ -30,6 +30,7 @@
           SELECT
             {% if not pdcr or td15 %}
             cast(o.CollectTimeStamp as date) as LogDate1
+           ,cast(l.CollectTimeStamp as date) as LogDate2
             {% else %}
             l.LogDate as LogDate1
             {% endif %}
@@ -39,7 +40,7 @@
           , sum(FreqOfUse) AS Use_Cnt
           , cast(Use_Cnt as float) / sum(Use_Cnt) over(partition by o.QueryID) as Allocation_Pct
           , Allocation_Pct * sum(l.AMPCPUTime + l.ParserCPUTime) AS Allocated_CPU
-          , Allocation_Pct * sum(l.TotalIOCount) AS Allocated_IOCnt
+          , Allocation_Pct * sum(case when TotalIOCount >(10**38) then 0 else TotalIOCount end) AS Allocated_IOCnt
           , max(l.TotalIOCount) as UnAllocated_IOCnt
           FROM {{ dbc.obj }}  o
           JOIN {{ dbc.log }}  l
@@ -53,6 +54,11 @@
             AND ObjectTableName IS NOT NULL
             AND ObjectColumnName IS NULL
             AND LogDate1 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+            and LogDate1 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
+            {% if not pdcr or td15 %}
+            AND LogDate2 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+            and LogDate2 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
+            {% endif %}
           GROUP BY 1,2,3,4
           ),
       io as (
@@ -73,16 +79,16 @@
       Select
          dbql.LogDate1  as LogDate
         {{ ',dbql.QueryID' if 'QueryID' in run.included }}
-        ,dbql.DatabaseName
-        ,dbql.TableName
-        ,sum(dbql.Use_Cnt) as Use_Cnt
-        ,count(*) as Request_Cnt
-        ,max(cds.Table_CurrentPerm_GB) as Table_CurrentPerm_GB
-        ,avg(dbql.Allocation_Pct) as Avg_Allocation_Pct
-        ,sum(dbql.Allocated_CPU) as Allocated_CPU
-        ,sum(dbql.Allocated_IOCnt) as Allocated_IOCnt
-        ,sum(dbql.Allocation_Pct * (dbql.UnAllocated_IOCnt * io.AvgGB_perIO)) as Allocated_IOGB
-        ,sum(dbql.Allocation_Pct * cds.Table_CurrentPerm_GB) as Allocated_CDS_GB
+        ,cast(dbql.DatabaseName as varchar(128)) as DatabaseName
+        ,cast(dbql.TableName    as varchar(128)) as TableName
+        ,cast(sum(dbql.Use_Cnt) as integer) as Use_Cnt
+        ,cast(count(*)          as integer) as Request_Cnt
+        ,cast(max(cds.Table_CurrentPerm_GB) as decimal(18,2)) as Table_CurrentPerm_GB
+        ,cast(avg(dbql.Allocation_Pct)      as decimal(18,4)) as Avg_Allocation_Pct
+        ,cast(sum(dbql.Allocated_CPU)       as decimal(18,2)) as Allocated_CPU
+        ,cast(sum(dbql.Allocated_IOCnt)     as decimal(18,2)) as Allocated_IOCnt
+        ,cast(sum(dbql.Allocation_Pct * (dbql.UnAllocated_IOCnt * io.AvgGB_perIO)) as decimal(18,4)) as Allocated_IOGB
+        ,cast(sum(dbql.Allocation_Pct * cds.Table_CurrentPerm_GB) as decimal(18,4)) as Allocated_CDS_GB
       from dbql
       join io
         on dbql.LogDate1 = io.LogDate
