@@ -368,10 +368,11 @@ tasks:
     file: bq--databases_most_dml_tables.csv
     sql: |
       Select DatabaseName
-      ,cast(cast(avg(cast(Request_Count as BigInt)) as BigInt format'ZZZ,ZZZ,ZZZ,ZZZ,ZZ9') as varchar(128)) as "Avg DML Request Count per Table"
+      ,cast(cast(dml_request_per_table_avg as BigInt format'ZZZ,ZZZ,ZZZ,ZZZ,ZZ9') as varchar(128)) as "Avg DML Request Count per Table"
+      ,avg(cast(Request_Count as BigInt)) dml_request_per_table_avg
       from vt_statement_count_by_table
       group by 1
-      order by 2 desc
+      order by dml_request_per_table_avg desc
 
 - name: DROP volatile table to save spool - vt_statement_count_by_table
   connect: source
