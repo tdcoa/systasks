@@ -646,7 +646,7 @@ tasks:
           from vt_disk_space group by 1
           )a
       group by 1,DBOrder
-      order by DBOrder
+      order by DBOrder desc
 
 
 - name: Export disk space summary - for space charting
@@ -667,7 +667,7 @@ tasks:
           group by 1
           )a
       group by 1,DBOrder
-      order by DBOrder
+      order by DBOrder desc
 
 - name: "Chart Diskspace by Database: Used Space"
   chart:
@@ -681,7 +681,7 @@ tasks:
       - "labelsize:6"
       - "xcolumns:[1]"
       - "ycolumns:[0]"
-      - "legendxy:(0,0)"  # disable
+      - "legendxy:(0,0)"
       - "xlabel:"
       - "ylabel:"
       - "color:[#0742EE]"
@@ -704,7 +704,7 @@ tasks:
           group by 1
           )a
       group by 1,DBOrder
-      order by DBOrder
+      order by DBOrder desc
 
 - name: "Chart Diskspace by Database: Fill%"
   chart:
@@ -718,7 +718,7 @@ tasks:
       - "labelsize:6"
       - "xcolumns:[3]"
       - "ycolumns:[0]"
-      - "legendxy:(0,0)"  # disable
+      - "legendxy:(0,0)"
       - "xlabel:"
       - "ylabel:"
       - "color:[#350A7C]"
