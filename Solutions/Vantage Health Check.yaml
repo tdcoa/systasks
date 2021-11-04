@@ -646,7 +646,7 @@ tasks:
           from vt_disk_space group by 1
           )a
       group by 1,DBOrder
-      order by DBOrder desc
+      order by DBOrder
 
 
 - name: Export disk space summary - for space charting
