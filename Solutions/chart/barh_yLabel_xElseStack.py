@@ -6,10 +6,17 @@ version = 1.1
 try:
     # setup visualization environment:
     coaLog = coaVizLib.coaLog('i')
-    logfilename = '{time}-v%s - bar_xLabel_yElseStack.log' %str(version).replace('.','_')
+    logfilename = '{time}-v%s - barh_yLabel_xElseStack.log' %str(version).replace('.','_')
     coaLog.addhandler('program debug log', 'd', Path(Path(os.getcwd()) / logfilename ))
     log = coaLog.log
     arg = coaVizLib.coaArg(log, sys.argv[1:], coaVizLib.getJsonFilePath(sys.argv[0]))
+
+    # custom... flip x/y axis before going into data & prework
+    xcols = list(arg.xcolumns)
+    arg.xcolumns = list(arg.ycolumns)
+    arg.ycolumns = list(xcols)
+    ###
+
     data = coaVizLib.coaData(log, arg)
     plt = coaVizLib.Prework(log, arg, data)
 
@@ -19,26 +26,31 @@ try:
     # iterate thru all columns in dfY and iterate / generate bar data:
     log.info('ready to generate stacked horizontal bar chart')
     bottom = [0 for z in data.dfy.iloc[:,0]]
-    log.info('    bottom = %s' %str(bottom) )
+    log.info('    left = %s' %str(bottom) )
     log.info('note: if you see an error that says something like: \n   %s\n   it means your csv is returning a TEXT type, not Number.  Maybe you have non-numerics mixed in, like commas or percent signs...?' %"--> unsupported operand type(s) for +: 'int' and 'str' <--")
 
     for itr, col in enumerate(data.dfy.columns):
         log.info('    building stack = %s' %str(data.dfy.loc[:,col].name) )
         ydata = list(data.dfy.loc[:,col])
-        plt.bar(data.dfx.iloc[:,0],
+        plt.barh(data.dfx.iloc[:,0],
                  ydata,
                  label = data.dfy.loc[:,col].name,
                  color = data.colormap['dfy'][col],
                  zorder = int(1/(itr+1)*100),
                  linestyle = '-',
                  linewidth = 2,
-                 bottom = bottom)
-        log.info('    stack built!  Re-calculating new bottom positions...' )
+                 left = bottom)
+        log.info('    stack built!  Re-calculating new left positions...' )
         bottom = [a + b for a,b in zip(bottom, ydata)]
-        log.info('    new bottom = %s' %str(bottom) )
+        log.info('    new left = %s' %str(bottom) )
+
+    log.info('    done stacking!' )
+    xlabel = data.dfx.iloc[:,0].name if arg.xlabel == '<<column name>>' else arg.xlabel
+    log.info('    xlabel = %s' %xlabel )
+    plt.xlabel(arg.ylabel, fontsize = arg.labelsize, color='grey')
+    plt.ylabel(xlabel, loc = "top", fontsize = arg.labelsize, color='grey')
 
     ### ========== END CHART-SPECIFIC CODE ========== ###
-
 
     plt = coaVizLib.Postwork(log, arg, data, plt)
 

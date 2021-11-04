@@ -5,6 +5,8 @@ import logging, sys, pandas as pd, time, json, numpy
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
+
+
 def getJsonFilePath( filepathstring:str ) -> Path:
     return Path(Path(filepathstring).parent / 'coaVizConfig.json')
 
@@ -45,6 +47,7 @@ def Postwork(log, arg, data, plt):
     log.info('Performing POSTWORK for coaViz processes: %s' %arg.title)
 
     # turn off borders, set xaxis items to grey
+    log.debug('turning off spines (box around graph)')
     ax = plt.gca()
     ax.spines['right'].set_visible(arg.border)
     ax.spines['left'].set_visible( arg.border)
@@ -55,6 +58,7 @@ def Postwork(log, arg, data, plt):
     # toggle LOGSCALE
     ax.set_ylim(ymin = arg.ymin)
     if arg.logscale:
+        log.debug('setting y axis scale to LOG')
         ax.set_yscale('log')
         if arg.ymin == 0: ax.set_ylim(ymin = 0.1 if arg.ymin==0 else arg.ymin )
 
@@ -62,16 +66,43 @@ def Postwork(log, arg, data, plt):
     x = 0 if arg.xlabelflex==0 else int(len(data.dfx) / arg.width / (8/arg.xticksize) / (4 * arg.xlabelflex))
     i = 0
     if x > 1:
+        log.debug('hiding every %i of the xlabels, to prevent over-crowding' %x)
         for label in plt.gca().xaxis.get_ticklabels():
             label.set_visible(i%x==0)
             i+=1
 
-    # ax.yaxis.set_major_formatter(formatter) # format y axis numeric formats
+    # apply any x/y label slice logic:
+    log.debug('xlabelslicer: %s' %str(arg.xlabelslicer))
+    if arg.xlabelslicer != [0,0]:
+        s1 = None if arg.xlabelslicer[0] == 0 else int(arg.xlabelslicer[0])
+        s2 = None if (len(arg.xlabelslicer)<2 or arg.xlabelslicer[1] == 0) else int(arg.xlabelslicer[1])
+        s3 = None if (len(arg.xlabelslicer)<3 or arg.xlabelslicer[2] == 0) else int(arg.xlabelslicer[2])
+        log.debug('slicing xlabel by positions: %s, %s' %(str(s1), str(s2)))
+        new_labels = [i.get_text().strip()[s1:s2:s3] for i in plt.gca().xaxis.get_ticklabels()]
+        plt.gca().xaxis.set_ticklabels(new_labels)
+
+    # set legend if called for
     if arg.legendxy != (0,0):
+        log.debug('drawing legend')
         plt.legend(loc = 'center', bbox_to_anchor = arg.legendxy, ncol = arg.legendcolumns)
+
+    log.info('saving file: %s' %arg.pngfilepath)
     plt.savefig(arg.pngfilepath, transparent=True,bbox_inches='tight')
 
     return plt
+
+
+def make_empty_chart(filepath:Path, msg:str = ''):
+    """create an empty graph, with optional words written. Mostly aimed at creating a file during errors."""
+    import matplotlib.pyplot as plt
+    fig= plt.figure()
+    fig.set_figheight(12)
+    fig.set_figwidth(16)
+    ax = fig.add_subplot()
+    ax.text(0.01, 0.1, msg, fontfamily='Courier')
+    fig.savefig(filepath)
+
+
 
 
 @dataclass
@@ -117,6 +148,7 @@ class coaLog():
         hlvl = self.__getloglevel__(loglevel)
         ts = self.timestamp
         hlogfilepath = str(logfilepath).replace(r'{time}', ts).replace(r'{ts}', ts).replace(r'{timestamp}', ts)
+        self.logfilename = hlogfilepath
 
         if hlogfilepath == '':
             handler = logging.StreamHandler()
@@ -237,7 +269,6 @@ class coaArg():
         s2l = self.__str2list__
         try:
             if finaltype == 'str':        return str(val)
-            #if finaltype == 'int':        return int(val)
             if finaltype == 'int':        return (None if val==None else int(val))
             if finaltype == 'bool':       return (False if str(val).strip().lower()[:1] in ['f','0'] else True)
             if finaltype == 'float':      return float(val)
@@ -496,9 +527,13 @@ class coaData():
         self.log.info('loading data into dataframes from file: %s' %csvfilepath)
         df = pd.read_csv(csvfilepath)
         self.log.info('data file loaded to "dfmain" with %i columns and %i rows' %(len(df.columns),len(df)))
+        if len(df)==0:
+            msg = '\n%s\nDATAFRAME HAD NO ROWS... this is likely to end poorly.\n%s' %('-'*50, '_'*50)
+            self.log.error(msg)
 
         # assign default column positions, if missing
         if ycolumns == []: ycolumns = list(set([x for x in range(len(df.columns))]) - set(xcolumns)) # default: all columns not in xcolumns
+        if xcolumns == []: xcolumns = [0]  # defaults to first column
 
         # pivot, if requested
         if self.args.dfpivot:
