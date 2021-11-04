@@ -25,5 +25,9 @@ tasklists:
     tags: [demo]
 
   Vantage Health Check:
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_Vantage_Health_Check.aspx
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_VantageHealthCheck.aspx
+    tags: [demo]
+
+  Vantage Health Check - On A Page:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_VantageHealthCheck.aspx
     tags: [demo]

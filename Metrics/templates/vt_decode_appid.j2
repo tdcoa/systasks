@@ -19,7 +19,7 @@
       ,Priority           integer
       ,Data_Source        varchar(32)  character set unicode
       )
-      unique primary index (Priority)
+      primary index (Priority)
       on commit preserve rows
 
 
@@ -29,7 +29,7 @@
   execute:
     sql: |
       insert into vt_decode_appid_load
-      Select
+      Select distinct
        case when character_length(AppID) - character_length(OReplace(AppID, '%')) = 0
             then 'Equal' else 'Like' end as Pattern_Type
       ,AppID as AppID_Pattern
@@ -66,12 +66,15 @@
       app  as (
               select a.*, max(Priority_Base)over() as Priority_Max
               from(
-                  select Pattern_Type, AppID_Pattern
-                  ,Application, Company, Usage
-                  ,row_number()over(order by Priority,Pattern_Type,AppID_Pattern,Application
-                                            ,Company,Usage,Data_Source) as Priority_Base
-                  ,Data_Source
-                  from vt_decode_appid_load) a
+                  select distinct Pattern_Type, AppID_Pattern, Application, Company, Usage, Priority_Base, Data_Source
+                  from (
+                    select Pattern_Type, AppID_Pattern
+                    ,Application, Company, Usage
+                    ,row_number()over(order by Priority,Pattern_Type,AppID_Pattern,Application
+                                              ,Company,Usage,Data_Source) as Priority_Base
+                    ,Data_Source
+                    from vt_decode_appid_load) a1
+                  ) a
               )
       Select dbql.appID
       ,case when character_length(regexp_substr(trim(dbql.appID), '^[ -~]+$', 1,1, 'i')) > 0

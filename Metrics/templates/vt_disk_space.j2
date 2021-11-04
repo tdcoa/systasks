@@ -46,9 +46,9 @@
              Select
               {{ 'DATE-1 as' if not pdcr }} LogDate
              ,DatabaseName
-             ,CURRENTPERM/1E9 as Database_CurrentPerm_GB
-             ,PEAKPERM/1E9 as Database_PeakPerm_GB
-             ,MAXPERM/1E9 as Database_MaxPerm_GB
+             ,cast(sum(CURRENTPERM) /1E9 as decimal(18,2)) as Database_CurrentPerm_GB
+             ,cast(sum(PEAKPERM)    /1E9 as decimal(18,2)) as Database_PeakPerm_GB
+             ,cast(sum(MAXPERM)     /1E9 as decimal(18,2)) as Database_MaxPerm_GB
              ,cast(sum(Database_MaxPerm_GB)over(partition by LogDate) as decimal(32,6)) as System_MaxPerm_GB
              ,cast(sum(Database_CurrentPerm_GB)over(partition by LogDate) as decimal(32,6)) as System_CurrentPerm_GB
              {% if pdcr %}
@@ -57,6 +57,7 @@
              {% else %}
              from dbc.DiskSpace
              {% endif %}
+             group by 1,2
            ) as d
        on t.LogDate = d.LogDate
       and t.DatabaseName = d.DatabaseName
