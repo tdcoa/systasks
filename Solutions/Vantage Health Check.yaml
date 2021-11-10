@@ -1199,7 +1199,7 @@ tasks:
     params:
       - csvfilepath:vhc--system_IO_by_dayofweek_heatmap.csv
       - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_maxobserved.png
-      - title:System IO Busy (Max Observed {{ io_percentile /1000 }}pctl) - {{ siteid }}
+      - title:System IO Busy - {{ siteid }}
       - height:6
       - width:3
       - annotate:{{ annotate_chart | default('True') }}
@@ -1233,7 +1233,7 @@ tasks:
     params:
       - csvfilepath:vhc--system_IO_by_day_heatmap.csv
       - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved.png
-      - title:System IO Busy (Max Observed {{ io_percentile /1000 }}pctl) - {{ siteid }}
+      - title:System IO Busy - {{ siteid }}
       - height:6
       - width:12
       - annotate:{{ annotate_chart | default('True') }}
