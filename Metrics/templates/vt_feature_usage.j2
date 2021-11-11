@@ -197,7 +197,7 @@
                   ,avg(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then
                     AmpCpuTime/nullifzero(NumOfActiveAmps*MaxAmpCpuTime) else null end) as avg_allmapamp_pe
                   ,sum(numsteps) as sum_numsteps
-                  ,sum(spoolusage) as sum_spoolusage
+                  ,sum(cast(case when spoolusage  >(10**38) then 0 else spoolusage end as decimal(38,0)) ) as sum_spoolusage
                   ,sum(NumResultRows) as sum_numresultrows
 
                   From {{ dbc.log }} as dbql
@@ -242,7 +242,7 @@
           ,count(cast(dbql.cnt_allmapamp_query     as bigint))        as cnt_allmapamp_query
           ,avg(  cast(dbql.avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
           ,sum(  cast(dbql.sum_numsteps            as bigint))        as sum_numsteps
-          ,sum(  cast(dbql.sum_spoolusage          as bigint))        as sum_spoolusage
+          ,sum(  cast(dbql.sum_spoolusage          as decimal(38,0))) as sum_spoolusage
           ,sum(  cast(dbql.sum_numresultrows       as bigint))        as sum_numresultrows
         from dbc.qrylogfeaturelistv feat
         join dbql
