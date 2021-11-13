@@ -71,6 +71,7 @@ tasks:
       - "height:4"
       - "width:21"
       - "xrotate:90"
-      - "legendx:2"
+      - "legendy:1.1"
+      - "legendx:0.5"
       - "barlogscale:False"
 {% endfor %}
