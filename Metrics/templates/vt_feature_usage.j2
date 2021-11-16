@@ -26,31 +26,31 @@
       ,User_Experience_Level_Name varchar(128) compress(null,'Unknown')
       ,Initiator_Role_Category    varchar(128) compress(null,'Unknown')
       ,Objective_Name             varchar(128) compress(null,'Unknown')
-      ,Request_Total_Cnt          integer
-      ,Statement_Total_Cnt        integer
-      ,Request_Error_Cnt          integer
-      ,Statement_Error_Cnt        integer
-      ,Request_Abort_Cnt          integer
-      ,Statement_Abort_Cnt        integer
-      ,distinct_cnt_username      integer
-      ,sum_parsercputime          decimal(18,2)
-      ,sum_ampcputime             decimal(18,2)
-      ,sum_totaliocount           decimal(18,2)
-      ,sum_reqiokb                decimal(18,2)
-      ,sum_reqphysio              decimal(18,2)
-      ,sum_reqphysiokb            decimal(18,2)
+      ,Request_Total_Cnt          bigint
+      ,Statement_Total_Cnt        bigint
+      ,Request_Error_Cnt          bigint
+      ,Statement_Error_Cnt        bigint
+      ,Request_Abort_Cnt          bigint
+      ,Statement_Abort_Cnt        bigint
+      ,distinct_cnt_username      bigint
+      ,sum_parsercputime          decimal(38,2)
+      ,sum_ampcputime             decimal(38,2)
+      ,sum_totaliocount           decimal(38,2)
+      ,sum_reqiokb                decimal(38,2)
+      ,sum_reqphysio              decimal(38,2)
+      ,sum_reqphysiokb            decimal(38,2)
       ,sum_usediota               decimal(38,2)
-      ,sum_impactcpu              decimal(18,2)
-      ,sum_impactio               decimal(18,2)
-      ,sum_lockdelay              decimal(18,2)
-      ,sum_delaytime              decimal(18,2)
-      ,sum_minrespholdtime        decimal(18,2)
-      ,sum_totalfirstresptime     decimal(18,2)
-      ,cnt_allmapamp_query        decimal(18,2)
-      ,avg_allmapamp_pe           decimal(18,2)
-      ,sum_numsteps               integer
-      ,sum_spoolusage             bigint
-      ,sum_numresultrows          bigint
+      ,sum_impactcpu              decimal(38,2)
+      ,sum_impactio               decimal(38,2)
+      ,sum_lockdelay              decimal(38,2)
+      ,sum_delaytime              decimal(38,2)
+      ,sum_minrespholdtime        decimal(38,2)
+      ,sum_totalfirstresptime     decimal(38,2)
+      ,cnt_allmapamp_query        decimal(38,2)
+      ,avg_allmapamp_pe           decimal(38,2)
+      ,sum_numsteps               BigInt
+      ,sum_spoolusage             decimal(38,0)
+      ,sum_numresultrows          decimal(38,0)
       ,Feature_Weight             integer compress(null, 0)
       ,Max_Threshold_LOW          integer compress(null, 10)
       ,Max_Threshold_MED          integer compress(null, 1000)
@@ -96,24 +96,24 @@
         ,Request_Abort_Cnt      BIGINT
         ,Statement_Abort_Cnt    BIGINT
         ,distinct_cnt_username  BIGINT
-        ,sum_parsercputime      DECIMAL(38,4)
-        ,sum_ampcputime         DECIMAL(38,4)
-        ,sum_totaliocount       BIGINT
-        ,sum_reqiokb            BIGINT
-        ,sum_reqphysio          BIGINT
-        ,sum_reqphysiokb        BIGINT
-        ,sum_usediota           BIGINT
-        ,sum_impactcpu          DECIMAL(38,4)
-        ,sum_impactio           BIGINT
-        ,sum_lockdelay          DECIMAL(38,4)
-        ,sum_delaytime          DECIMAL(38,4)
-        ,sum_minrespholdtime    DECIMAL(38,4)
-        ,sum_totalfirstresptime DECIMAL(38,4)
-        ,cnt_allmapamp_query    INTEGER
-        ,avg_allmapamp_pe       FLOAT
+        ,sum_parsercputime      DECIMAL(38,2)
+        ,sum_ampcputime         DECIMAL(38,2)
+        ,sum_totaliocount       DECIMAL(38,2)
+        ,sum_reqiokb            DECIMAL(38,2)
+        ,sum_reqphysio          DECIMAL(38,2)
+        ,sum_reqphysiokb        DECIMAL(38,2)
+        ,sum_usediota           DECIMAL(38,2)
+        ,sum_impactcpu          DECIMAL(38,2)
+        ,sum_impactio           DECIMAL(38,2)
+        ,sum_lockdelay          DECIMAL(38,2)
+        ,sum_delaytime          DECIMAL(38,2)
+        ,sum_minrespholdtime    DECIMAL(38,2)
+        ,sum_totalfirstresptime DECIMAL(38,2)
+        ,cnt_allmapamp_query    decimal(38,2)
+        ,avg_allmapamp_pe       decimal(38,2)
         ,sum_numsteps           BIGINT
-        ,sum_spoolusage         BIGINT
-        ,sum_numresultrows      BIGINT
+        ,sum_spoolusage         decimal(38,0)
+        ,sum_numresultrows      decimal(38,0)
         ) PRIMARY INDEX ( LogDate ,Feature_Name ,UserName )
           ON COMMIT PRESERVE ROWS
 
@@ -174,31 +174,31 @@
                   ,zeroifnull(sum(cast(case when dbql.ErrorCode not in(0,3158)  then dbql.Statements else 0 end as bigint))) as Statement_Error_Cnt
                   ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'           then 1               else 0 end as bigint))) as   Request_Abort_Cnt
                   ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'           then dbql.Statements else 0 end as bigint))) as Statement_Abort_Cnt
-                  ,count(distinct username) as distinct_cnt_username
+                  ,cast(count(distinct username) as bigint) as distinct_cnt_username
                   --consumption metrics
-                  ,sum(ParserCPUTime) as sum_parsercputime
-                  ,sum(ampcputime)    as sum_ampcputime
-                  ,sum(case when TotalIOCount >(10**38) then 0 else TotalIOCount end) as sum_totaliocount
-                  ,sum(case when ReqIOKB      >(10**38) then 0 else ReqIOKB      end) as sum_reqiokb
-                  ,sum(case when ReqPhysIO    >(10**38) then 0 else ReqPhysIO    end) as sum_reqphysio
-                  ,sum(case when ReqPhysIOKB  >(10**38) then 0 else ReqPhysIOKB  end) as sum_reqphysiokb
-                  ,sum(case when UsedIota     >(10**38) then 0 else UsedIota     end) as sum_usediota
+                  ,sum(cast(ParserCPUTime as decimal(38,2))) as sum_parsercputime
+                  ,sum(cast(ampcputime    as decimal(38,2))) as sum_ampcputime
+                  ,sum(cast(case when TotalIOCount >(10**38) then 0 else TotalIOCount end as decimal(38,2))) as sum_totaliocount
+                  ,sum(cast(case when ReqIOKB      >(10**38) then 0 else ReqIOKB      end as decimal(38,2))) as sum_reqiokb
+                  ,sum(cast(case when ReqPhysIO    >(10**38) then 0 else ReqPhysIO    end as decimal(38,2))) as sum_reqphysio
+                  ,sum(cast(case when ReqPhysIOKB  >(10**38) then 0 else ReqPhysIOKB  end as decimal(38,2))) as sum_reqphysiokb
+                  ,sum(cast(case when UsedIota     >(10**38) then 0 else UsedIota     end as decimal(38,2))) as sum_usediota
                   --impact
-                  ,sum(case when maxampcputime = 0 then ampcputime else maxampcputime * numofactiveamps end) as sum_impactcpu
-                  ,sum(case when maxampio = 0 then totaliocount else maxampio * numofactiveamps end)         as sum_impactio
+                  ,sum(cast(case when maxampcputime = 0 then ampcputime else maxampcputime * numofactiveamps end as decimal(38,2))) as sum_impactcpu
+                  ,sum(cast(case when maxampio = 0 then totaliocount else maxampio * numofactiveamps end         as decimal(38,2))) as sum_impactio
                   --duration metrics
-                  ,(sum(LockDelay*100))      as sum_lockdelay
-                  ,(sum(DelayTime))          as sum_delaytime
-                  ,(sum(MinRespHoldTime))    as sum_minrespholdtime
-                  ,(sum(TotalFirstRespTime)) as sum_totalfirstresptime --delay+exec+minresp
+                  ,sum(cast(LockDelay*100      as decimal(38,2))) as sum_lockdelay
+                  ,sum(cast(DelayTime          as decimal(38,2))) as sum_delaytime
+                  ,sum(cast(MinRespHoldTime    as decimal(38,2))) as sum_minrespholdtime
+                  ,sum(cast(TotalFirstRespTime as decimal(38,2))) as sum_totalfirstresptime --delay+exec+minresp
                   --complexity metrics
                   -- ,sum(case when abortflag = 'T' then 1 else 0 end) as cnt_abort_query  --<<--- replaced by Request_Abort_Cnt, above
-                  ,sum(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then 1 else 0 end) cnt_allmapamp_query
-                  ,avg(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then
-                    AmpCpuTime/nullifzero(NumOfActiveAmps*MaxAmpCpuTime) else null end) as avg_allmapamp_pe
-                  ,sum(numsteps) as sum_numsteps
+                  ,sum(cast(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then 1 else 0 end as decimal(38,2))) cnt_allmapamp_query
+                  ,avg(cast(case when NumOfActiveAMPs = MaxNumMapAMPs and MaxNumMapAMPs > 0 then
+                    AmpCpuTime/nullifzero(NumOfActiveAmps*MaxAmpCpuTime) else null end as decimal(38,2))) as avg_allmapamp_pe
+                  ,sum(cast(numsteps as bigint)) as sum_numsteps
                   ,sum(cast(case when spoolusage  >(10**38) then 0 else spoolusage end as decimal(38,0)) ) as sum_spoolusage
-                  ,sum(NumResultRows) as sum_numresultrows
+                  ,sum(cast(NumResultRows as decimal(38,0))) as sum_numresultrows
 
                   From {{ dbc.log }} as dbql
                   where LogDate in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
@@ -226,24 +226,24 @@
           ,sum(cast(dbql.Request_Abort_Cnt         as bigint))        as Request_Abort_Cnt
           ,sum(cast(dbql.Statement_Abort_Cnt       as bigint))        as Statement_Abort_Cnt
           ,sum(cast(dbql.distinct_cnt_username     as bigint))        as distinct_cnt_username
-          ,sum(  cast(dbql.sum_parsercputime       as decimal(38,4))) as sum_parsercputime
-          ,sum(  cast(dbql.sum_ampcputime          as decimal(38,4))) as sum_ampcputime
-          ,sum(  cast(dbql.sum_totaliocount        as bigint))        as sum_totaliocount
-          ,sum(  cast(dbql.sum_reqiokb             as bigint))        as sum_reqiokb
-          ,sum(  cast(dbql.sum_reqphysio           as bigint))        as sum_reqphysio
-          ,sum(  cast(dbql.sum_reqphysiokb         as bigint))        as sum_reqphysiokb
-          ,sum(  cast(dbql.sum_usediota            as bigint))        as sum_usediota
-          ,sum(  cast(dbql.sum_impactcpu           as decimal(38,4))) as sum_impactcpu
-          ,sum(  cast(dbql.sum_impactio            as bigint))        as sum_impactio
-          ,sum(  cast(dbql.sum_lockdelay           as decimal(38,4))) as sum_lockdelay
-          ,sum(  cast(dbql.sum_delaytime           as decimal(38,4))) as sum_delaytime
-          ,sum(  cast(dbql.sum_minrespholdtime     as decimal(38,4))) as sum_minrespholdtime
-          ,sum(  cast(dbql.sum_totalfirstresptime  as decimal(38,4))) as sum_totalfirstresptime
-          ,count(cast(dbql.cnt_allmapamp_query     as bigint))        as cnt_allmapamp_query
-          ,avg(  cast(dbql.avg_allmapamp_pe        as bigint))        as avg_allmapamp_pe
+          ,sum(  cast(dbql.sum_parsercputime       as decimal(38,2))) as sum_parsercputime
+          ,sum(  cast(dbql.sum_ampcputime          as decimal(38,2))) as sum_ampcputime
+          ,sum(  cast(dbql.sum_totaliocount        as decimal(38,2))) as sum_totaliocount
+          ,sum(  cast(dbql.sum_reqiokb             as decimal(38,2))) as sum_reqiokb
+          ,sum(  cast(dbql.sum_reqphysio           as decimal(38,2))) as sum_reqphysio
+          ,sum(  cast(dbql.sum_reqphysiokb         as decimal(38,2))) as sum_reqphysiokb
+          ,sum(  cast(dbql.sum_usediota            as decimal(38,2))) as sum_usediota
+          ,sum(  cast(dbql.sum_impactcpu           as decimal(38,2))) as sum_impactcpu
+          ,sum(  cast(dbql.sum_impactio            as decimal(38,2))) as sum_impactio
+          ,sum(  cast(dbql.sum_lockdelay           as decimal(38,2))) as sum_lockdelay
+          ,sum(  cast(dbql.sum_delaytime           as decimal(38,2))) as sum_delaytime
+          ,sum(  cast(dbql.sum_minrespholdtime     as decimal(38,2))) as sum_minrespholdtime
+          ,sum(  cast(dbql.sum_totalfirstresptime  as decimal(38,2))) as sum_totalfirstresptime
+          ,count(cast(dbql.cnt_allmapamp_query     as decimal(38,2))) as cnt_allmapamp_query
+          ,avg(  cast(dbql.avg_allmapamp_pe        as decimal(38,2))) as avg_allmapamp_pe
           ,sum(  cast(dbql.sum_numsteps            as bigint))        as sum_numsteps
           ,sum(  cast(dbql.sum_spoolusage          as decimal(38,0))) as sum_spoolusage
-          ,sum(  cast(dbql.sum_numresultrows       as bigint))        as sum_numresultrows
+          ,sum(  cast(dbql.sum_numresultrows       as decimal(38,0))) as sum_numresultrows
         from dbc.qrylogfeaturelistv feat
         join dbql
           on bytes(dbql.featureusage) = 256
