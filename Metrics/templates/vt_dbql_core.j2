@@ -409,7 +409,7 @@
       INSERT INTO vt_dbql_core  -- summary
         with dbql as(
             Select
-             cast({{ 'CollectTimeStamp' if td15 else 'starttime' }} as date) as LogDate
+             cast(CollectTimeStamp as date) as LogDate
              {% if 'LogTS' in run.included %}
              ,cast(cast(cast(CollectTimeStamp as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
              {% endif %}
