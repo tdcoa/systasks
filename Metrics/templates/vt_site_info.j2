@@ -16,6 +16,8 @@
         ,cast(cast(RunTS as DATE format 'mmmmbddbyyyy')as varchar(20)) as FullDate
         ,'{{ your_name | default('add variable: your_name')}}' as Your_Name
         ,'{{ your_title | default('add variable: your_title')}}' as Your_Title
+        ,'"{{ startdate }}"' as StartDate
+        ,'"{{ enddate }}"' as EndDate
       from dbc.dbcinfo
       cross join (select trim(cast(SpoolSpace/1e9 as INT)(varchar(64))) as Spool_GB from dbc.users where username = USER) sp
       where Database_Version is not null
