@@ -1135,7 +1135,7 @@ tasks:
     sql: select cast( {{ io_percentile }}/10.0 as decimal(9,1) format 'ZZZ.9%')(varchar(8)) as pctl
 
 # Line Chart:
-- name: Export System IO for Line Chart
+- name: Export System IO for Line Chart (IOTA+IOBusy)
   connect: source
   export:
     file: vhc--system_IO_BusyPct_allPctl.csv
@@ -1153,12 +1153,66 @@ tasks:
       group by LogDate
       order by LogDate
 
-- name: Chart IO% to Max, Line chart by Day
+- name: Chart IO% to Max, IOTA and IOBusy, Line chart by Day
   chart:
     command: chart/line_xDate_yElse.py
     params:
       - file:vhc--system_IO_BusyPct_allPctl.csv
       - title:System IO% Busy, IOTA and Max Observed - {{ siteid }}
+      - height:6
+      - width:12
+
+
+# Line Chart:
+- name: Export System IO for Line Chart (IOTA)
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_justIOTA.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      {% if td15 %}
+      ,0 as "IOTA Busy%--#204BDB"
+      {% else %}
+      ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      {% endif %}
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOTA, Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_justIOTA.csv
+      - title:System IOTA - {{ siteid }}
+      - height:6
+      - width:12
+
+
+# Line Chart:
+- name: Export System IO for Line Chart (IOBusy)
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_justIOBusy.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOBusy, Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_justIOBusy.csv
+      - title:System IO% Busy (Max Observed) - {{ siteid }}
       - height:6
       - width:12
 

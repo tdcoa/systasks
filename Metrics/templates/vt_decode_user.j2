@@ -102,6 +102,18 @@
          ,UserType = 'Teradata Internal'
       where A.UserName = B.DatabaseName
 
+
+- name: Update vt_decode_user to change empty values to Unknown
+  connect: source
+  execute:
+    sql: |
+      update vt_decode_user  SET
+       UserName     = case when coalesce(UserName     , '') in('','null') then 'Unknown' else trim(UserName)     end
+      ,UserType     = case when coalesce(UserType     , '') in('','null') then 'Unknown' else trim(UserType)     end
+      ,Organization = case when coalesce(Organization , '') in('','null') then 'Unknown' else trim(Organization) end
+      ,Department   = case when coalesce(Department   , '') in('','null') then 'Unknown' else trim(Department)   end
+
+
 {% if td15 %}
 - name: Insert dummy record for "Summary Queries" to allow for td15 joins
   connect: source
