@@ -216,7 +216,7 @@ tasks:
 
 {% if td15 %}
 
-- name: "* EXPORT Q1 (DUMMY): DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+- name: "* EXPORT Q1 (TD15): DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
   connect: source
   export:
     file: oap--OutcomeCPUConsumption.csv
