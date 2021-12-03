@@ -26,12 +26,12 @@
                 CASE WHEN IndexType IN ('U','P','Q') THEN 'Unique'
                      WHEN IndexType IN ('K') THEN 'Primary Key'
                 END (VARCHAR(30)) AS ConstraintType,
-                {% if rowsize_64k %}
-                cast(null as varchar(20000)) as Details
-                {% else %}
+                {% if constraint_columns %}
                 TRIM(TRAILING ','
                      FROM XMLAGG(ColumnName || ','
                      ORDER BY ColumnPosition)(VARCHAR(20000))) AS Details
+                {% else %}
+                  cast(null as varchar(20000)) as Details_blank
                 {% endif %}
           FROM  DBC.IndicesV
           WHERE IndexType IN ('K','U','P','Q')
