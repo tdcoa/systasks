@@ -1,0 +1,5 @@
+'CPULimit'	CPULimit
+# AMPs	432
+# Nodes	12
+CPULimit	1
+IOLimit	1
