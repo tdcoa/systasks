@@ -1,6 +1,8 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_disk_space' in run.completed %}
 
+{% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
+
 - name: Create vt_disk_space
   connect: source
   execute:
@@ -49,7 +51,11 @@
              ,cast(sum(CURRENTPERM) /1E9 as decimal(18,2)) as Database_CurrentPerm_GB
              ,cast(sum(PEAKPERM)    /1E9 as decimal(18,2)) as Database_PeakPerm_GB
              ,cast(sum(MAXPERM)     /1E9 as decimal(18,2)) as Database_MaxPerm_GB
+             {% if override_maxperm_tb == 0 %}
              ,cast(sum(Database_MaxPerm_GB)over(partition by LogDate) as decimal(32,6)) as System_MaxPerm_GB
+             {% else %}
+             ,cast( {{ override_maxperm_tb * 1000 }} as decimal(32,6)) as System_MaxPerm_GB
+             {% endif %}
              ,cast(sum(Database_CurrentPerm_GB)over(partition by LogDate) as decimal(32,6)) as System_CurrentPerm_GB
              {% if pdcr %}
              from pdcrinfo.DatabaseSpace_hst
