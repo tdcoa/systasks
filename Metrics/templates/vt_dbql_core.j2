@@ -174,7 +174,7 @@
   connect: source
   execute:
     sql: |
-      INSERT INTO vt_dbql_core
+      INSERT INTO vt_dbql_core -- detail
         with dbql as(
             select
              {{ dbc.logdt }} as LogDate
@@ -406,7 +406,7 @@
   connect: source
   execute:
     sql: |
-      INSERT INTO vt_dbql_core  -- summary
+      INSERT INTO vt_dbql_core -- summary
         with dbql as(
             Select
              cast(CollectTimeStamp as date) as LogDate
