@@ -5,20 +5,36 @@ tasks:
 {% set logts = true %} # turn on option to have system_cpu generate per 10min increment
 {% include "vt_system_cpu_by_day.j2" %}
 
+{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+{% set totalactive_cod_cpu = wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu | round(6) %}
+
+{% if export_all %}
+- name: Export Entire vt_System_CPU_by_Day table
+  connect: source
+  export:
+    file: system_cpu_by_day_fullexport.csv
+    sql: select * from vt_System_CPU_by_Day order by 1,2,3,4,5
+
+{% endif %}
+
 - name: Export System CPU for Chart
   connect: source
   export:
     file: system_cpu_by_day.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#AFAFAF"
-      ,cast(sum(CPU_IOWait ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#BD9200"
-      ,cast(sum(CPU_OS     ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
-      ,cast(sum(CPU_DBS    ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
-      ,cast(sum(CPU_Total  ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Total %--#F01D1D"
+      ,cast(sum(CPU_Full_Idle   ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU Idle %--#AFAFAF"
+      ,cast(sum(CPU_Full_IOWait ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU IOWait %--#C39BD3"
+      ,cast(sum(CPU_Full_OS     ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU OS %--#43A9BD"
+      ,cast(sum(CPU_Full_DBS    ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU DBS %--#142CF6"
+      ,100.00 as "CPU Total %--#F01D1D"
+      ,avg(CPU_COD_Total_Active_Pct) * 100.00 as "CPU Total Available %--#9C0A0A"
       from vt_System_CPU_by_Day
       group by 1
       order by 1
+
 
 - name: Chart System CPU - Line chart by Day
   chart:
@@ -36,13 +52,12 @@ tasks:
     params:
       - csvfilepath:system_cpu_by_day.csv
       - pngfilepath:system_cpu_by_day_stacked.png
-      - title:System CPU - {{ siteid }}
+      - title:System CPU (No COD Applied) - {{ siteid }}
       - ycolumns:[4,3,2,1]
       - height:6
       - width:12
       - ylabel:CPU Percent to Total
       - legendxy:(0.5, -0.2)
-
 
 - name: Chart System CPU - Stacked Horz Bars by Day
   chart:
@@ -50,11 +65,39 @@ tasks:
     params:
       - csvfilepath:system_cpu_by_day.csv
       - pngfilepath:system_cpu_by_day_stacked_horz.png
-      - title:System CPU - {{ siteid }}
+      - title:System CPU (No COD Applied) - {{ siteid }}
       - xcolumns:[4,3,2,1]
       - height:6
       - width:12
       - legendxy:(0.5, -0.2)
+
+
+- name: Export Cumulative System CPU for Chart
+  connect: source
+  export:
+    file: system_cpu_by_day_cumulative.csv
+    sql: |
+      select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,cast(sum(CPU_Full_IOWait) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#C39BD3"
+      ,"CPU IOWait %--#C39BD3" +
+       cast(sum(CPU_Full_OS) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
+      ,"CPU OS %--#43A9BD" +
+       cast(sum(CPU_Full_DBS) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
+      ,cast(max(CPU_COD_Total_Active_Pct) as decimal(38,4)) * 100 as "CPU Total Available %--#BA4A00"
+      ,100 as "CPU Total Platform %--#F01D1D"
+      from vt_System_CPU_by_Day
+      group by 1
+      order by 1
+
+- name: Chart System CPU - Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:system_cpu_by_day_cumulative.csv
+      - pngfile:system_cpu_by_day_line.png
+      - title:System CPU, Cumulative - {{ siteid }}
+      - height:6
+      - width:12
 
 
 - name: Export CPU by Day of Week for charting
@@ -96,7 +139,8 @@ tasks:
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,LogHr as "Hour"
-      ,cast(cast(sum(CPU_DBS + CPU_OS + CPU_IOWait) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS + CPU_Full_IOWait as decimal(38,4)))
+      / sum(cast(CPU_COD_Active_Total as decimal(38,2)))) * 100 as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
       order by 1,2
@@ -107,15 +151,14 @@ tasks:
     params:
       - csvfilepath:system_cpu_by_day_heatmap.csv
       - pngfilepath:system_cpu_by_day_heatmap.png
-      - title:System CPU - {{ siteid }}
+      - title:System CPU (COD Adjusted) - {{ siteid }}
       - height:6
       - width:12
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
-      - heatmapmin:0
       - heatmapmax:100
-
+      - heatmapmin:0
 
 - name: Export System CPU by Day of Week for HeatMap
   connect: source
@@ -125,7 +168,8 @@ tasks:
       Select
        cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
       ,LogHr as "Hour"
-      ,cast(cast(sum(CPU_DBS + CPU_OS + CPU_IOWait) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS + CPU_Full_IOWait as decimal(38,4)))
+      / sum(cast(CPU_COD_Active_Total as decimal(38,4)))) * 100.00 as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
       order by 1,2
@@ -136,12 +180,12 @@ tasks:
     params:
       - csvfilepath:system_cpu_by_dayofweek_heatmap.csv
       - pngfilepath:system_cpu_by_dayofweek_heatmap.png
-      - title:System CPU - {{ siteid }}
+      - title:System CPU (COD Adjusted) - {{ siteid }}
       - height:6
       - width:3
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
       - xslice:[1,0]
-      - heatmapmin:0
       - heatmapmax:100
+      - heatmapmin:0
