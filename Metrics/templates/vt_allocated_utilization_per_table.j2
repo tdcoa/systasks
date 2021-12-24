@@ -14,6 +14,8 @@
 {% include "vt_datedriver.j2" %}
 {% include "vt_disk_space.j2" %}
 
+{% set alt = true if not pdcr or td15 else false %}
+
 {% for ichunk in range(1, process_chunks+1) %}
 
 - name: {{ 'Create' if ichunk==1 else 'Insert into' }} vt_allocated_utilization_per_table (chunk {{ ichunk }} of {{ process_chunks }})
@@ -25,41 +27,52 @@
       {% else %}
       insert into vt_allocated_utilization_per_table
       {% endif %}
-      with
+      with /* COA-V2 */
       dbql as (
           SELECT
-            {% if not pdcr or td15 %}
-            cast(o.CollectTimeStamp as date) as LogDate1
-           ,cast(l.CollectTimeStamp as date) as LogDate2
-            {% else %}
-            l.LogDate as LogDate1
-            {% endif %}
-          , o.QueryID
-          , objectdatabasename AS DatabaseName
-          , ObjectTableName AS TableName
-          , sum(FreqOfUse) AS Use_Cnt
-          , cast(Use_Cnt as float) / sum(Use_Cnt) over(partition by o.QueryID) as Allocation_Pct
-          , Allocation_Pct * sum(l.AMPCPUTime + l.ParserCPUTime) AS Allocated_CPU
-          , Allocation_Pct * sum(case when TotalIOCount >(10**38) then 0 else TotalIOCount end) AS Allocated_IOCnt
-          , max(l.TotalIOCount) as UnAllocated_IOCnt
-          FROM {{ dbc.obj }}  o
-          JOIN {{ dbc.log }}  l
-          {% if not pdcr or td15 %}
-            on cast(o.CollectTimeStamp as date) = cast(l.CollectTimeStamp as date)
-          {% else %}
-            on o.LogDate = l.LogDate
-          {% endif %}
-           and o.QueryID = l.QueryID
-          WHERE Objecttype = 'Tab'
-            AND ObjectTableName IS NOT NULL
-            AND ObjectColumnName IS NULL
-            AND LogDate1 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
-            and LogDate1 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
-            {% if not pdcr or td15 %}
-            AND LogDate2 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
-            and LogDate2 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
-            {% endif %}
-          GROUP BY 1,2,3,4 {{ ',5' if not pdcr or td15 else '' }}
+          LogDate1, DatabaseName, TableName
+          ,sum(Use_Cnt)           as Use_Cnt
+          ,count(*)               as Request_Cnt
+          ,Avg(Allocation_Pct)    as Allocation_Pct
+          ,sum(Allocated_CPU)     as Allocated_CPU
+          ,sum(Allocated_IOCnt)   as Allocated_IOCnt
+          ,sum(UnAllocated_IOCnt) as UnAllocated_IOCnt
+          FROM (
+                SELECT
+                  {% if alt %}
+                  cast(o.CollectTimeStamp as date) as LogDate1
+                 ,cast(l.CollectTimeStamp as date) as LogDate2
+                  {% else %}
+                  l.LogDate as LogDate1
+                  {% endif %}
+                , o.QueryID
+                , objectdatabasename AS DatabaseName
+                , ObjectTableName AS TableName
+                , sum(FreqOfUse) AS Use_Cnt
+                , cast(Use_Cnt as float) / sum(Use_Cnt) over(partition by o.QueryID) as Allocation_Pct
+                , Allocation_Pct * sum(l.AMPCPUTime + l.ParserCPUTime) AS Allocated_CPU
+                , Allocation_Pct * sum(case when TotalIOCount >(10**38) then 0 else TotalIOCount end) AS Allocated_IOCnt
+                , max(l.TotalIOCount) as UnAllocated_IOCnt
+                FROM {{ dbc.obj }}  o
+                JOIN {{ dbc.log }}  l
+                {% if alt %}
+                  on cast(o.CollectTimeStamp as date) = cast(l.CollectTimeStamp as date)
+                {% else %}
+                  on o.LogDate = l.LogDate
+                {% endif %}
+                 and o.QueryID = l.QueryID
+                WHERE Objecttype = 'Tab'
+                  AND ObjectTableName IS NOT NULL
+                  AND ObjectColumnName IS NULL
+                  AND LogDate1 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+                  and LogDate1 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
+                  {% if not pdcr or td15 %}
+                  AND LogDate2 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+                  and LogDate2 between {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
+                  {% endif %}
+                GROUP BY 1,2,3,4{{ ',5' if alt else '' }}
+                ) a
+          GROUP BY 1,2,3
           ),
       io as (
           SELECT thedate as LogDate
@@ -78,7 +91,6 @@
           )
       Select
          dbql.LogDate1  as LogDate
-        {{ ',dbql.QueryID' if 'QueryID' in run.included }}
         ,cast(dbql.DatabaseName as varchar(128)) as DatabaseName
         ,cast(dbql.TableName    as varchar(128)) as TableName
         ,cast(sum(dbql.Use_Cnt) as integer) as Use_Cnt
@@ -100,7 +112,6 @@
        dbql.LogDate1
       ,dbql.DatabaseName
       ,dbql.TableName
-      {{ ',dbql.QueryID' if 'QueryID' in run.included }}
       {% if ichunk == 1 %}
       ) with data
         {% if 'QueryID' in run.included %}
