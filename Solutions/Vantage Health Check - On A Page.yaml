@@ -1,20 +1,73 @@
-description: Generates the Vantage Health Check On a Page PPT, with key information.
-version: 1.0
+description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
+version: 4.0
+# add this line to skip duplicate CREATE vt_* statements :
 {% set run = namespace(completed=[]) if run is not defined else run %}
 
+# DEFINE STARTING STATE OF VARIABLES
+{% set startdate = 'DATE-42'   if startdate is not defined else startdate %}
+{% set enddate   = 'DATE-1'    if enddate   is not defined else enddate %}
+{% set export_detail = False   if export_detail is not defined else export_detail %}
+{% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
 
-{% set reconcile = False if reconcile is not defined else reconcile %}
-{% set save_prework = False %}
-{% set statement_use_buckets = 12 %}
+{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+{% set full_cod_cpu = wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu | round(6) %}
+{% set workload_cod_cpu = wlm_cod_cpu * epod_cod_cpu | round(6) %}
+
+{% set    wlm_cod_io = 1.00    if    wlm_cod_io is not defined else  wlm_cod_io   %}
+{% set   epod_cod_io = 1.00    if   epod_cod_io is not defined else epod_cod_io   %}
+{% set workload_cod_io = wlm_cod_io * epod_cod_io | round(6) %}
+{% set full_cod_io = workload_cod_io %}
+
 {% set td15 = True if tdver[:2]=='15' else False %}
 
-{% set startdate = 'Current_Date-29' %}
-{% set enddate = 'Current_Date-1' %}
 
+# iteration lists:
+{% set prebuild_files = ['ztmp.csv'] %}
 
 tasks:
 
+
+- name: "Copy mockup of the only required .csv file: vhc--intro.csv"
+  copy:
+    files:
+      - mockup/oap--dbcinfo.csv
+      - mockup/oap--dbcinfo.tsv
+      - mockup/oap--COD.csv
+      - mockup/oap--COD.tsv
+
+
+- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
+  script:
+    command: scripts/fix_allreturnfile_placeholders.py
+    params:
+      - "Vantage Health Check - On A Page.yaml"
+      - "{{ prebuild_files|join(',') }}"
+
+
+- name: "Export Variables to a reconcile file"
+  connect: source
+  export:
+    file: vhc--reconcile_variables.csv
+    sql: |
+      select
+        '{{ startdate }}' as StartDate
+       ,'{{ enddate }}' as EndDate
+       ,'{{ export_detail }}' as Export_Details
+       ,'{{ process_chunks }}' as Process_Chunks
+       ,'{{ full_cod_cpu }}'     as Full_COD_CPU
+       ,'{{ pm_cod_cpu }}'       as   pm_cod_cpu
+       ,'{{ wlm_cod_cpu }}'      as   wlm_cod_cpu
+       ,'{{ epod_cod_cpu }}'     as   epod_cod_cpu
+       ,'{{ full_cod_io }}'      as Full_COD_IO
+       ,'{{ wlm_cod_io }}'       as   wlm_cod_io
+       ,'{{ epod_cod_io }}'      as   epod_cod_io
+       from (sel 1 one ) a
+
+
 {% include "vt_site_info.j2" %}
+
 
 - name: "Export Site and CSM information (if available) for pptx title slide"
   connect: source
@@ -22,13 +75,18 @@ tasks:
     file: oap--intro.csv
     sql: Select * from vt_site_info
 
-{% include "vt_decode_user.j2" %}
 
 {% set save_prework   = False %}
 {% set include_hour   = False %}
 {% set include_wdname = False %}
 {% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
+
+
+
+######################################
+####### Vantage-on-a-Page:  ##########
+######################################
 
 - name: Export User Counts for pptx
   connect: source
@@ -92,13 +150,34 @@ tasks:
       from vt_dbql_core
       ) d1
 
-
 {% if td15 %}
 
-- name: "* EXPORT Q1: DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+- name: "* EXPORT Q1 (TD15): DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
   connect: source
   export:
     file: oap--OutcomeCPUConsumption.csv
+    sql: |
+      select
+        LogDate
+        ,MAX(CASE WHEN StatementOutcome =  'Answers' THEN ConsuptionPercentage ELSE NULL END) AS  "Answers"
+        ,MAX(CASE WHEN StatementOutcome =  'Data Maintenance' THEN ConsuptionPercentage ELSE NULL END) AS  "Data Maintenance"
+        ,MAX(CASE WHEN StatementOutcome =  'Ingest & Prep' THEN ConsuptionPercentage ELSE NULL END) AS  "Ingest & Prep"
+        ,MAX(CASE WHEN StatementOutcome =  'System & Procedural' THEN ConsuptionPercentage ELSE NULL END) AS  "System & Procedural"
+        from (
+        SELECT
+         LogDate
+         ,Statement_Outcome as StatementOutcome
+         ,SUM(CPU_Total_Sec) as SUMCPUTime
+         ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
+         ,SUMCPUTime/TotalSUMCPUTimeDay * 100 as ConsuptionPercentage
+        FROM vt_dbql_core
+        GROUP BY 1,2) as tmp
+        group by 1
+
+- name: "* EXPORT Q1 (TD15) w/COD: DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+  connect: source
+  export:
+    file: oap--OutcomeCPUConsumption_COD.csv
     sql: |
       select
         LogDate
@@ -146,8 +225,40 @@ tasks:
         avg(ConsuptionPercentage)
         FOR StatementOutcome in ('Answers', 'Data Maintenance', 'Ingest & Prep','System & Procedural')
       ) as PT
+      order by 1
+
+- name: "* EXPORT Q1 w/COD: DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+  connect: source
+  export:
+    file: oap--OutcomeCPUConsumption_COD.csv
+    sql: |
+      select
+       *
+      from
+      (
+       select
+        LogDate
+        ,StatementOutcome
+        ,ConsuptionPercentage
+        from (
+        SELECT
+         LogDate
+         ,Statement_Outcome as StatementOutcome
+         ,SUM(CPU_Total_Sec) as SUMCPUTime
+         ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
+         ,SUMCPUTime/TotalSUMCPUTimeDay * 100 as ConsuptionPercentage
+        FROM vt_dbql_core
+        GROUP BY 1,2) as tmp
+      ) as src
+      PIVOT
+      (
+        avg(ConsuptionPercentage)
+        FOR StatementOutcome in ('Answers', 'Data Maintenance', 'Ingest & Prep','System & Procedural')
+      ) as PT
       order by 1;
+
 {% endif %}
+
 
 - name: CPU Consuption by Outcome
   chart:
@@ -162,6 +273,7 @@ tasks:
       - ylabel:CPU Consumption Break down
       - legendxy:(0.5, -0.2)
       - colors:(#AFAFAF,#142CF6,#43A9BD,#F01D1D)
+
 
 {% include "vt_concurrency.j2" %}
 
@@ -289,9 +401,9 @@ tasks:
   export:
     file: oap--COD.csv
     sql: |
-         SELECT 'CPULimit', CPULimit (INT) FROM (Select {{ cod_cpu | default(1) }} as CPULimit) As d
+         SELECT 'CPULimit', CPULimit (INT) FROM (Select {{ full_cod_cpu | default(1) }} *100 as CPULimit) As d
          union all
-         SELECT 'IOLimit',  IOLimit FROM (Select {{ cod_io | default(1) }} as IOLimit) As d
+         SELECT 'IOLimit',  IOLimit FROM (Select {{ full_cod_io | default(1) }} *100 as IOLimit) As d
          union all
          SELECT '# Nodes', count(distinct nodeid) FROM dbc.resusagespma where TheDate = current_date
          union all
@@ -312,10 +424,9 @@ tasks:
 
 {% endif %}
 
-
-
 # to generate the CPU Heatmap
-{% include "vt_system_consumption_detail.j2" %}
+{% set logts = true %}
+{% include "vt_system_cpu_by_day.j2" %}
 
 - name: "Generate Heatmap data"
   connect: source
@@ -323,12 +434,12 @@ tasks:
     file: oap--SPMADetailData.csv
     sql: |
          select
-          SiteID
-          ,cast(TD_DAY_OF_WEEK(Log_Date) as char(1)) || cast(cast(Log_Date as date format'e4') as varchar(16)) as "Day of the Week"
-          ,Log_Hour
-          ,AVG(AvgCPUPct) (FORMAT 'ZZ9.99') as Avg_CPU
-          ,MEDIAN(AvgCPUPct) (FORMAT 'ZZ9.99') as Med_CPU
-         from vt_SPMADetailData
+          '{{ siteid }}' as SiteID
+          ,cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+          ,LogHr as Log_Hour
+          ,AVG((    (CPU_Full_OS + CPU_Full_DBS + CPU_Full_IOWait)*1.000000) / CPU_COD_Active_Total) *100.0 (FORMAT 'ZZ9.99') as Avg_CPU
+          ,MEDIAN(( (CPU_Full_OS + CPU_Full_DBS + CPU_Full_IOWait)*1.000000) / CPU_COD_Active_Total) *100.0 (FORMAT 'ZZ9.99') as Med_CPU
+         from vt_System_CPU_by_Day
          Group by 1,2,3
          order by 1,2,3;
 
@@ -340,7 +451,7 @@ tasks:
     params:
       - "csvfilepath:oap--SPMADetailData.csv"
       - "pngfilepath:oap--CPUHeapmapMed.png"
-      - "title:CPU Use% by Weekday/Hour - Median"
+      - "title:CPU Use% by Weekday/Hour (COD {{ full_cod_cpu *100}}%)"
       - "xcolumns:[1]"
       - "ycolumns:[2,4]"
       - "height:6"
@@ -348,7 +459,9 @@ tasks:
       - "heatmapcolorcount:4"
       - "colors:[white,green,yellow,red]"
       - "heatmapmin:0"
+      - "heatmapmax:100"
       - "xslice:[1,4]"
+
 
 # generate chart from CPU data:
 - name: "Chart Heatmap for Average CPU by weekday/hour"
@@ -357,7 +470,7 @@ tasks:
     params:
       - "csvfilepath:oap--SPMADetailData.csv"
       - "pngfilepath:oap--CPUHeapmapAvg.png"
-      - "title:CPU Use% by Weekday/Hour - Average"
+      - "title:CPU Use% by Weekday/Hour (COD {{ full_cod_cpu *100}}%)"
       - "xcolumns:[1]"
       - "ycolumns:[2,3]"
       - "height:6"
@@ -365,7 +478,10 @@ tasks:
       - "heatmapcolorcount:4"
       - "colors:[white,green,yellow,red]"
       - "heatmapmin:0"
+      - "heatmapmax:100"
       - "xslice:[1,4]"
+
+
 
 {% include "vt_disk_space.j2" %}
 
@@ -390,6 +506,21 @@ tasks:
           ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
           from vt_disk_space
           group by DatabaseName, TableName ) a
+
+
+######################################
+######################################
+######################################
+
+
+- name: DROP volatile table to save spool - vt_dbql_core
+  connect: source
+  execute:
+    sql: drop table vt_dbql_core
+
+
+
+
 
 - name: PPTx final build for Vantage Health Check On a Page
   ppt:
