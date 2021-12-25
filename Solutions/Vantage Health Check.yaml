@@ -532,14 +532,15 @@ tasks:
   export:
     file: oap--COD.csv
     sql: |
-         SELECT 'CPULimit', CPULimit FROM (Select {{ full_cod_cpu | default(1.0) }} *100.0 as CPULimit) As d
+         SELECT 'CPULimit',  trim(cast(CPULimit as decimal(9,2))) as CPULimit  FROM (Select {{ full_cod_cpu | default(1.0) }} * 100 as CPULimit) As d
          union all
-         SELECT 'IOLimit',  IOLimit FROM (Select {{ full_cod_io | default(1.0) }} *100.0 as IOLimit) As d
+         SELECT 'IOLimit',  trim(cast(IOLimit as decimal(9,2))) as IOLimit FROM (Select {{ full_cod_io | default(1.0) }} * 100 as IOLimit) As d
          union all
-         SELECT '# Nodes', count(distinct nodeid) FROM dbc.resusagespma where TheDate = current_date
+         SELECT '# Nodes', cast(count(distinct nodeid) as varchar(16)) FROM dbc.resusagespma where TheDate = current_date
          union all
-         sel '# AMPs',count(distinct vprid) FROM dbc.ResUsageSvpr WHERE Thedate = current_date AND VprType LIKE 'AMP%'
-         order by 1;
+         sel '# AMPs',    cast(count(distinct vprid) as varchar(16)) FROM dbc.ResUsageSvpr WHERE Thedate = current_date AND VprType LIKE 'AMP%'
+         order by 1
+
 
 - name: "Get system information"
   connect: source
