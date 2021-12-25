@@ -44,7 +44,7 @@ version: 4.0
 tasks:
 
 
-- name: "Copy mockup of the only required .csv file: vhc--intro.csv"
+- name: "Copy mockup of non-standard required .csv files"
   copy:
     files:
       - mockup/vhc--intro.csv

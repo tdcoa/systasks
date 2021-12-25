@@ -29,7 +29,7 @@ version: 4.0
 tasks:
 
 
-- name: "Copy mockup of the only required .csv file: vhc--intro.csv"
+- name: "Copy mockup of non-standard required .csv files"
   copy:
     files:
       - mockup/oap--dbcinfo.csv
@@ -73,6 +73,12 @@ tasks:
   connect: source
   export:
     file: oap--intro.csv
+    sql: Select * from vt_site_info
+
+- name: "Export Site and CSM information (if available) for pptx title slide"
+  connect: source
+  export:
+    file: vhc--intro.csv
     sql: Select * from vt_site_info
 
 
