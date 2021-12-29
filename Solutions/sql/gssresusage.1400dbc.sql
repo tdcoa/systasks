@@ -2,6 +2,49 @@
 /*   Logic remains intact, but macro wrapper has been removed, */
 /*   parameters have been changed to jinja template parameters, and */
 /*   create volatile table wrapper has been added, to create an abstraction point. */
+
+-- make dates more flexible: StartDate
+{% set startdate = 'date-31' if startdate is not defined else startdate %}
+{% if "date" in startdate.lower() %}
+  -- Date looks like a SQL standard "DATE" or "Current_Date" function, no work needed
+{% elif "select" in startdate.lower() %}
+  -- Date looks like a SQL subselect, no work needed
+{% elif "/" in startdate %}
+  -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
+  {% set startmonth = startdate.split("/")[0] %}
+  {% set startday   = startdate.split("/")[1] %}
+  {% set startyear  = startdate.split("/")[2] %}
+  {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+{% elif "-" in startdate %}
+  -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
+  {% set startyear  = startdate.replace("'","").split("-")[0] %}
+  {% set startmonth = startdate.replace("'","").split("-")[1] %}
+  {% set startday   = startdate.replace("'","").split("-")[2] %}
+  {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+{% endif %}
+-- startdate: {{ startdate }}
+
+-- make dates more flexible: EndDate
+{% set enddate = 'date-1' if enddate is not defined else enddate %}
+{% if "date" in enddate.lower() %}
+  -- Date looks like a SQL standard "DATE" or "Current_Date" function, no work needed
+{% elif "select" in enddate.lower() %}
+  -- Date looks like a SQL subselect, no work needed
+{% elif "/" in enddate %}
+  -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
+  {% set endmonth = enddate.split("/")[0] %}
+  {% set endday   = enddate.split("/")[1] %}
+  {% set endyear  = enddate.split("/")[2] %}
+  {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+{% elif "-" in startdate %}
+  -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
+  {% set endyear  = enddate.replace("'","").split("-")[0] %}
+  {% set endmonth = enddate.replace("'","").split("-")[1] %}
+  {% set endday   = enddate.replace("'","").split("-")[2] %}
+  {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+{% endif %}
+-- enddate: {{ enddate }}
+
 CREATE VOLATILE MULTISET TABLE vt_gssresusage as (
  sel
  'TD14v1.72' (named "Version")
@@ -377,11 +420,11 @@ sel
 ,sum(HostWriteKB) (named "NtwWriteKB")
 
 from dbc.resusagespma
- WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ startdate | default ('0') }} ) OR
+ WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ starttime | default ('0') }} ) OR
  ( THEDATE > {{ startdate | default ('date-45') }} ) )
  AND
- ( ( THEDATE = {{ endtime | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
- ( THEDATE < {{ endtime | default ('date-1')  }} ) )
+ ( ( THEDATE = {{ enddate | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
+ ( THEDATE < {{ enddate | default ('date-1')  }} ) )
  group by 1,2,3,4,5,6,7,8,9,10,11,12
 
 ) spma_dt left join
@@ -489,11 +532,11 @@ from dbc.resusagespma
 ,AMPWorkTaskExec + AMPWorkTaskServ (named "TotalAMPCPUBusy")
 
 from dbc.resusagesvpr
- WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ startdate | default ('0') }} ) OR
+ WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ starttime | default ('0') }} ) OR
  ( THEDATE > {{ startdate | default ('date-45') }} ) )
  AND
- ( ( THEDATE = {{ endtime | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
- ( THEDATE < {{ endtime | default ('date-1')  }} ) )
+ ( ( THEDATE = {{ enddate | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
+ ( THEDATE < {{ enddate | default ('date-1')  }} ) )
 
 group by 1,2,3,4
 
@@ -527,11 +570,11 @@ group by 1,2,3,4
  ,max(case when PdiskType = 'SSD' then WriteRespMax else 0 END) (named "SSDWriteRespMax")
 
 from dbc.resusagespdsk
- WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ startdate | default ('0') }} ) OR
+ WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ starttime | default ('0') }} ) OR
  ( THEDATE > {{ startdate | default ('date-45') }} ) )
  AND
- ( ( THEDATE = {{ endtime | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
- ( THEDATE < {{ endtime | default ('date-1')  }} ) )
+ ( ( THEDATE = {{ enddate | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
+ ( THEDATE < {{ enddate | default ('date-1')  }} ) )
  group by 1,2,3,4
 
 ) spdsk_dt

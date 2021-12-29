@@ -1,4 +1,6 @@
 import os
+from pathlib import Path 
+
 for file in os.scandir('.'):
     if file.name.startswith('gssresusagemacro.') and file.name.endswith('.sql'):
         newfilename = file.name.replace('gssresusagemacro.','gssresusage.')
@@ -13,13 +15,18 @@ for file in os.scandir('.'):
         file_lines = file_lines[7:-1]
         print('   ', 'removing last 1 and first 7 lines, new line #1: %s' %file_lines[0].strip())
 
-        # add new comment header and VT wrapper
         file_lines.insert(0, '/* THIS FILE HAS BEEN DE-MACRO-FIED BY AN AUTOMATED PROCESS. */')
         file_lines.insert(1, '/*   Logic remains intact, but macro wrapper has been removed, */')
         file_lines.insert(2, '/*   parameters have been changed to jinja template parameters, and */')
         file_lines.insert(3, '/*   create volatile table wrapper has been added, to create an abstraction point. */')
-        file_lines.insert(4, 'CREATE VOLATILE MULTISET TABLE vt_gssresusage as (')
-        file_lines.append(') with data  primary index(LogDate, LogTime)  on commit preserve rows')
+        file_lines.insert(4, '')
+        file_lines.insert(5, 'CREATE VOLATILE MULTISET TABLE vt_gssresusage as (')
+        file_lines.append(") with data  primary index(LogDate, LogTime)  on commit preserve rows")
+
+        # add flexidate logic to the top of the file:
+        with Path('../scripts/flexidate.txt').open('r') as fh:
+            for i, val in enumerate(fh.readlines()):
+                file_lines.insert(i+4, val)
 
         # do data clean-up per line
         for i, line in enumerate(file_lines):
@@ -33,8 +40,8 @@ for file in os.scandir('.'):
         filetext = '\n'.join(file_lines)
 
         findreplace = [[':BEGINDATE' , "{{ startdate | default ('date-45') }}"]
-                      ,[':ENDDATE'   , "{{ endtime | default ('date-1')  }}"]
-                      ,[':BEGINTIME' , "{{ startdate | default ('0') }}"]
+                      ,[':ENDDATE'   , "{{ enddate | default ('date-1')  }}"]
+                      ,[':BEGINTIME' , "{{ starttime | default ('0') }}"]
                       ,[':ENDTIME'   , "{{ endtime | default ('240000') }}"]]
         for fr in findreplace:
             filetext = filetext.replace(fr[0], fr[1])
