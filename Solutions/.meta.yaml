@@ -31,3 +31,7 @@ tasklists:
   Vantage Health Check - On A Page:
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_VantageHealthCheck.aspx
     tags: [demo]
+
+  Upload to Transcend - GSSResUsage Sizing Data:
+    tags: [gss]
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_GSSResUsage_Sizing_Data.aspx
