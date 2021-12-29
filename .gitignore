@@ -1,5 +1,5 @@
 toggle_foldernames
 cheatsheet*
 __pycache__
-.*
 _*
+.DS_Store
