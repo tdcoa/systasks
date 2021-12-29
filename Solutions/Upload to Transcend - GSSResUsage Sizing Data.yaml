@@ -48,7 +48,7 @@ tasks:
 {% endif %}
 
 
-- name: Copy over the gssresusage query file, just for reconciliation (GSS Member? {{ gss_member }} means {{ with_data }})
+- name: Copy over the gssresusage query file, just for reconciliation
   connect: source
   copy:
     files: ['{{ dirs.systasks }}/Solutions/sql/gssresusage.{{ tdversion }}{{ pdcrstr }}.sql']
