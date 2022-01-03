@@ -587,7 +587,7 @@ tasks:
       - "xcolumns:[1]"
       - "ycolumns:[2,4]"
       - "height:6"
-      - "width:9"
+      - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
       - "heatmapcolorcount:4"
       - "colors:[white,green,yellow,red]"
       - "heatmapmin:0"
@@ -606,7 +606,7 @@ tasks:
       - "xcolumns:[1]"
       - "ycolumns:[2,3]"
       - "height:6"
-      - "width:9"
+      - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
       - "heatmapcolorcount:4"
       - "colors:[white,green,yellow,red]"
       - "heatmapmin:0"
@@ -1247,7 +1247,7 @@ tasks:
       - pngfilepath:vhc--system_cpu_by_day_heatmap.png
       - title:System CPU - {{ siteid }}
       - height:6
-      - width:12
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
@@ -1276,7 +1276,7 @@ tasks:
       - pngfilepath:vhc--system_cpu_by_day_heatmap_wCOD.png
       - title:System CPU - {{ siteid }}
       - height:6
-      - width:12
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
@@ -1615,7 +1615,7 @@ tasks:
       - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved.png
       - title:System IO Busy - {{ siteid }}
       - height:6
-      - width:12
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
@@ -1631,7 +1631,7 @@ tasks:
       - pngfilepath:vhc--system_IO_by_day_heatmap_iota.png
       - title:System IOTA Busy - {{ siteid }}
       - height:6
-      - width:12
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
@@ -1713,7 +1713,7 @@ tasks:
       - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved_wCOD.png
       - title:System IO Busy - {{ siteid }}
       - height:6
-      - width:12
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
@@ -1729,7 +1729,7 @@ tasks:
       - pngfilepath:vhc--system_IO_by_day_heatmap_iota_wCOD.png
       - title:System IOTA Busy - {{ siteid }}
       - height:6
-      - width:12
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
