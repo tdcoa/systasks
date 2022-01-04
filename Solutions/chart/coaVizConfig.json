@@ -2,8 +2,8 @@
   {"name":   "csvfilepath",  "aliases": ["csvfile", "file"]          ,"type": "str",        "default": "<<no default>>"   ,"notes":"only required arg, name of file to fill dataframe/chart"   }
  ,{"name":   "pngfilepath",  "aliases": ["pngfile"]                  ,"type": "str",        "default": "<<csvfilepath:replace(.csv:.png)>>" ,"notes":"if not supplied, will use csv filename as .png"   }
  ,{"name":   "title",        "aliases": []                           ,"type": "str",        "default": ""                 ,"notes":""   }
- ,{"name":   "width",        "aliases": []                           ,"type": "int",        "default": "16"               ,"notes":""   }
- ,{"name":   "height",       "aliases": []                           ,"type": "int",        "default": "9"                ,"notes":""   }
+ ,{"name":   "width",        "aliases": []                           ,"type": "float",      "default": "16"               ,"notes":""   }
+ ,{"name":   "height",       "aliases": []                           ,"type": "float",      "default": "9"                ,"notes":""   }
  ,{"name":   "xrotate",      "aliases": ["rotatex"]                  ,"type": "int",        "default": "90"               ,"notes":""   }
  ,{"name":   "xticksize",    "aliases": []                           ,"type": "int",        "default": "8"                ,"notes":""   }
  ,{"name":   "xlabelflex",   "aliases": []                           ,"type": "float",      "default": "1"                ,"notes":"remove some x labels to prevent over-crowding. 1=best guess, lower=fewer labels, 0 disables."}
