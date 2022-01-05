@@ -1,0 +1,2 @@
+Site_ID,Customer_Name,Database_Version,User,Spool_GB,RunTS,FullDate,Your_Name,Your_Title,StartDate,EndDate
+Site_ID (from vhc--intro.csv/tsv),Customer Name (from vhc--intro.csv/tsv),XX.yy.aa.bb,executing_user,0,2021-12-17 20:08:26-05:00,December 17 2021,"Variable ""your_name""","Variable ""your_title""",12/9/21,12/15/21
