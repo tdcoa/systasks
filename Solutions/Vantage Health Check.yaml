@@ -26,6 +26,7 @@ version: 4.0
 # iteration lists:
 {% set feature_columns = ['Feature_Category','Feature_SubCategory','Product_Name','Product_Category','Solution_Type','User_Experience_Level_Name','Initiator_Role_Category','Objective_Name','Department','UserType','Organization'] %}
 {% set alloc_columns = ['Allocated_CPU','Allocated_IOCnt','Allocated_IOGB','Allocated_CDS_GB'] %}
+{% set template_files = [] %}   # ['vhc--intro.csv','vhc--intro.tsv','oap--dbcinfo.csv','oap--dbcinfo.tsv','oap--COD.csv','oap--COD.tsv']
 
 {% set prebuild_files = [] %}
 {% for col in feature_columns %}
@@ -38,21 +39,26 @@ version: 4.0
 {{ prebuild_files.append(filename) or "" }}
 {% endfor %}
 
+{% for col in template_files %}
+{% set filename = col  %}
+{{ prebuild_files.append(filename) or "" }}
+{% endfor %}
+
 {{ prebuild_files.append('reconcile_dbql_core_settings.csv') or "" }}
 {{ prebuild_files.append('reconcile_system_io_observed_max_levels.csv') or "" }}
 
 tasks:
 
 
-- name: "Copy mockup of non-standard required .csv files"
+- name: "Copy mockup of non-standard required .csv files"  # make sure these are listed above in template_files
   copy:
     files:
-      - mockup/vhc--intro.csv
-      - mockup/vhc--intro.tsv
-      - mockup/oap--dbcinfo.csv
-      - mockup/oap--dbcinfo.tsv
-      - mockup/oap--COD.csv
-      - mockup/oap--COD.tsv
+      - mockup/vhc--intro_template.csv
+      - mockup/vhc--intro_template.tsv
+      - mockup/oap--dbcinfo_template.csv
+      - mockup/oap--dbcinfo_template.tsv
+      - mockup/oap--COD_template.csv
+      - mockup/oap--COD_template.tsv
 
 
 - name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
@@ -498,11 +504,11 @@ tasks:
       from vt_dbql_core
 
 {% if syslib_access %}
-# Retrieve COD limit
+# Retrieve COD limit, for reference
 - name: "Retrieve COD limit"
   connect: source
   export:
-    file: oap--COD.csv
+    file: oap--COD_fromSystem.csv
     sql: |
          SELECT 'CPULimit', CPULimit FROM TABLE (TD_SYSFNLIB.TD_get_COD_Limits( ) ) As d
          union all
@@ -516,7 +522,7 @@ tasks:
 - name: "Get system information"
   connect: source
   export:
-    file: oap--dbcinfo.csv
+    file: oap--dbcinfo_fromSystem.csv
     sql: |
        Select InfoKey, InfoData from dbc.dbcinfo
        union all
@@ -524,9 +530,9 @@ tasks:
        union all
        Select 'SystemName', SystemName FROM TABLE (SYSLIB.MonitorSystemPhysicalConfig()) as CFG
        order by 1;
+{% endif %}
 
-{% else %}
-# simply take associated variables:
+# full process simply take associated variables:
 - name: "Retrieve COD limit"
   connect: source
   export:
@@ -541,7 +547,6 @@ tasks:
          sel '# AMPs',    cast(count(distinct vprid) as varchar(16)) FROM dbc.ResUsageSvpr WHERE Thedate = current_date AND VprType LIKE 'AMP%'
          order by 1
 
-
 - name: "Get system information"
   connect: source
   export:
@@ -552,9 +557,8 @@ tasks:
        Select 'SystemType', SystemType FROM (Select '{{ site_type | default('*** add site_type to variable list for autopopulation ***') }}' as SystemType) as CFG
        union all
        Select 'SystemName', SystemName FROM (Select '{{ siteid }}' as SystemName) as CFG
-       order by 1;
+       order by 1
 
-{% endif %}
 
 
 # to generate the CPU Heatmap

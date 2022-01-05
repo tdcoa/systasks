@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 import sys, logging
+import shutil
 
 version = 'v1.0'
 
@@ -61,8 +62,8 @@ except Exception as ex:
     log.debug(f'something went wrong with building file list from yaml:\n{str(ex)}')
 
 
-log.info('\nFILE LIST BUILD, TIME TO CREATE ANY THAT ARE MISSING OR ZERO-BYTE:')
 
+log.info('\nFILE LIST BUILD, TIME TO CREATE ANY THAT ARE MISSING OR ZERO-BYTE:')
 # for everything found AND everything passed in, create placeholder .csv and .tsv
 for file in files:
     print(file)
@@ -72,15 +73,25 @@ for file in files:
             makefile = False
             csvfile = Path(file)
             tsvfile = Path(file.strip()[:-3] + 'tsv')
+            csvfiletemplate =  Path(file.strip()[:-4] + '_template.csv')
+            tsvfiletemplate =  Path(file.strip()[:-4] + '_template.tsv')
             if (not csvfile.exists()) or csvfile.stat().st_size == 0:
                 log.debug(f'  csv file missing or zero-byte, adding placeholder file...')
-                with csvfile.open('w', encoding='utf-8') as fh:
-                    fh.write(csv_stub)
+                if csvfiletemplate.exists():
+                    log.debug(f'  csv _template file found, using instead of generic stub...')
+                    shutil.copy(csvfiletemplate, csvfile)
+                else:
+                    with csvfile.open('w', encoding='utf-8') as fh:
+                        fh.write(csv_stub)
                 makefile = True
             if (not tsvfile.exists()) or tsvfile.stat().st_size == 0:
                 log.debug(f'  tsv file missing or zero-byte, adding placeholder file...')
-                with tsvfile.open('w', encoding='utf-8') as fh:
-                    fh.write(tsv_stub)
+                if tsvfiletemplate.exists():
+                    log.debug(f'  tsv _template file found, using instead of generic stub...')
+                    shutil.copy(tsvfiletemplate, tsvfile)
+                else:
+                    with tsvfile.open('w', encoding='utf-8') as fh:
+                        fh.write(tsv_stub)
                 makefile = True
             if makefile:
                 log.debug('  files CREATED!')
@@ -91,6 +102,7 @@ for file in files:
 
     except Exception as ex:
         log.exception(f'something went wrong with pre-building file: {str(file)}: {str(ex)}', stack_info=True)
+
 
 
 # finally, roll thru EVERYTHING one more time and if zero-byte, give it some tsv data
