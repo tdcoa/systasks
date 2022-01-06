@@ -75,8 +75,8 @@ tasks:
     file: vhc--reconcile_variables.csv
     sql: |
       select
-        '{{ startdate }}' as StartDate
-       ,'{{ enddate }}' as EndDate
+        {{ startdate }} as StartDate
+       ,{{ enddate }} as EndDate
        ,'{{ export_detail }}' as Export_Details
        ,'{{ process_chunks }}' as Process_Chunks
        ,'{{ full_cod_cpu }}'     as Full_COD_CPU
