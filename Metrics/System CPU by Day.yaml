@@ -1,14 +1,26 @@
 description: Generates daily CPU numbers, broken out by DBS, OS, Wait, and Idle, as well other platform characteristics such as MaxIOTA and Node Type.
 version: 1
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
+
 tasks:
 
 {% set logts = true %} # turn on option to have system_cpu generate per 10min increment
 {% include "vt_system_cpu_by_day.j2" %}
 
+
 {% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
 {% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
 {% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
 {% set totalactive_cod_cpu = wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu | round(6) %}
+
 
 {% if export_all %}
 - name: Export Entire vt_System_CPU_by_Day table
@@ -16,13 +28,12 @@ tasks:
   export:
     file: system_cpu_by_day_fullexport.csv
     sql: select * from vt_System_CPU_by_Day order by 1,2,3,4,5
-
 {% endif %}
 
 - name: Export System CPU for Chart
   connect: source
   export:
-    file: system_cpu_by_day.csv
+    file: system_cpu_by_day_AVG.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,cast(sum(CPU_Full_Idle   ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU Idle %--#AFAFAF"
@@ -40,9 +51,9 @@ tasks:
   chart:
     command: chart/line_xDate_yElse.py
     params:
-      - file:system_cpu_by_day.csv
-      - pngfile:system_cpu_by_day_line.png
-      - title:System CPU - {{ siteid }}
+      - file:system_cpu_by_day_AVG.csv
+      - pngfile:system_cpu_by_day_AVG_line.png
+      - title:Average CPU - {{ siteid }}
       - height:6
       - width:12
 
@@ -50,9 +61,9 @@ tasks:
   chart:
     command: chart/bar_xLabel_yElseStack.py
     params:
-      - csvfilepath:system_cpu_by_day.csv
-      - pngfilepath:system_cpu_by_day_stacked.png
-      - title:System CPU (No COD Applied) - {{ siteid }}
+      - csvfilepath:system_cpu_by_day_AVG.csv
+      - pngfilepath:system_cpu_by_day_AVG_stacked.png
+      - title:Average CPU (No COD Applied) - {{ siteid }}
       - ycolumns:[4,3,2,1]
       - height:6
       - width:12
@@ -63,9 +74,9 @@ tasks:
   chart:
     command: chart/barh_yLabel_xElseStack.py
     params:
-      - csvfilepath:system_cpu_by_day.csv
-      - pngfilepath:system_cpu_by_day_stacked_horz.png
-      - title:System CPU (No COD Applied) - {{ siteid }}
+      - csvfilepath:system_cpu_by_day_AVG.csv
+      - pngfilepath:system_cpu_by_day_AVG_stacked_horz.png
+      - title:Average CPU (No COD Applied) - {{ siteid }}
       - xcolumns:[4,3,2,1]
       - height:6
       - width:12
@@ -75,7 +86,7 @@ tasks:
 - name: Export Cumulative System CPU for Chart
   connect: source
   export:
-    file: system_cpu_by_day_cumulative.csv
+    file: system_cpu_by_day_cumulative_AVG.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,cast(sum(CPU_Full_IOWait) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#C39BD3"
@@ -93,9 +104,9 @@ tasks:
   chart:
     command: chart/line_xDate_yElse.py
     params:
-      - file:system_cpu_by_day_cumulative.csv
-      - pngfile:system_cpu_by_day_line.png
-      - title:System CPU, Cumulative - {{ siteid }}
+      - file:system_cpu_by_day_cumulative_AVG.csv
+      - pngfile:system_cpu_by_day_cumulative_AVG_line.png
+      - title:Average CPU, Cumulative - {{ siteid }}
       - height:6
       - width:12
 
@@ -103,7 +114,7 @@ tasks:
 - name: Export CPU by Day of Week for charting
   connect: source
   export:
-    file: system_cpu_by_dayofweek.csv
+    file: system_cpu_by_dayofweek_AVG.csv
     sql: |
       Select cast(cast(LogDate as date format'e4') as varchar(16)) as dayofweek
       ,cast(sum(CPU_OS+CPU_DBS)    as decimal(38,0)) as "Aggregate CPU Seconds"
@@ -124,8 +135,8 @@ tasks:
   chart:
     command: chart/barline_xLabels_yBar_yLine.py
     params:
-      - file:system_cpu_by_dayofweek.csv
-      - title:CPU by Day of Week - {{ siteid }}
+      - file:system_cpu_by_dayofweek_AVG.csv
+      - title:Average Active CPU by Day of Week - {{ siteid }}
       - height:6
       - width:12
       - sort:0 # 0=none/sql default, 1 thru N = column to sort
@@ -134,12 +145,12 @@ tasks:
 - name: Export System CPU for Heatmap
   connect: source
   export:
-    file: system_cpu_by_day_heatmap.csv
+    file: system_cpu_by_day_heatmap_AVG.csv
     sql: |
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,LogHr as "Hour"
-      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS + CPU_Full_IOWait as decimal(38,4)))
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS as decimal(38,4)))
       / sum(cast(CPU_COD_Active_Total as decimal(38,2)))) * 100 as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
@@ -149,9 +160,9 @@ tasks:
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
     params:
-      - csvfilepath:system_cpu_by_day_heatmap.csv
-      - pngfilepath:system_cpu_by_day_heatmap.png
-      - title:System CPU (COD Adjusted) - {{ siteid }}
+      - csvfilepath:system_cpu_by_day_heatmap_AVG.csv
+      - pngfilepath:system_cpu_by_day_heatmap_AVG.png
+      - title:Average Active CPU (COD Adjusted) - {{ siteid }}
       - height:6
       - width:12
       - annotate:{{ annotate_chart | default('True') }}
@@ -163,12 +174,12 @@ tasks:
 - name: Export System CPU by Day of Week for HeatMap
   connect: source
   export:
-    file: system_cpu_by_dayofweek_heatmap.csv
+    file: system_cpu_by_dayofweek_heatmap_AVG.csv
     sql: |
       Select
        cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
       ,LogHr as "Hour"
-      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS + CPU_Full_IOWait as decimal(38,4)))
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS as decimal(38,4)))
       / sum(cast(CPU_COD_Active_Total as decimal(38,4)))) * 100.00 as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
@@ -178,9 +189,75 @@ tasks:
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
     params:
-      - csvfilepath:system_cpu_by_dayofweek_heatmap.csv
-      - pngfilepath:system_cpu_by_dayofweek_heatmap.png
-      - title:System CPU (COD Adjusted) - {{ siteid }}
+      - csvfilepath:system_cpu_by_dayofweek_heatmap_AVG.csv
+      - pngfilepath:system_cpu_by_dayofweek_heatmap_AVG.png
+      - title:Average Active CPU (COD Adjusted) - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmax:100
+      - heatmapmin:0
+
+
+# ----------------------------------------------------------------
+# ----------------------------------------------------------------
+#  Max CPU pulls and graphs
+# ----------------------------------------------------------------
+# ----------------------------------------------------------------
+
+- name: Export MAX CPU for Heatmap (AvgMax)
+  connect: source
+  export:
+    file: system_cpu_by_day_heatmap_MAX.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,LogHr as "Hour"
+      ,avg(CPU_Busy_AvgMaxPct) * 100.00 as "Peak CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart MAX CPU - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_cpu_by_day_heatmap_MAX.csv
+      - pngfilepath:system_cpu_by_day_heatmap_MAX.png
+      - title:Peak CPU (COD Adjusted) - {{ siteid }}
+      - height:6
+      - width:12
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmax:100
+      - heatmapmin:0
+
+
+
+- name: Export MAX CPU by Day of Week for HeatMap (AvgMax)
+  connect: source
+  export:
+    file: system_cpu_by_dayofweek_heatmap_MAX.csv
+    sql: |
+      Select
+       cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+      ,LogHr as "Hour"
+      ,avg(CPU_Busy_AvgMaxPct) * 100.00 as "Peak CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart MAX CPU - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:system_cpu_by_dayofweek_heatmap_MAX.csv
+      - pngfilepath:system_cpu_by_dayofweek_heatmap_MAX.png
+      - title:Peak CPU (COD Adjusted) - {{ siteid }}
       - height:6
       - width:3
       - annotate:{{ annotate_chart | default('True') }}

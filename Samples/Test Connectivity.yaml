@@ -2,7 +2,6 @@ description: >
   This simple process connects to a system and exports the dbc.dbcinfo table.
   It is intended only as a connectivity check.
 
-
 tasks:
 
 # SQL can be placed inline, as shown here:

@@ -1,7 +1,15 @@
 description: Generates the Snowflake Competitive Powerpoint deck, designed to be customer facing.  Please see the associated training, linked in the HELP section.
 version: 1
-# add this line to skip duplicate CREATE vt_* statements :
-{% set run = namespace(completed=[]) if run is not defined else run %}
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
+
 
 # set master default for start/end date in this solution to 6wks, unless otherwise defined
 {% set startdate   = 'DATE-42' if startdate is not defined else startdate %}
@@ -20,6 +28,15 @@ tasks:
 {% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
 
+
+{% set prebuild_files = [] %}
+
+- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
+  script:
+    command: scripts/fix_allreturnfile_placeholders.py
+    params:
+      - "Competition - Snowflake.yaml"
+      - "{{ prebuild_files|join(',') }}"
 
 
 - name: "Export Site and CSM information (if available) for  pptx title slide"

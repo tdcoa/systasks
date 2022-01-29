@@ -228,16 +228,16 @@
             ,case when ReqIOKB      >(10**38) then 0 else ReqIOKB      end as ReqIOKB_
             ,case when ReqPhysIO    >(10**38) then 0 else ReqPhysIO    end as ReqPhysIO_
             ,case when ReqPhysIOKB  >(10**38) then 0 else ReqPhysIOKB  end as ReqPhysIOKB_
-            {% if td15 %}
             ,0 as UsedIota_
-            {% else %}
-            ,case when UsedIota     >(10**38) then 0 else UsedIota     end as UsedIota_
-            {% endif %}
 
             /* ====== Metrics: Other ====== */
             ,SpoolUsage, NumResultRows, NumOfActiveAMPs, NumSteps, TotalServerByteCount
             from {{ dbc.log }} as d
             where {{ dbc.logdt }} in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            and TotalIOCount_ < (10**34)
+            and ReqIOKB_      < (10**34)
+            and ReqPhysIO_    < (10**34)
+            and ReqPhysIOKB_  < (10**34)
 
         ),
 
@@ -444,16 +444,16 @@
             ,cast(0                                                           as bigint       ) as ReqIOKB_
             ,cast(case when ReqPhysIOKB >(10**38) then 0 else ReqPhysIOKB end as decimal(38,2)) as ReqPhysIOKB_
             {% endif %}
-            {% if td15 %}
             ,0 as UsedIota_
-            {% else %}
-            ,case when UsedIota     >(10**38) then 0 else UsedIota     end as UsedIota_
-            {% endif %}
 
             /* ====== Metrics: Other ====== */
             ,0 SpoolUsage, 0 NumResultRows, 0 NumOfActiveAMPs, 0 NumSteps, 0 TotalServerByteCount
             From {{ dbc.summary }} smry
             where LogDate in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            and TotalIOCount_ < (10**34)
+            and ReqIOKB_      < (10**34)
+            and ReqPhysIO_    < (10**34)
+            and ReqPhysIOKB_  < (10**34)
 
         ),
 

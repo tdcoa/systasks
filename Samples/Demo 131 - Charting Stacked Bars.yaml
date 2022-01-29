@@ -1,6 +1,17 @@
 description: >
   This demonstrated COA charting of HEATMAPS in action, from pulling data through generating
   the final graph.
+version: 1
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
+
 
 
 tasks:

@@ -1,10 +1,18 @@
 description: Download vt_dbql_core_daily output.  One year (365 days) on Transcend Production ran for 5min and generated 56k rows, for a filesize of 18MB.
 version: 1
 tasks:
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
 
-{% set run = namespace(completed=[]) if run is not defined else run %}
+
 {% include "vt_dbql_core.j2" %}
-
 {% set export_all = True if export_all is not defined else export_all %}
 {% set chart = True if chart is not defined else chart %}
 

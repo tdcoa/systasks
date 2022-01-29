@@ -1,6 +1,15 @@
 description: Generate vt_dbc_column_summary containing summary information on all columns in the database (from dbc.ColumnsV), including data types, column types, identity columns, formatted flags, as well as aggregated categories, along with column counts.  This is all summary only, and does NOT include column/table/database names.
 version: 1
 tasks:
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
 
 {% include "vt_dbc_column_summary.j2" %}
 

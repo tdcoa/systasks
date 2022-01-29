@@ -1,0 +1,86 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_System_CPU_by_Day' in run.completed %}
+
+{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+
+
+- name:  "Create vt_System_CPU_by_Day"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_System_CPU_by_Day as
+      (
+        Select '{{ siteid }}' as Site_ID
+        ,cast(TheDate as format 'Y4-MM-DD') as LogDate
+        {% if logts %}
+        ,cast(theTime/100 as int)-(LogHr*100) as LogMin
+        ,cast(theTime/10000 as int) as LogHr
+        ,cast(
+         cast(cast(theDate as date format 'yyyy-mm-ddb') as char(11)) ||
+         cast(cast(LogHr as int format '99:') as char(3)) ||
+         cast(cast(LogMin as int format '99') as char(2)) || ':00'
+         as timestamp(0)) as LogTS
+        {% endif %}
+        ,SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
+        ,cast(max(NodeType) as varchar(10)) as Node_Type
+        ,cast(count(distinct NodeID) as smallint) as Node_Cnt
+        ,cast(max(NCPUs) as smallint) as vCPU_per_Node
+        ,{{ pm_cod_cpu }}   as CPU_COD_PM_Active_Pct
+        ,{{ wlm_cod_cpu }}  as CPU_COD_WLM_Active_Pct
+        ,{{ epod_cod_cpu }} as CPU_COD_EPOD_Active_Pct
+        ,cast(CPU_COD_WLM_Active_Pct   * CPU_COD_EPOD_Active_Pct * CPU_COD_PM_Active_Pct as decimal(9,6)) as CPU_COD_Total_Active_Pct
+        -- Raw CPU, aka reported right out of ResUsage
+        ,sum(cast(CPUIdle   as decimal(18,0))) as CPU_Idle
+        ,sum(cast(CPUIOWait as decimal(18,0))) as CPU_IOWait
+        ,sum(cast(CPUUServ  as decimal(18,0))) as CPU_OS
+        ,sum(cast(CPUUExec  as decimal(18,0))) as CPU_DBS
+        ,CPU_Idle+CPU_IOWait+CPU_OS+CPU_DBS    as CPU_Total
+        -- CPU after scaled-up for PM-COD
+           /* Unlike WLM/EPOD, PM-COD is already part of the Raw ResUsage Numbers
+              The below section scales-up the system CPU to 'full' amount, absent PM-COD */
+        ,CPU_Idle + (CPU_Full_Total - CPU_Total)      as CPU_Full_Idle
+        ,CPU_IOWait /* don't scale up consumption */  as CPU_Full_IOWait
+        ,CPU_OS     /* don't scale up consumption */  as CPU_Full_OS
+        ,CPU_DBS    /* don't scale up consumption */  as CPU_Full_DBS
+        ,CPU_Total  / CPU_COD_PM_Active_Pct as CPU_Full_Total
+        -- COD-Active
+        ,CPU_Full_Total * CPU_COD_Total_Active_Pct  as CPU_COD_Active_Total
+        ,CPU_Full_Total * CPU_COD_PM_Active_Pct     as CPU_COD_Active_After_PM
+        ,CPU_Full_Total * CPU_COD_WLM_Active_Pct    as CPU_COD_Active_After_WLM
+        ,CPU_Full_Total * CPU_COD_EPOD_Active_Pct   as CPU_COD_Active_After_EPOD
+        -- COD-Inactive
+        ,CPU_Full_Total - CPU_COD_Active_Total      as CPU_COD_Inactive_Total
+        ,CPU_Full_Total - CPU_COD_Active_After_PM   as CPU_COD_Inactive_PM
+        ,CPU_Full_Total - CPU_COD_Active_After_WLM  as CPU_COD_Inactive_WLM
+        ,CPU_Full_Total - CPU_COD_Active_After_EPOD as CPU_COD_Inactive_EPOD
+        -- CPU Consumed % of Full Platform Available (No COD)
+        ,cast(CPU_Full_Idle    as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_Idle_Pct_of_Full
+        ,cast(CPU_Full_IOWait  as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_IOWait_Pct_of_Full
+        ,cast(CPU_Full_OS      as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_OS_Pct_of_Full
+        ,cast(CPU_Full_DBS     as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_DBS_Pct_of_Full
+        -- CPU Consumed % of Active Available post-COD
+        ,cast(CPU_COD_Active_Total - (CPU_Full_OS+CPU_Full_DBS+CPU_Full_IOWait) as decimal(38,6))
+        /cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_Idle_Pct_of_Active
+        ,cast(CPU_Full_IOWait  as decimal(38,6))/ cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_IOWait_Pct_of_Active
+        ,cast(CPU_Full_OS      as decimal(38,6))/ cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_OS_Pct_of_Active
+        ,cast(CPU_Full_DBS     as decimal(38,6))/ cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_DBS_Pct_of_Active
+        ,sum(cast(FullPotentialIOTA/1e9 as decimal(18,0))) as MaxIOTA_cntB
+        ,SUM(HostReadKB) as HostRead_KB
+        ,SUM(HostWriteKB) as HostWrite_KB
+        from {{ dbc.spma }}
+        where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+        Group by LogDate
+        {{ ',LogTS, LogHr, LogMin' if logts else '' }}
+      ) with data
+        primary index (LogDate)
+        on commit preserve rows
+
+- name:  "Collect Stats"
+  connect: source
+  execute:
+    sql: collect stats on vt_System_CPU_by_Day column(LogDate)
+
+{% endif %}
+{{ run.completed.append('vt_System_CPU_by_Day') or '' }}

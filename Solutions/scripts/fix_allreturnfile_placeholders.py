@@ -35,6 +35,68 @@ csv_stub = ','.join(['no_data_%i' %i for i in range(1,stubbed_column_count+1)]) 
 tsv_stub = '\t'.join(['no_data_%i' %i for i in range(1,stubbed_column_count+1)]) + '\n' + '\t'.join(['0' for i in range(1,stubbed_column_count+1)])
 
 
+
+def fix_tsv_content(tsvfilecontent, consecutive_spaces_to_equal_tab:int=2):
+    lines = tsvfilecontent.split('\n')
+    rows = []
+    first_row_column_count = 0
+
+    for line in lines:
+        # if it appears to be TSV already, just use the tab delimiter (stripping out extra space)
+        if '\t' in line:
+            rows.append('\t'.join([str(c).strip() for c in list(line.split('\t'))]))
+
+        # otherwise, proceed to try and guess where tabs go:
+        elif line !='':
+            cols = []
+            colstart = 0
+            found_first_nonspace = True
+            consecutive_spaces = 0
+            end_of_line = False
+
+            for pos in range(0, len(line)):
+                end_of_line = pos >= len(line)-1
+                char = line[pos:pos+1]
+                if char != ' ': found_first_nonspace = True
+
+                if found_first_nonspace or end_of_line:
+                    # look if we've traversed 3 spaces consecutively
+                    if char == ' ':
+                        consecutive_spaces +=1
+                    else:
+                        consecutive_spaces = 0
+                    # if so, capture current column data, and setup for next column
+                    if consecutive_spaces >= consecutive_spaces_to_equal_tab or end_of_line:
+                        cols.append( line[colstart: pos + end_of_line].strip() )
+                        colstart = pos
+                        found_first_nonspace = False
+                        consecutive_spaces = 0
+
+            # make sure data column count == header column count
+            coltxt = '\t'.join(cols)
+            column_count = len(coltxt.split('\t'))
+            if rows == []:
+                first_row_column_count = column_count
+            else:
+                if column_count < first_row_column_count:
+                    cols = coltxt.split('\t')
+                    for i in range(0, first_row_column_count - column_count):
+                        cols.append('')
+                    coltxt = '\t'.join(cols)
+                    column_count = len(coltxt.split('\t'))
+                elif column_count > first_row_column_count:
+                    log.debug(f"you're fucked: your file is all sorts of screwed up. go manually fix it.")
+
+            # append to the final row list, and go to the next line
+            rows.append( coltxt )
+
+    # return all rows as one big string
+    return '\n'.join(rows)
+
+
+
+
+
 try:
     files = list(extrafilenames.split(','))
 except Exception as ex:
@@ -135,6 +197,10 @@ for file in files:
 
             # if we could figure out encoding:
             log.debug(f'  {len(filecontent)} bytes read')
+
+        # ensure that TSV formats are indeed tab-separated values
+        log.debug('making sure TSV are, in fact, Tab-Separated Values and not fixed-width')
+        filecontent = fix_tsv_content(filecontent)
 
         # write back file content into uft-8 format:
         log.debug(f'  writing file back as utf-8 format')

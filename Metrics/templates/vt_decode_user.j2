@@ -110,7 +110,7 @@
   execute:
     sql: |
       update vt_decode_user  SET
-       UserName     = case when coalesce(UserName     , '') in('','null') then 'Unknown' else trim(UserName)     end
+       UserName     = case when coalesce(UserName     , '') in('','null') then 'Unknown' else     (UserName)     end
       ,UserType     = case when coalesce(UserType     , '') in('','null') then 'Unknown' else trim(UserType)     end
       ,Organization = case when coalesce(Organization , '') in('','null') then 'Unknown' else trim(Organization) end
       ,Department   = case when coalesce(Department   , '') in('','null') then 'Unknown' else trim(Department)   end

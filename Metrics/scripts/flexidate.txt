@@ -1,0 +1,42 @@
+
+-- make dates more flexible: StartDate
+{% set startdate = 'date-31' if startdate is not defined else startdate %}
+{% if "date" in startdate.lower() %}
+  -- Date looks like a SQL standard "DATE" or "Current_Date" function, no work needed
+{% elif "select" in startdate.lower() %}
+  -- Date looks like a SQL subselect, no work needed
+{% elif "/" in startdate %}
+  -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
+  {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
+  {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
+  {% set startyear  = startdate.split("/")[2] %}
+  {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+{% elif "-" in startdate %}
+  -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
+  {% set startyear  = startdate.replace("'","").split("-")[0] %}
+  {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
+  {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
+  {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+{% endif %}
+-- startdate: {{ startdate }}
+
+-- make dates more flexible: EndDate
+{% set enddate = 'date-1' if enddate is not defined else enddate %}
+{% if "date" in enddate.lower() %}
+  -- Date looks like a SQL standard "DATE" or "Current_Date" function, no work needed
+{% elif "select" in enddate.lower() %}
+  -- Date looks like a SQL subselect, no work needed
+{% elif "/" in enddate %}
+  -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
+  {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
+  {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
+  {% set endyear  = enddate.split("/")[2] %}
+  {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+{% elif "-" in startdate %}
+  -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
+  {% set endyear  = enddate.replace("'","").split("-")[0] %}
+  {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
+  {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
+  {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+{% endif %}
+-- enddate: {{ enddate }}

@@ -1,7 +1,14 @@
 description: "Runs DBQL_Core and upload results to Transcend, including both the existing COA table (adlste_coa.coa_dat_DBQL_Core) which covers existing PowerBI reporting, as well as the new COA table (adlste_coa.coa_dat_DBQL_Core2) which includes more request/statement breakouts for more nuanced querycount designs.  See the 'Help' article for more details. "
 version: 1
-# add this line to skip duplicate CREATE vt_* statements :
-{% set run = namespace(completed=[]) if run is not defined else run %}
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
 
 
 tasks:

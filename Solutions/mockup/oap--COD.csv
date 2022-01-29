@@ -1,0 +1,5 @@
+'CPULimit',CPULimit
+# AMPs,0
+# Nodes,0
+CPULimit,100
+IOLimit,100

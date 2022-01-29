@@ -4,6 +4,26 @@ description: >
   calendar table with a random number generator, which is saved to both a .csv
   and a graph.  All save output to the defined "Out" directory.
 
+# this is informational only, not really used:
+version: 1
+
+# this pre-process section manages 2 things:
+#  - tracks volatile tables created, so we don't error trying to create twice
+#  - hardens start/end dates, so it's not quite so picky about format
+# everything runs without the below section, just minus the above functionality
+
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
+
+
+
 # as an aside: the above description text will wrap, because of the ">" character.
 # change that character to a pipe "|" and it will preserve linebreaks
 

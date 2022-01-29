@@ -11,15 +11,15 @@
   -- Date looks like a SQL subselect, no work needed
 {% elif "/" in startdate %}
   -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
-  {% set startmonth = startdate.split("/")[0] %}
-  {% set startday   = startdate.split("/")[1] %}
+  {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
+  {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
   {% set startyear  = startdate.split("/")[2] %}
   {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
 {% elif "-" in startdate %}
   -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
   {% set startyear  = startdate.replace("'","").split("-")[0] %}
-  {% set startmonth = startdate.replace("'","").split("-")[1] %}
-  {% set startday   = startdate.replace("'","").split("-")[2] %}
+  {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
+  {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
   {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
 {% endif %}
 -- startdate: {{ startdate }}
@@ -32,20 +32,20 @@
   -- Date looks like a SQL subselect, no work needed
 {% elif "/" in enddate %}
   -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
-  {% set endmonth = enddate.split("/")[0] %}
-  {% set endday   = enddate.split("/")[1] %}
+  {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
+  {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
   {% set endyear  = enddate.split("/")[2] %}
   {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
 {% elif "-" in startdate %}
   -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
   {% set endyear  = enddate.replace("'","").split("-")[0] %}
-  {% set endmonth = enddate.replace("'","").split("-")[1] %}
-  {% set endday   = enddate.replace("'","").split("-")[2] %}
+  {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
+  {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
   {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
 {% endif %}
 -- enddate: {{ enddate }}
 
-CREATE VOLATILE MULTISET TABLE vt_gssresusage as (
+CREATE VOLATILE MULTISET TABLE vt_gssresusage_prework as (
 sel
 'TD17v1.0' (named "Version")
 ,spma_dt.LogDate (named "LogDate")

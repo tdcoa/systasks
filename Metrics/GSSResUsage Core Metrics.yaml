@@ -1,0 +1,41 @@
+description: Generates volatile table with core GSS ResUsage metrics, mostly around System CPU and IO.
+version: 1
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
+### import macro to harden start/end dates:
+{% import "coa_util.j2" as macro with context %}
+{{ macro.harden_dates(run, startdate, enddate) }}
+{% set startdate = run.dates[0] %}
+{% set enddate = run.dates[1] %}
+### ============= STANDARD PRE-PROCESSING =============
+
+# set defaults:
+{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+{% set totalactive_cod_cpu = wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu | round(6) %}
+
+{% set fileprefix = 'gssresusage' %}
+
+tasks:
+{% include "vt_gssresusage_core.j2" %}
+
+- name: export final GSSResUsage_Core.csv file
+  connect: source
+  export:
+    sql: Select * from vt_gssresusage_core order by logts
+    file: {{ fileprefix }}--full_export.csv
+
+- name: export system details from GSSResUsage
+  connect: source
+  export:
+    file: {{ fileprefix }}--system_detail.csv
+    sql: |
+      select Site_ID, NodeGen, DBSRelease, PMCOD, WMCOD, IOCOD, Amps as AMPs_perNode, CPUs as CPUs_perNode, avg(MaxMemSizeGB) as MemGB_perNode
+      ,NumNodes as NodeCount
+      ,Amps_perNode  * NodeCount as AMPs_Total
+      ,CPUs_perNode  * NodeCount as CPUs_Total
+      ,MemGB_perNode * NodeCount as MemGB_Total
+      from vt_gssresusage_core
+      group by Site_ID, NodeGen, DBSRelease, PMCOD, WMCOD, IOCOD, Amps, CPUs, NumNodes
