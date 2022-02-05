@@ -1,7 +1,9 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_decode_user' in run.completed %}
 
+{% set skip_userinfo = false if skip_userinfo is not defined else skip_userinfo %}
 {% include "vt_decode_tdbinternal.j2" %}
+
 
 # variables
 #  expected: pdcr, startdate, enddate
@@ -42,7 +44,8 @@
 {% endif %}
 
 
-{% if pdcr %}
+{% if pdcr  and  not skip_userinfo %}
+
 - name: If PDCR, insert PDCRInfo.UserInfo information into vt_decode_user, if missing
   connect: source
   execute:
