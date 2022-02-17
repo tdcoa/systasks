@@ -132,13 +132,22 @@
   # track original values for those modified below, for reconciliation
   {% set orig = {} %}
 
+  # set defaults explicitly, or else the orig dict load will fail...
+  {% set your_name     = 'your_name'     if your_name      is not defined else your_name     %}
+  {% set your_title    = 'your_title'    if your_title     is not defined else your_title    %}
+  {% set customer_name = 'customer_name' if customer_name  is not defined else customer_name %}
+  {% set startdate = 'DATE-31' if startdate is not defined else startdate %}
+  {% set enddate   = 'DATE-01' if enddate   is not defined else enddate   %}
+  {% set tdver     = '17.05'   if tdver     is not defined else tdver     %}
+  {% set pdcr      = true      if pdcr      is not defined else pdcr      %}
+  {% set siteid    = 'siteid'  if siteid    is not defined else siteid    %}
+
   {{ orig.__setitem__('startdate',     startdate    )  or '' }}
   {{ orig.__setitem__('enddate',       enddate      )  or '' }}
   {{ orig.__setitem__('tdver',         tdver        )  or '' }}
   {{ orig.__setitem__('your_name',     your_name    )  or '' }}
   {{ orig.__setitem__('your_title',    your_title   )  or '' }}
   {{ orig.__setitem__('customer_name', customer_name )  or '' }}
-
 
   # make dates more flexible: StartDate
   {% set startdate = 'date-31' if startdate is not defined else startdate %}
@@ -231,6 +240,13 @@
       ,'{{ epod_cod_io  | default(1.00)  }}' as EPOD_COD_IO
       ,'{{ reconcile    | default(false) }}' as Reconcile
       ,'{{ custom_decode_folder }}' as Custom_Decode_Folder
+
+# report out logging rules:
+- name: RECONCILE DBQLogRules
+  connect: source
+  export:
+    file: reconcile_logging_rules.csv
+    sql: select * from dbc.dbqlrulesv  order by 1
 
 
   {% set context.variables = {"startdate":startdate, "enddate":enddate
