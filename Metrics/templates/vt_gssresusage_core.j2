@@ -5,6 +5,7 @@
 {% set tdv = tdver[:2] | int %}
 {% set tdversion = tdver.replace('.','') %}
 {% set pdcrstr = 'pdcr' if pdcr else 'dbc' %}
+{% set save_prework = false if save_prework is not defined else save_prework %}
 
 {% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
 {% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
@@ -39,7 +40,7 @@
        ,cast(  Minute10                           as  SMALLINT)          as Minute10
        ,cast(  RSSInterval                        as  SMALLINT)          as RSSInterval
        ,cast(  NodeGen                            as  VARCHAR(8) )       as NodeGen
-       ,cast(  AMPS                               as  VARCHAR(128))      as AMPS  -- can be "PI-Only Node" 
+       ,cast(  AMPS                               as  VARCHAR(128))      as AMPS  -- can be "PI-Only Node"
        ,cast(  CPUs                               as  SMALLINT)          as CPUs
        ,cast(  DBSRelease                         as  VARCHAR(50) )      as DBSRelease
        ,cast(  PMCOD                              as  SMALLINT)          as PMCOD
@@ -257,10 +258,12 @@
         ,column(LogDate)
       on vt_gssresusage_core
 
+{% if not save_prework %}
 - name: Drop Prework
   connect: source
   execute:
     sql: drop table vt_gssresusage_prework
+{% endif %}
 
 {% endif %}
 {{ run.completed.append('vt_gssresusage_core') or '' }}

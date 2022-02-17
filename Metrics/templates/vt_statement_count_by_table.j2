@@ -22,11 +22,11 @@
       insert into vt_statement_count_by_table_prework
       {% endif %}
         Select
-           {{ dbc.logdt }} as LogDate
-          ,o.ObjectDatabaseName as DatabaseName
-          ,o.ObjectTableName as TableName
-          ,l.StatementType
-          ,count(*) as Request_Count
+           {{ dbc.logdt }} (DATE) as LogDate
+          ,cast(o.ObjectDatabaseName as VARCHAR(256)) as DatabaseName
+          ,cast(o.ObjectTableName    as VARCHAR(256)) as TableName
+          ,cast(l.StatementType      as VARCHAR(256)) as StatementType
+          ,cast(count(*)             as BIGINT)       as Request_Count
         from {{ dbc.log }} as l
         join (Select
               {% if pdcr %}

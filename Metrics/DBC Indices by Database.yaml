@@ -1,15 +1,25 @@
 description: Export table vt_dbc_indices_by_database
-version: 0
+
 tasks:
+
 ### ============= STANDARD PRE-PROCESSING =============
 # SETUP run context, and skip duplicate CREATE vt_* statements :
-{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
-### import macro to harden start/end dates:
+{% set run = namespace(completed=[], variables={}) if run is not defined else run %}
+### Macro imported below will validate /correct a subset of variables,
+### then export ALL variables to a reconcile_variables.csv
+### Hence, this process must run AFTER the "tasks:" node
 {% import "coa_util.j2" as macro with context %}
-{{ macro.harden_dates(run, startdate, enddate) }}
-{% set startdate = run.dates[0] %}
-{% set enddate = run.dates[1] %}
+{{ macro.validate_variables(run) }}
+### return corrected variables to the main namespace:
+{% set startdate     = run.variables['startdate']     %}
+{% set enddate       = run.variables['enddate']       %}
+{% set your_name     = run.variables['your_name']     %}
+{% set your_title    = run.variables['your_title']    %}
+{% set customer_name = run.variables['customer_name'] %}
+{% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
+{% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
 ### ============= STANDARD PRE-PROCESSING =============
+
 
 {% include "vt_dbc_indices_by_database.j2" %}
 

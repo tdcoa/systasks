@@ -121,3 +121,125 @@
   {{ context.dates.append( startdate ) or '' }}
   {{ context.dates.append(  enddate  ) or '' }}
 {%- endmacro %}
+
+
+
+
+
+###### make the StartDate//EndDate a little more hardy...
+{% macro validate_variables(context) -%}
+
+  # track original values for those modified below, for reconciliation
+  {% set orig = {} %}
+
+  {{ orig.__setitem__('startdate',     startdate    )  or '' }}
+  {{ orig.__setitem__('enddate',       enddate      )  or '' }}
+  {{ orig.__setitem__('tdver',         tdver        )  or '' }}
+  {{ orig.__setitem__('your_name',     your_name    )  or '' }}
+  {{ orig.__setitem__('your_title',    your_title   )  or '' }}
+  {{ orig.__setitem__('customer_name', customer_name )  or '' }}
+
+
+  # make dates more flexible: StartDate
+  {% set startdate = 'date-31' if startdate is not defined else startdate %}
+  {% if "date" in startdate.lower() %}
+  {% elif "select" in startdate.lower() %}
+  {% elif "/" in startdate %}
+    {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
+    {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
+    {% set startyear  = startdate.split("/")[2] %}
+    {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+  {% elif "-" in startdate %}
+    {% set startyear  = startdate.replace("'","").split("-")[0] %}
+    {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
+    {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
+    {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+  {% endif %}
+
+  # make dates more flexible: EndDate
+  {% set enddate = 'date-1' if enddate is not defined else enddate %}
+  {% if "date" in enddate.lower() %}
+  {% elif "select" in enddate.lower() %}
+  {% elif "/" in enddate %}
+    {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
+    {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
+    {% set endyear  = enddate.split("/")[2] %}
+    {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+  {% elif "-" in startdate %}
+    {% set endyear  = enddate.replace("'","").split("-")[0] %}
+    {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
+    {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
+    {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+  {% endif %}
+
+  {% set your_name     = your_name.replace("'","''")     %}
+  {% set your_title    = your_title.replace("'","''")    %}
+  {% set customer_name = customer_name.replace("'","''") %}
+  {% set tdver         = '{:0<5}'.format(tdver[:5]) %}
+  {% set td15 = true if tdver[:2]=='15' else false %}
+  {% set td16 = true if tdver[:2]=='16' else false %}
+  {% set td17 = true if tdver[:2]=='17' else false %}
+
+# report out all variables:
+- name: RECONCILE variables (coa_util.validate_variables())
+  connect: source
+  export:
+    file: reconcile_variables.csv
+    sql: |
+      Select
+      /* Variables, for easy reading in Explain
+        Originals:
+        -- {{ orig['startdate']     }} as startdate
+        -- {{ orig['enddate']       }} as enddate
+        -- {{ orig['your_name']     }} as your_name
+        -- {{ orig['your_title']    }} as your_title
+        -- {{ orig['customer_name'] }} as customer_name
+        -- {{ orig['tdver']         }} as tdver
+        Modified:
+        -- {{ startdate }} as startdate_final
+        -- {{ enddate }} as enddate_final
+        -- {{ your_name }} as your_name
+        -- {{ your_title }} as your_title
+        -- {{ customer_name }} as customer_name
+        -- {{ tdver }} as tdver
+        Non-Modified found in SQL below
+      */
+       '{{ siteid }}' as SiteID
+      ,'{{ site_type }}' as Site_Type
+      ,'{{pdcr}}' as PDCR
+      ,(select case when count(*)=0 then 'False' else 'True' End
+        from dbc.tablesv where databasename='pdcrinfo' and tablename='dbqlogtbl_hst') as PDCR_DBFound
+      ,'{{ tdver }}' as TDVer
+      ,(select InfoData from dbc.dbcinfo where infokey='VERSION') as TDVer_DBReported
+      ,'{{ td15 }}' as TD15
+      ,'{{ td16 }}' as TD16
+      ,'{{ td17 }}' as TD17
+      ,{{ startdate }} as StartDate
+      ,{{ enddate }} as EndDate
+      ,'{{ your_name }}' as YourName
+      ,'{{ your_title }}' as YourTitle
+      ,'{{ customer_name }}' as CustomerName
+      ,USER as Executing_User
+      ,(select trim(cast(SpoolSpace/1e9 as INT)(varchar(64))) x from dbc.users where username = USER) as Executing_User_SpoolGB
+      ,current_timestamp(0) as Run_Timestamp
+      ,cast(cast(Run_Timestamp as DATE format 'mmmmbddbyyyy')as varchar(20)) as Run_Date
+      ,{{process_chunks | default(1) }} as Process_Chunks
+      ,'{{ pm_cod_cpu   | default(1.00)  }}' as PM_COD_CPU
+      ,'{{ wlm_cod_cpu  | default(1.00)  }}' as WLM_COD_CPU
+      ,'{{ epod_cod_cpu | default(1.00)  }}' as EPOD_COD_CPU
+      ,'{{ wlm_cod_io   | default(1.00)  }}' as WLM_COD_IO
+      ,'{{ epod_cod_io  | default(1.00)  }}' as EPOD_COD_IO
+      ,'{{ reconcile    | default(false) }}' as Reconcile
+      ,'{{ custom_decode_folder }}' as Custom_Decode_Folder
+
+
+  {% set context.variables = {"startdate":startdate, "enddate":enddate
+                            ,"your_name":your_name
+                            ,"your_title":your_title
+                            ,"customer_name":customer_name
+                            ,"tdver":tdver
+                            ,"td15":td15
+                            ,"td16":td16
+                            ,"td17":td17
+                            } %}
+{%- endmacro %}

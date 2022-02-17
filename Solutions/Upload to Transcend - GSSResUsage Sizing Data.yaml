@@ -1,36 +1,275 @@
 description: "Selects and Runs the GSSResUsage sizing SQL, and upload results to Transcend."
-version: 1
-### ============= STANDARD PRE-PROCESSING =============
-# SETUP run context, and skip duplicate CREATE vt_* statements :
-{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
-### import macro to harden start/end dates:
-{% import "coa_util.j2" as macro with context %}
-{{ macro.harden_dates(run, startdate, enddate) }}
-{% set startdate = run.dates[0] %}
-{% set enddate = run.dates[1] %}
-### ============= STANDARD PRE-PROCESSING =============
 
 # set defalts:
 {% set upload = True if upload is not defined else upload %}
 {% set reconcile = True if reconcile is not defined else reconcile %}
+{% set save_prework = true if save_prework is not defined else save_prework %}
 {% set gtt_db        = 'APP_TCA_TMP' if gtt_db is not defined else gtt_db %}
 {% set sp_db         = 'APP_TCA_TBL' if sp_db  is not defined else sp_db %}
 {% set dbprefix      = '' %}
+
+tasks:
+
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], variables={}) if run is not defined else run %}
+### Macro imported below will validate /correct a subset of variables,
+### then export ALL variables to a reconcile_variables.csv
+### Hence, this process must run AFTER the "tasks:" node
+{% import "coa_util.j2" as macro with context %}
+{{ macro.validate_variables(run) }}
+### return corrected variables to the main namespace:
+{% set startdate     = run.variables['startdate']     %}
+{% set enddate       = run.variables['enddate']       %}
+{% set your_name     = run.variables['your_name']     %}
+{% set your_title    = run.variables['your_title']    %}
+{% set customer_name = run.variables['customer_name'] %}
+{% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
+{% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
+### ============= STANDARD PRE-PROCESSING =============
 
 {% set tdv = tdver[:2] | int %}
 {% set tdversion = tdver.replace('.','') %}
 {% set pdcrstr = 'pdcr' if pdcr else 'dbc' %}
 
-tasks:
 
+### the "skip_export" flag skips the data export, and
+### drops right down to data import.  This allows for the
+### introduction of older / preexisting files for upload
 {% if not skip_export %}
 {% include "vt_gssresusage_core.j2" %}
 
-- name: export final GSSResUsage_Core.csv file
+{% if save_prework %}
+- name: export raw (original format) GSSResUsage.csv
   connect: source
   export:
-    sql: Select * from vt_gssresusage_core order by logts
+    sql: Select * from vt_gssresusage_prework order by 5
+    file: {{ fileprefix }}--{{ siteid }}_raw.csv
+{% endif %}
+
+- name: export final (tdver agnostic) GSSResUsage_Core.csv
+  connect: source
+  export:
     file: gssresusage_core.csv
+    sql: |
+      Select
+       "tca_system_id"
+      ,"gss_qry_vrsn"
+      ,"LogDate"
+      ,"LogDOW"
+      ,"LogTime"
+      ,"LogTs"
+      ,"LogHr"
+      ,"Minute10"
+      ,"RSSInterval"
+      ,"NodeGen"
+      ,"AMPS"
+      ,"CPUs"
+      ,"DBSRelease"
+      ,"PMCOD"
+      ,"WMCOD"
+      ,"IOCOD"
+      ,"MinMemSizeGB"
+      ,"MaxMemSizeGB"
+      ,"NumNodes"
+      ,"AvgCPUBusy"
+      ,"MaxCPUBusy"
+      ,"AvgPctOSCPU"
+      ,"MaxPctOSCPU"
+      ,"AvgPctIOWait"
+      ,"AvgRunQSz"
+      ,"MaxRunQSz"
+      ,"MaxPctIOWait"
+      ,"PctReadsCnt"
+      ,"PctReadsKB"
+      ,"AvgPosReadSec"
+      ,"AvgPreReadSec"
+      ,"AvgWriteSec"
+      ,"AvgIOPsSec"
+      ,"MaxIOPsSec"
+      ,"AvgMBSecNode"
+      ,"MaxMBSecNode"
+      ,"AvgReadMBSecNode"
+      ,"AvgWriteMBSecNode"
+      ,"TtlMBSecGen"
+      ,"TtlReadMBSecGen"
+      ,"TtlWriteMBSecGen"
+      ,"TtlPosReadSecGen"
+      ,"TtlPreReadSecGen"
+      ,"TtlWriteSecGen"
+      ,"KBRead"
+      ,"KBWrite"
+      ,"PermCacheEffKB"
+      ,"SpoolCacheEffKB"
+      ,"TotalCacheEffKB"
+      ,"PermCacheEffCnt"
+      ,"SpoolCacheEffCnt"
+      ,"PermDBCacheEffCnt"
+      ,"PermCICacheEffCnt"
+      ,"SpoolDBCacheEffCnt"
+      ,"SpoolCICacheEffCnt"
+      ,"LogPermDBSecNode_SVPR"
+      ,"LogPermCISecNode_SVPR"
+      ,"LogSpoolDBSecNode_SVPR"
+      ,"LogSpoolCISecNode_SVPR"
+      ,"PhySpoolDBSecNode_SVPR"
+      ,"PhySpoolCISecNode_SVPR"
+      ,"PhyPermDBSecNode_SVPR"
+      ,"PhyPermCISecNode_SVPR"
+      ,"LogPermReadSecNode_SVPR"
+      ,"LogSpoolReadSecNode_SVPR"
+      ,"LogPermReadMBSecNode_SVPR"
+      ,"LogSpoolReadMBSecNode_SVPR"
+      ,"PhyPermPosReadMBSecNode_SVPR"
+      ,"PhyPermPreReadMBSecNode_SVPR"
+      ,"PhySpoolPosReadMBSecNode_SVPR"
+      ,"PhySpoolPreReadMBSecNode_SVPR"
+      ,"PhyPermPosReadSecNode_SVPR"
+      ,"PhyPermPreReadSecNode_SVPR"
+      ,"PhySpoolPosReadSecNode_SVPR"
+      ,"PhySpoolPreReadSecNode_SVPR"
+      ,"PhyPermWriteSecNode_SVPR"
+      ,"PhySpoolWriteSecNode_SVPR"
+      ,"PhyPermWriteMBSecNode_SVPR"
+      ,"PhySpoolWriteMBSecNode_SVPR"
+      ,"TtlPhyPermReadMBSecNode_SVPR"
+      ,"TtlPhySpoolReadMBSecNode_SVPR"
+      ,"TtlPhyPermWriteMBSecNode_SVPR"
+      ,"TtlPhySpoolWriteMBSecNode_SVPR"
+      ,"TtlPhyPermReadsSecNode_SVPR"
+      ,"TtlPhySpoolReadsSecNode_SVPR"
+      ,"TtlPhyWriteSecNode_SVPR"
+      ,"TtlPhyWriteMBSecNode_SVPR"
+      ,"TtlLogReadMBSecNode_SVPR"
+      ,"TtlPhyReadMBSecNode_SVPR"
+      ,"CylReadRequestsSecNode_SVPR"
+      ,"CylReadSecNode_SVPR"
+      ,"CylReadBlocksSecNode_SVPR"
+      ,"CylReadDenThrSecNode_SVPR"
+      ,"CylReadDenCacheSecNode_SVPR"
+      ,"PermDirtyRelSecNode_SVPR"
+      ,"PermCleanRelSecNode_SVPR"
+      ,"PermDirtyRelMBSecNode_SVPR"
+      ,"PermCleanRelMBSecNode_SVPR"
+      ,"PermAgedWriteMBSecNode_SVPR"
+      ,"SpoolDirtyRelSecNode_SVPR"
+      ,"SpoolCleanRelSecNode_SVPR"
+      ,"SpoolDirtyRelMBSecNode_SVPR"
+      ,"SpoolCleanRelMBSecNode_SVPR"
+      ,"SpoolAgedWriteMBSecNode_SVPR"
+      ,"WALTJWriteMBSecNode_SVPR"
+      ,"WALTJDirtyRelMBSecNode_SVPR"
+      ,"PhysWALTJReadMBSecNode_SVPR"
+      ,"AvgPtPReadsSec"
+      ,"MaxPtPReadsSec"
+      ,"AvgPtPWritesSec"
+      ,"MaxPtPWritesSec"
+      ,"AvgPtPReadMBSec"
+      ,"MaxPtPReadMBSec"
+      ,"AvgPtPWriteMBSec"
+      ,"MaxPtPWriteMBSec"
+      ,"AvgBrdReadsSec"
+      ,"MaxBrdReadsSec"
+      ,"AvgBrdWritesSec"
+      ,"MaxBrdWritesSec"
+      ,"AvgBrdReadMBSec"
+      ,"MaxBrdReadMBSec"
+      ,"AvgBrdWriteMBSec"
+      ,"MaxBrdWriteMBSec"
+      ,"AvgPgSwapInSec"
+      ,"MaxPgSwapInSec"
+      ,"AvgPgSwapOutSec"
+      ,"MaxPgSwapOutSec"
+      ,"AvgHDDReadMBSecNode_SPDSK"
+      ,"MaxHDDReadMBSecNode_SPDSK"
+      ,"AvgHDDWriteMBSecNode_SPDSK"
+      ,"MaxHDDWriteMBSecNode_SPDSK"
+      ,"AvgHDDReadsSecNode_SPDSK"
+      ,"MaxHDDReadsSecNode_SPDSK"
+      ,"AvgHDDWritesSecNode_SPDSK"
+      ,"MaxHDDWritesSecNode_SPDSK"
+      ,"AvgHDDReadResp"
+      ,"MaxHDDReadResp"
+      ,"AvgHDDWriteResp"
+      ,"MaxHDDWriteResp"
+      ,"AvgSSDReadMBSecNode_SPDSK"
+      ,"MaxSSDReadMBSecNode_SPDSK"
+      ,"AvgSSDWriteMBSecNode_SPDSK"
+      ,"MaxSSDWriteMBSecNode_SPDSK"
+      ,"AvgSSDReadsSecNode_SPDSK"
+      ,"MaxSSDReadsSecNode_SPDSK"
+      ,"AvgSSDWritesSecNode_SPDSK"
+      ,"MaxSSDWritesSecNode_SPDSK"
+      ,"AvgSSDReadResp"
+      ,"MaxSSDReadResp"
+      ,"AvgSSDWriteResp"
+      ,"MaxSSDWriteResp"
+      ,"AvgWISSDReadMBSecNode_SPDSK"
+      ,"MaxWISSDReadMBSecNode_SPDSK"
+      ,"AvgWISSDWriteMBSecNode_SPDSK"
+      ,"MaxWISSDWriteMBSecNode_SPDSK"
+      ,"AvgWISSDReadsSecNode_SPDSK"
+      ,"MaxWISSDReadsSecNode_SPDSK"
+      ,"AvgWISSDWritesSecNode_SPDSK"
+      ,"MaxWISSDWritesSecNode_SPDSK"
+      ,"AvgWISSDReadResp"
+      ,"MaxWISSDReadResp"
+      ,"AvgWISSDWriteResp"
+      ,"MaxWISSDWriteResp"
+      ,"AvgRISSDReadMBSecNode_SPDSK"
+      ,"MaxRISSDReadMBSecNode_SPDSK"
+      ,"AvgRISSDWriteMBSecNode_SPDSK"
+      ,"MaxRISSDWriteMBSecNode_SPDSK"
+      ,"AvgRISSDReadsSecNode_SPDSK"
+      ,"MaxRISSDReadsSecNode_SPDSK"
+      ,"AvgRISSDWritesSecNode_SPDSK"
+      ,"MaxRISSDWritesSecNode_SPDSK"
+      ,"AvgRISSDReadResp"
+      ,"MaxRISSDReadResp"
+      ,"AvgRISSDWriteResp"
+      ,"MaxRISSDWriteResp"
+      ,"AvgPECPUBusy"
+      ,"MaxPECPUBusy"
+      ,"AvgGTWCPUBusy"
+      ,"MaxGTWCPUBusy"
+      ,"AvgAMPCPUBusy"
+      ,"MaxAMPCPUBusy"
+      ,"AvgGTW_PECPUBusy"
+      ,"MaxGTW_PECPUBusy"
+      ,"AvgVHAgedOut_SVPR"
+      ,"AvgVHAgedOutMBSecNode_SVPR"
+      ,"AvgLogVHReads_SVPR"
+      ,"AvgLogVHReadMBSecNode_SVPR"
+      ,"AvgPhysVHReads_SVPR"
+      ,"AvgPhysVHReadMBSecNode_SVPR"
+      ,"PreCompMBSecNode_SVPR"
+      ,"PostCompMBSecNode_SVPR"
+      ,"PreUnCompMBSecNode_SVPR"
+      ,"PostUnCompMBSecNode_SVPR"
+      ,"CompDBsSecNode_SVPR"
+      ,"UnCompDBsSecNode_SVPR"
+      ,"COMPCPU"
+      ,"UNCOMPCPU"
+      ,"PctCPUComp"
+      ,"PctCPUUnComp"
+      ,"CompRatioComp_SVPR"
+      ,"CompRatioUnComp_SVPR"
+      ,"TtlTCPUComp_Est1"
+      ,"TtlTCPUUnComp_Est1"
+      ,"TtlTCPUComp_Est2"
+      ,"TtlTCPUUnComp_Est2"
+      ,"TtlTCPUComp_Est3"
+      ,"TtlTCPUUnComp_Est3"
+      ,"CPUMSMBComp"
+      ,"CPUMSMBUnComp"
+      ,"AvgNtwReadMBSecNode"
+      ,"MaxNtwReadMBSecNode"
+      ,"AvgNtwWriteMBSecNode"
+      ,"MaxNtwWriteMBSecNode"
+      ,"TotalNtwReadMBSecNode"
+      ,"TotalNtwWriteMBSecNode"
+      from vt_gssresusage_core order by logts
+
 {% endif %}
 
 

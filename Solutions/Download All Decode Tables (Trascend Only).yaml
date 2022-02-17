@@ -2,22 +2,28 @@ description: >
      RUNNING AGAINST TRANSCEND ONLY, this process downloads all Decode_* datasets from the
      TD_Common_View database.  This is primarily used to re-generate Decode_*.csv files
      for pushing back out to the System Collection.zip release files.
-version: 1
-### ============= STANDARD PRE-PROCESSING =============
-# SETUP run context, and skip duplicate CREATE vt_* statements :
-{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
-### import macro to harden start/end dates:
-{% import "coa_util.j2" as macro with context %}
-{{ macro.harden_dates(run, startdate, enddate) }}
-{% set startdate = run.dates[0] %}
-{% set enddate = run.dates[1] %}
-### ============= STANDARD PRE-PROCESSING =============
 
-
-{% set save_prework = true %}
-{% set decode_from_transcend = true %}
 
 tasks:
+
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], variables={}) if run is not defined else run %}
+### Macro imported below will validate /correct a subset of variables,
+### then export ALL variables to a reconcile_variables.csv
+### Hence, this process must run AFTER the "tasks:" node
+{% import "coa_util.j2" as macro with context %}
+{{ macro.validate_variables(run) }}
+### return corrected variables to the main namespace:
+{% set startdate     = run.variables['startdate']     %}
+{% set enddate       = run.variables['enddate']       %}
+{% set your_name     = run.variables['your_name']     %}
+{% set your_title    = run.variables['your_title']    %}
+{% set customer_name = run.variables['customer_name'] %}
+{% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
+{% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
+### ============= STANDARD PRE-PROCESSING =============
+
 
 
 {% include "vt_decode_tablekind.j2" %}
@@ -39,27 +45,27 @@ tasks:
 
 
 {% include "vt_decode_appid.j2" %}
-- name: "Export vt_decode_appid_load.csv"
+- name: "Export vt_decode_appid.csv"
   connect: source
   export:
     file: decode_appid.csv
-    sql: select * from vt_decode_appid_load order by Priority asc
+    sql: select * from vt_decode_appid order by Priority asc
 
 
 {% include "vt_decode_statement.j2" %}
-- name: "Export vt_decode_statement_load.csv"
+- name: "Export vt_decode_statement.csv"
   connect: source
   export:
     file: decode_statement.csv
-    sql: select * from vt_decode_statement_load order by Statement_Use15
+    sql: select * from vt_decode_statement order by Statement_Use15
 
 
 {% include "vt_decode_tdbinternal.j2" %}
-- name: "Export vt_decode_tdbinternal_load.csv"
+- name: "Export vt_decode_tdbinternal.csv"
   connect: source
   export:
     file: decode_tdbinternal.csv
-    sql: select * from vt_decode_tdbinternal_load order by DatabaseName
+    sql: select * from vt_decode_tdbinternal order by DatabaseName
 
 
 {% include "vt_decode_columntype.j2" %}

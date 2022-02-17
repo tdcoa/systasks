@@ -1,19 +1,12 @@
 description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
 version: 4.0
 
-
-### ============= STANDARD PRE-PROCESSING =============
-# SETUP run context, and skip duplicate CREATE vt_* statements :
-{% set run = namespace(completed=[], dates=[]) if run is not defined else run %}
-### import macro to harden start/end dates:
-{% import "coa_util.j2" as macro with context %}
-{{ macro.harden_dates(run, startdate, enddate) }}
-{% set startdate = run.dates[0] %}
-{% set enddate = run.dates[1] %}
-### ============= STANDARD PRE-PROCESSING =============
-
-
+### VHC changes should be made to the full version first,
+### then copy/pasted to the OAP version and below toggled:
 {% set vhc_on_a_page = false %}
+### Thus, this should be the only difference between the two docs
+### soas to keep the logic identical / from drifting apart
+
 
 # DEFINE STARTING STATE OF VARIABLES
 {% set startdate = 'DATE-42'   if startdate is not defined else startdate %}
@@ -64,6 +57,26 @@ version: 4.0
 {{ prebuild_files.append('reconcile_system_io_observed_max_levels.csv') or "" }}
 
 tasks:
+
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], variables={}) if run is not defined else run %}
+### Macro imported below will validate /correct a subset of variables,
+### then export ALL variables to a reconcile_variables.csv
+### Hence, this process must run AFTER the "tasks:" node
+{% import "coa_util.j2" as macro with context %}
+{{ macro.validate_variables(run) }}
+### return corrected variables to the main namespace:
+{% set startdate     = run.variables['startdate']     %}
+{% set enddate       = run.variables['enddate']       %}
+{% set your_name     = run.variables['your_name']     %}
+{% set your_title    = run.variables['your_title']    %}
+{% set customer_name = run.variables['customer_name'] %}
+{% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
+{% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
+### ============= STANDARD PRE-PROCESSING =============
+
+
 
 - name: "Copy mockup of non-standard required .csv files"  # make sure these are listed above in template_files
   copy:
@@ -762,7 +775,7 @@ tasks:
 
 {% include "vt_disk_space.j2" %}
 
-- name: Export disk space summary
+- name: Export disk space summary - VHC
   connect: source
   export:
     file: vhc--diskspace.csv
@@ -785,7 +798,7 @@ tasks:
           group by DatabaseName, TableName ) a
 
 
-- name: Export disk space summary
+- name: Export disk space by Database
   connect: source
   export:
     file: vhc--diskspace_x_database.csv
@@ -794,7 +807,7 @@ tasks:
        case when DBCurrPermRank >25 then 'All Other Databases' else DatabaseName end as "Database"
       ,cast(cast(sum(DBCurrPermGB) as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
       ,cast(cast(sum(DBMaxPermGB)  as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Space (GB)"
-      ,cast(cast(sum(DBCurrPermGB) / cast(sum(DBMaxPermGB) as decimal(38,4)) *100.0000 as decimal(9,2)) as varchar(32))||'%' as "Fill%"
+      ,cast(cast(zeroifnull(sum(DBCurrPermGB) / nullifzero(cast(sum(DBMaxPermGB) as decimal(38,4)))) *100.0000 as decimal(9,2) format 'ZZ9.99%') as varchar(32)) as "Fill%"
       ,case when "Database" =  'All Other Databases' then 99 else DBCurrPermRank end as DBOrder
       from(
           Select DatabaseName, avg(Database_CurrentPerm_GB) as DBCurrPermGB, avg(Database_MaxPerm_GB) as DBMaxPermGB
@@ -814,7 +827,7 @@ tasks:
        case when DBCurrPermRank >25 then 'All Other Databases' else DatabaseName end as "Database"
       ,cast(sum(DBCurrPermGB) as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Used Space (GB)"
       ,cast(sum(DBMaxPermGB)  as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Max Space (GB)"
-      ,cast(sum(DBCurrPermGB) / cast(sum(DBMaxPermGB) as decimal(38,4)) *100.0000 as decimal(9,2))  as "Fill%"
+      ,cast(cast(zeroifnull(sum(DBCurrPermGB) / nullifzero(cast(sum(DBMaxPermGB) as decimal(38,4)))) *100.0000 as decimal(9,2) format 'ZZ9.99%') as varchar(32)) as "Fill%"
       ,case when "Database" =  'All Other Databases' then 99 else DBCurrPermRank end as DBOrder
       from(
           Select DatabaseName, avg(Database_CurrentPerm_GB) as DBCurrPermGB, avg(Database_MaxPerm_GB) as DBMaxPermGB
@@ -851,7 +864,7 @@ tasks:
        case when DBCurrPermRank >25 then 'All Other Databases' else DatabaseName end as "Database"
       ,cast(sum(DBCurrPermGB) as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Used Space (GB)"
       ,cast(sum(DBMaxPermGB)  as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Max Space (GB)"
-      ,cast(sum(DBCurrPermGB) / cast(sum(DBMaxPermGB) as decimal(38,4)) *100.0000 as decimal(9,2))  as "Fill%"
+      ,cast(cast(zeroifnull(sum(DBCurrPermGB) / nullifzero(cast(sum(DBMaxPermGB) as decimal(38,4)))) *100.0000 as decimal(9,2) format 'ZZ9.99%') as varchar(32)) as "Fill%"
       ,case when "Database" =  'All Other Databases' then 99 else DBCurrPermRank end as DBOrder
       from(
           Select DatabaseName, avg(Database_CurrentPerm_GB) as DBCurrPermGB, avg(Database_MaxPerm_GB) as DBMaxPermGB
