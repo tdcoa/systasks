@@ -4,8 +4,17 @@ description: Generates the Snowflake Competitive Powerpoint deck, designed to be
 {% set startdate   = 'DATE-42' if startdate is not defined else startdate %}
 {% set enddate = 'DATE-1' if enddate is not defined else enddate %}
 
-
 tasks:
+
+
+{% set prebuild_files = ['reconcile_variables.csv','reconcile_logging_rules.csv','reconcile_datedriver.csv','reconcile_decode_appid.csv','reconcile_DBQL_Core.csv','reconcile_feature_usage.csv','queries_by_runtime_bucket_RECONCILE.csv'] %}
+
+- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
+  script:
+    command: scripts/fix_allreturnfile_placeholders.py
+    params:
+      - "Competition - Snowflake.yaml"
+      - "{{ prebuild_files|join(',') }}"
 
 ### ============= STANDARD PRE-PROCESSING =============
 # SETUP run context, and skip duplicate CREATE vt_* statements :
@@ -29,29 +38,18 @@ tasks:
 {% include "vt_decode_user.j2" %}
 {% include "vt_site_info.j2" %}
 
+- name: "Export Site and CSM information (if available) for  pptx title slide"
+  connect: source
+  export:
+    file: sf--intro.csv
+    sql: Select * from vt_site_info
+
 
 {% set save_prework   = False %}
 {% set include_hour   = False %}
 {% set include_wdname = False %}
 {% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
-
-
-{% set prebuild_files = [] %}
-
-- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
-  script:
-    command: scripts/fix_allreturnfile_placeholders.py
-    params:
-      - "Competition - Snowflake.yaml"
-      - "{{ prebuild_files|join(',') }}"
-
-
-- name: "Export Site and CSM information (if available) for  pptx title slide"
-  connect: source
-  export:
-    file: sf--intro.csv
-    sql: Select * from vt_site_info
 
 
 {% include "vt_concurrency.j2" %}

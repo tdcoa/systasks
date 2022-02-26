@@ -31,7 +31,7 @@ version: 4.0
 # iteration lists:
 {% set feature_columns = ['Feature_Category','Feature_SubCategory','Product_Name','Product_Category','Solution_Type','User_Experience_Level_Name','Initiator_Role_Category','Objective_Name','Department','UserType','Organization'] %}
 {% set alloc_columns = ['Allocated_CPU','Allocated_IOCnt','Allocated_IOGB','Allocated_CDS_GB'] %}
-{% set template_files = [] %}   # ['vhc--intro.csv','vhc--intro.tsv','oap--dbcinfo.csv','oap--dbcinfo.tsv','oap--COD.csv','oap--COD.tsv']
+{% set template_files = ['reconcile_variables.csv','reconcile_logging_rules.csv','reconcile_datedriver.csv','reconcile_decode_appid.csv','reconcile_DBQL_Core.csv','reconcile_feature_usage.csv','queries_by_runtime_bucket_RECONCILE.csv'] %}   # ['vhc--intro.csv','vhc--intro.tsv','oap--dbcinfo.csv','oap--dbcinfo.tsv','oap--COD.csv','oap--COD.tsv']
 
 {% set prebuild_files = [] %}
 {% if not vhc_on_a_page %}
@@ -58,6 +58,28 @@ version: 4.0
 
 tasks:
 
+
+- name: "Copy mockup of non-standard required .csv files"  # make sure these are listed above in template_files
+  copy:
+    files:
+      - mockup/vhc--intro_template.csv
+      - mockup/vhc--intro_template.tsv
+      - mockup/oap--dbcinfo_template.csv
+      - mockup/oap--dbcinfo_template.tsv
+      - mockup/oap--COD_template.csv
+      - mockup/oap--COD_template.tsv
+
+
+
+- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
+  script:
+    command: scripts/fix_allreturnfile_placeholders.py
+    params:
+      - "Vantage Health Check.yaml"
+      - "{{ prebuild_files|join(',') }}"
+
+
+
 ### ============= STANDARD PRE-PROCESSING =============
 # SETUP run context, and skip duplicate CREATE vt_* statements :
 {% set run = namespace(completed=[], variables={}) if run is not defined else run %}
@@ -75,26 +97,6 @@ tasks:
 {% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
 {% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
 ### ============= STANDARD PRE-PROCESSING =============
-
-
-
-- name: "Copy mockup of non-standard required .csv files"  # make sure these are listed above in template_files
-  copy:
-    files:
-      - mockup/vhc--intro_template.csv
-      - mockup/vhc--intro_template.tsv
-      - mockup/oap--dbcinfo_template.csv
-      - mockup/oap--dbcinfo_template.tsv
-      - mockup/oap--COD_template.csv
-      - mockup/oap--COD_template.tsv
-
-
-- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
-  script:
-    command: scripts/fix_allreturnfile_placeholders.py
-    params:
-      - "Vantage Health Check.yaml"
-      - "{{ prebuild_files|join(',') }}"
 
 
 - name: "Export Variables to a reconcile file"
