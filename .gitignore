@@ -3,3 +3,6 @@ cheatsheet*
 __pycache__
 _*
 .DS_Store
+Metrics/scripts/\.vscode
+Metrics/scripts/test
+Metrics/scripts/temp

@@ -1,0 +1,269 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_gssresusage_core' in run.completed %}
+
+
+{% set tdv = tdver[:2] | int %}
+{% set tdversion = tdver.replace('.','') %}
+{% set pdcrstr = 'pdcr' if pdcr else 'dbc' %}
+{% set save_prework = false if save_prework is not defined else save_prework %}
+
+{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+
+{% if reconcile %}
+- name: Copy over the gssresusage query file, just for reconciliation
+  connect: source
+  copy:
+    files: ['{{ dirs.systasks }}/Metrics/sql/gssresusage.{{ tdversion }}{{ pdcrstr }}.sql']
+{% endif %}
+
+- name: Create the vt_gssresusage_prework table from GSSResUsage logic for {{ tdversion }}{{ pdcrstr }} (family {{tdv}})
+  connect: source
+  execute:
+    sqlfile: {{ dirs.systasks }}/Metrics/sql/gssresusage.{{ tdversion }}{{ pdcrstr }}.sql
+
+- name: Make Version-Agnostic Volatile Table - vt_gssresusage_core
+  connect: source
+  execute:
+    sql: |
+      create volatile table  vt_gssresusage_core  as (
+      Select
+        cast(  '{{ siteid }}'                     as  VARCHAR(255) )     as site_id
+       ,cast(  0                                  as  INTEGER)           as tca_system_id
+       ,cast(  Version                            as  VARCHAR(15) )      as gss_qry_vrsn
+       ,cast(  cast(LogDate as DATE FORMAT 'YYYY-MM-DD') as VARCHAR(10)) as LogDate
+       ,cast(  LogDOW                             as  VARCHAR(3) )       as LogDOW
+       ,cast(  LogTime                            as  FLOAT)             as LogTime
+       ,cast(  "Timestamp"                        as  TIMESTAMP(0))      as LogTs
+       ,cast(  "Hour"                             as  SMALLINT)          as LogHr
+       ,cast(  Minute10                           as  SMALLINT)          as Minute10
+       ,cast(  RSSInterval                        as  SMALLINT)          as RSSInterval
+       ,cast(  NodeGen                            as  VARCHAR(8) )       as NodeGen
+       ,cast(  AMPS                               as  VARCHAR(128))      as AMPS  -- can be "PI-Only Node"
+       ,cast(  CPUs                               as  SMALLINT)          as CPUs
+       ,cast(  DBSRelease                         as  VARCHAR(50) )      as DBSRelease
+       ,cast(  PMCOD                              as  SMALLINT)          as PMCOD
+       ,cast(  WMCOD                              as  FLOAT)             as WMCOD
+       ,cast(  IOCOD                              as  FLOAT)             as IOCOD
+       ,cast(  MinMemSizeGB                       as  DECIMAL(18,3))     as MinMemSizeGB
+       ,cast(  MaxMemSizeGB                       as  DECIMAL(18,3))     as MaxMemSizeGB
+       ,cast(  NumNodes                           as  INTEGER)           as NumNodes
+       ,cast(  AvgCPUBusy                         as  DECIMAL(18,3))     as AvgCPUBusy
+       ,cast(  MaxCPUBusy                         as  DECIMAL(18,3))     as MaxCPUBusy
+       ,cast(  AvgPctOSCPU                        as  DECIMAL(18,3))     as AvgPctOSCPU
+       ,cast(  MaxPctOSCPU                        as  DECIMAL(18,3))     as MaxPctOSCPU
+       ,cast(  AvgPctIOWait                       as  DECIMAL(18,3))     as AvgPctIOWait
+       ,cast(  AvgRunQSz                          as  DECIMAL(18,3))     as AvgRunQSz
+       ,cast(  MaxRunQSz                          as  DECIMAL(18,3))     as MaxRunQSz
+       ,cast(  MaxPctIOWait                       as  DECIMAL(18,3))     as MaxPctIOWait
+       ,cast(  PctReadsCnt                        as  DECIMAL(18,3))     as PctReadsCnt
+       ,cast(  PctReadsKB                         as  DECIMAL(18,3))     as PctReadsKB
+       ,cast(  AvgPosReadSec                      as  DECIMAL(18,3))     as AvgPosReadSec
+       ,cast(  AvgPreReadSec                      as  DECIMAL(18,3))     as AvgPreReadSec
+       ,cast(  AvgWriteSec                        as  DECIMAL(18,3))     as AvgWriteSec
+       ,cast(  AvgIOPsSec                         as  DECIMAL(18,3))     as AvgIOPsSec
+       ,cast(  MaxIOPsSec                         as  DECIMAL(18,3))     as MaxIOPsSec
+       ,cast(  AvgMBSecNode                       as  DECIMAL(18,3))     as AvgMBSecNode
+       ,cast(  MaxMBSecNode                       as  DECIMAL(18,3))     as MaxMBSecNode
+       ,cast(  AvgReadMBSecNode                   as  DECIMAL(18,3))     as AvgReadMBSecNode
+       ,cast(  AvgWriteMBSecNode                  as  DECIMAL(18,3))     as AvgWriteMBSecNode
+       ,cast(  TtlMBSecGen                        as  DECIMAL(18,3))     as TtlMBSecGen
+       ,cast(  TtlReadMBSecGen                    as  DECIMAL(18,3))     as TtlReadMBSecGen
+       ,cast(  TtlWriteMBSecGen                   as  DECIMAL(18,3))     as TtlWriteMBSecGen
+       ,cast(  TtlPosReadSecGen                   as  DECIMAL(18,3))     as TtlPosReadSecGen
+       ,cast(  TtlPreReadSecGen                   as  DECIMAL(18,3))     as TtlPreReadSecGen
+       ,cast(  TtlWriteSecGen                     as  DECIMAL(18,3))     as TtlWriteSecGen
+       ,cast(  KBRead                             as  DECIMAL(18,3))     as KBRead
+       ,cast(  KBWrite                            as  DECIMAL(18,3))     as KBWrite
+       ,cast(  PermCacheEffKB                     as  DECIMAL(18,3))     as PermCacheEffKB
+       ,cast(  SpoolCacheEffKB                    as  DECIMAL(18,3))     as SpoolCacheEffKB
+       ,cast(  TotalCacheEffKB                    as  DECIMAL(18,3))     as TotalCacheEffKB
+       ,cast(  PermCacheEffCnt                    as  DECIMAL(18,3))     as PermCacheEffCnt
+       ,cast(  SpoolCacheEffCnt                   as  DECIMAL(18,3))     as SpoolCacheEffCnt
+       ,cast(  PermDBCacheEffCnt                  as  DECIMAL(18,3))     as PermDBCacheEffCnt
+       ,cast(  PermCICacheEffCnt                  as  DECIMAL(18,3))     as PermCICacheEffCnt
+       ,cast(  SpoolDBCacheEffCnt                 as  DECIMAL(18,3))     as SpoolDBCacheEffCnt
+       ,cast(  SpoolCICacheEffCnt                 as  DECIMAL(18,3))     as SpoolCICacheEffCnt
+       ,cast(  LogPermDBSecNode_SVPR              as  DECIMAL(18,3))     as LogPermDBSecNode_SVPR
+       ,cast(  LogPermCISecNode_SVPR              as  DECIMAL(18,3))     as LogPermCISecNode_SVPR
+       ,cast(  LogSpoolDBSecNode_SVPR             as  DECIMAL(18,3))     as LogSpoolDBSecNode_SVPR
+       ,cast(  LogSpoolCISecNode_SVPR             as  DECIMAL(18,3))     as LogSpoolCISecNode_SVPR
+       ,cast(  PhySpoolDBSecNode_SVPR             as  DECIMAL(18,3))     as PhySpoolDBSecNode_SVPR
+       ,cast(  PhySpoolCISecNode_SVPR             as  DECIMAL(18,3))     as PhySpoolCISecNode_SVPR
+       ,cast(  PhyPermDBSecNode_SVPR              as  DECIMAL(18,3))     as PhyPermDBSecNode_SVPR
+       ,cast(  PhyPermCISecNode_SVPR              as  DECIMAL(18,3))     as PhyPermCISecNode_SVPR
+       ,cast(  LogPermReadSecNode_SVPR            as  DECIMAL(18,3))     as LogPermReadSecNode_SVPR
+       ,cast(  LogSpoolReadSecNode_SVPR           as  DECIMAL(18,3))     as LogSpoolReadSecNode_SVPR
+       ,cast(  LogPermReadMBSecNode_SVPR          as  DECIMAL(18,3))     as LogPermReadMBSecNode_SVPR
+       ,cast(  LogSpoolReadMBSecNode_SVPR         as  DECIMAL(18,3))     as LogSpoolReadMBSecNode_SVPR
+       ,cast(  PhyPermPosReadMBSecNode_SVPR       as  DECIMAL(18,3))     as PhyPermPosReadMBSecNode_SVPR
+       ,cast(  PhyPermPreReadMBSecNode_SVPR       as  DECIMAL(18,3))     as PhyPermPreReadMBSecNode_SVPR
+       ,cast(  PhySpoolPosReadMBSecNode_SVPR      as  DECIMAL(18,3))     as PhySpoolPosReadMBSecNode_SVPR
+       ,cast(  PhySpoolPreReadMBSecNode_SVPR      as  DECIMAL(18,3))     as PhySpoolPreReadMBSecNode_SVPR
+       ,cast(  PhyPermPosReadSecNode_SVPR         as  DECIMAL(18,3))     as PhyPermPosReadSecNode_SVPR
+       ,cast(  PhyPermPreReadSecNode_SVPR         as  DECIMAL(18,3))     as PhyPermPreReadSecNode_SVPR
+       ,cast(  PhySpoolPosReadSecNode_SVPR        as  DECIMAL(18,3))     as PhySpoolPosReadSecNode_SVPR
+       ,cast(  PhySpoolPreReadSecNode_SVPR        as  DECIMAL(18,3))     as PhySpoolPreReadSecNode_SVPR
+       ,cast(  PhyPermWriteSecNode_SVPR           as  DECIMAL(18,3))     as PhyPermWriteSecNode_SVPR
+       ,cast(  PhySpoolWriteSecNode_SVPR          as  DECIMAL(18,3))     as PhySpoolWriteSecNode_SVPR
+       ,cast(  PhyPermWriteMBSecNode_SVPR         as  DECIMAL(18,3))     as PhyPermWriteMBSecNode_SVPR
+       ,cast(  PhySpoolWriteMBSecNode_SVPR        as  DECIMAL(18,3))     as PhySpoolWriteMBSecNode_SVPR
+       ,cast(  TtlPhyPermReadMBSecNode_SVPR       as  DECIMAL(18,3))     as TtlPhyPermReadMBSecNode_SVPR
+       ,cast(  TtlPhySpoolReadMBSecNode_SVPR      as  DECIMAL(18,3))     as TtlPhySpoolReadMBSecNode_SVPR
+       ,cast(  TtlPhyPermWriteMBSecNode_SVPR      as  DECIMAL(18,3))     as TtlPhyPermWriteMBSecNode_SVPR
+       ,cast(  TtlPhySpoolWriteMBSecNode_SVPR     as  DECIMAL(18,3))     as TtlPhySpoolWriteMBSecNode_SVPR
+       ,cast(  TtlPhyPermReadsSecNode_SVPR        as  DECIMAL(18,3))     as TtlPhyPermReadsSecNode_SVPR
+       ,cast(  TtlPhySpoolReadsSecNode_SVPR       as  DECIMAL(18,3))     as TtlPhySpoolReadsSecNode_SVPR
+       ,cast(  TtlPhyWriteSecNode_SVPR            as  DECIMAL(18,3))     as TtlPhyWriteSecNode_SVPR
+       ,cast(  TtlPhyWriteMBSecNode_SVPR          as  DECIMAL(18,3))     as TtlPhyWriteMBSecNode_SVPR
+       ,cast(  TtlLogReadMBSecNode_SVPR           as  DECIMAL(18,3))     as TtlLogReadMBSecNode_SVPR
+       ,cast(  TtlPhyReadMBSecNode_SVPR           as  DECIMAL(18,3))     as TtlPhyReadMBSecNode_SVPR
+       ,cast(  CylReadRequestsSecNode_SVPR        as  DECIMAL(18,3))     as CylReadRequestsSecNode_SVPR
+       ,cast(  CylReadSecNode_SVPR                as  DECIMAL(18,3))     as CylReadSecNode_SVPR
+       ,cast(  CylReadBlocksSecNode_SVPR          as  DECIMAL(18,3))     as CylReadBlocksSecNode_SVPR
+       ,cast(  CylReadDenThrSecNode_SVPR          as  DECIMAL(18,3))     as CylReadDenThrSecNode_SVPR
+       ,cast(  CylReadDenCacheSecNode_SVPR        as  DECIMAL(18,3))     as CylReadDenCacheSecNode_SVPR
+       ,cast(  PermDirtyRelSecNode_SVPR           as  DECIMAL(18,3))     as PermDirtyRelSecNode_SVPR
+       ,cast(  PermCleanRelSecNode_SVPR           as  DECIMAL(18,3))     as PermCleanRelSecNode_SVPR
+       ,cast(  PermDirtyRelMBSecNode_SVPR         as  DECIMAL(18,3))     as PermDirtyRelMBSecNode_SVPR
+       ,cast(  PermCleanRelMBSecNode_SVPR         as  DECIMAL(18,3))     as PermCleanRelMBSecNode_SVPR
+       ,cast(  PermAgedWriteMBSecNode_SVPR        as  DECIMAL(18,3))     as PermAgedWriteMBSecNode_SVPR
+       ,cast(  SpoolDirtyRelSecNode_SVPR          as  DECIMAL(18,3))     as SpoolDirtyRelSecNode_SVPR
+       ,cast(  SpoolCleanRelSecNode_SVPR          as  DECIMAL(18,3))     as SpoolCleanRelSecNode_SVPR
+       ,cast(  SpoolDirtyRelMBSecNode_SVPR        as  DECIMAL(18,3))     as SpoolDirtyRelMBSecNode_SVPR
+       ,cast(  SpoolCleanRelMBSecNode_SVPR        as  DECIMAL(18,3))     as SpoolCleanRelMBSecNode_SVPR
+       ,cast(  SpoolAgedWriteMBSecNode_SVPR       as  DECIMAL(18,3))     as SpoolAgedWriteMBSecNode_SVPR
+       ,cast(  WALTJWriteMBSecNode_SVPR           as  DECIMAL(18,3))     as WALTJWriteMBSecNode_SVPR
+       ,cast(  WALTJDirtyRelMBSecNode_SVPR        as  DECIMAL(18,3))     as WALTJDirtyRelMBSecNode_SVPR
+       ,cast(  PhysWALTJReadMBSecNode_SVPR        as  DECIMAL(18,3))     as PhysWALTJReadMBSecNode_SVPR
+       ,cast(  AvgPtPReadsSec                     as  DECIMAL(18,3))     as AvgPtPReadsSec
+       ,cast(  MaxPtPReadsSec                     as  DECIMAL(18,3))     as MaxPtPReadsSec
+       ,cast(  AvgPtPWritesSec                    as  DECIMAL(18,3))     as AvgPtPWritesSec
+       ,cast(  MaxPtPWritesSec                    as  DECIMAL(18,3))     as MaxPtPWritesSec
+       ,cast(  AvgPtPReadMBSec                    as  DECIMAL(18,3))     as AvgPtPReadMBSec
+       ,cast(  MaxPtPReadMBSec                    as  DECIMAL(18,3))     as MaxPtPReadMBSec
+       ,cast(  AvgPtPWriteMBSec                   as  DECIMAL(18,3))     as AvgPtPWriteMBSec
+       ,cast(  MaxPtPWriteMBSec                   as  DECIMAL(18,3))     as MaxPtPWriteMBSec
+       ,cast(  AvgBrdReadsSec                     as  DECIMAL(18,3))     as AvgBrdReadsSec
+       ,cast(  MaxBrdReadsSec                     as  DECIMAL(18,3))     as MaxBrdReadsSec
+       ,cast(  AvgBrdWritesSec                    as  DECIMAL(18,3))     as AvgBrdWritesSec
+       ,cast(  MaxBrdWritesSec                    as  DECIMAL(18,3))     as MaxBrdWritesSec
+       ,cast(  AvgBrdReadMBSec                    as  DECIMAL(18,3))     as AvgBrdReadMBSec
+       ,cast(  MaxBrdReadMBSec                    as  DECIMAL(18,3))     as MaxBrdReadMBSec
+       ,cast(  AvgBrdWriteMBSec                   as  DECIMAL(18,3))     as AvgBrdWriteMBSec
+       ,cast(  MaxBrdWriteMBSec                   as  DECIMAL(18,3))     as MaxBrdWriteMBSec
+       ,cast(  AvgPgSwapInSec                     as  DECIMAL(18,3))     as AvgPgSwapInSec
+       ,cast(  MaxPgSwapInSec                     as  DECIMAL(18,3))     as MaxPgSwapInSec
+       ,cast(  AvgPgSwapOutSec                    as  DECIMAL(18,3))     as AvgPgSwapOutSec
+       ,cast(  MaxPgSwapOutSec                    as  DECIMAL(18,3))     as MaxPgSwapOutSec
+       ,cast(  AvgHDDReadMBSecNode_SPDSK          as  DECIMAL(18,3))     as AvgHDDReadMBSecNode_SPDSK
+       ,cast(  MaxHDDReadMBSecNode_SPDSK          as  DECIMAL(18,3))     as MaxHDDReadMBSecNode_SPDSK
+       ,cast(  AvgHDDWriteMBSecNode_SPDSK         as  DECIMAL(18,3))     as AvgHDDWriteMBSecNode_SPDSK
+       ,cast(  MaxHDDWriteMBSecNode_SPDSK         as  DECIMAL(18,3))     as MaxHDDWriteMBSecNode_SPDSK
+       ,cast(  AvgHDDReadsSecNode_SPDSK           as  DECIMAL(18,3))     as AvgHDDReadsSecNode_SPDSK
+       ,cast(  MaxHDDReadsSecNode_SPDSK           as  DECIMAL(18,3))     as MaxHDDReadsSecNode_SPDSK
+       ,cast(  AvgHDDWritesSecNode_SPDSK          as  DECIMAL(18,3))     as AvgHDDWritesSecNode_SPDSK
+       ,cast(  MaxHDDWritesSecNode_SPDSK          as  DECIMAL(18,3))     as MaxHDDWritesSecNode_SPDSK
+       ,cast(  AvgHDDReadResp                     as  DECIMAL(18,3))     as AvgHDDReadResp
+       ,cast(  MaxHDDReadResp                     as  DECIMAL(18,3))     as MaxHDDReadResp
+       ,cast(  AvgHDDWriteResp                    as  DECIMAL(18,3))     as AvgHDDWriteResp
+       ,cast(  MaxHDDWriteResp                    as  DECIMAL(18,3))     as MaxHDDWriteResp
+       ,cast(  AvgSSDReadMBSecNode_SPDSK          as  DECIMAL(18,3))     as AvgSSDReadMBSecNode_SPDSK
+       ,cast(  MaxSSDReadMBSecNode_SPDSK          as  DECIMAL(18,3))     as MaxSSDReadMBSecNode_SPDSK
+       ,cast(  AvgSSDWriteMBSecNode_SPDSK         as  DECIMAL(18,3))     as AvgSSDWriteMBSecNode_SPDSK
+       ,cast(  MaxSSDWriteMBSecNode_SPDSK         as  DECIMAL(18,3))     as MaxSSDWriteMBSecNode_SPDSK
+       ,cast(  AvgSSDReadsSecNode_SPDSK           as  DECIMAL(18,3))     as AvgSSDReadsSecNode_SPDSK
+       ,cast(  MaxSSDReadsSecNode_SPDSK           as  DECIMAL(18,3))     as MaxSSDReadsSecNode_SPDSK
+       ,cast(  AvgSSDWritesSecNode_SPDSK          as  DECIMAL(18,3))     as AvgSSDWritesSecNode_SPDSK
+       ,cast(  MaxSSDWritesSecNode_SPDSK          as  DECIMAL(18,3))     as MaxSSDWritesSecNode_SPDSK
+       ,cast(  AvgSSDReadResp                     as  DECIMAL(18,3))     as AvgSSDReadResp
+       ,cast(  MaxSSDReadResp                     as  DECIMAL(18,3))     as MaxSSDReadResp
+       ,cast(  AvgSSDWriteResp                    as  DECIMAL(18,3))     as AvgSSDWriteResp
+       ,cast(  MaxSSDWriteResp                    as  DECIMAL(18,3))     as MaxSSDWriteResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgWISSDReadMBSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as AvgWISSDReadMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxWISSDReadMBSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as MaxWISSDReadMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgWISSDWriteMBSecNode_SPDSK       ' }}as  DECIMAL(18,3))     as AvgWISSDWriteMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxWISSDWriteMBSecNode_SPDSK       ' }}as  DECIMAL(18,3))     as MaxWISSDWriteMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgWISSDReadsSecNode_SPDSK         ' }}as  DECIMAL(18,3))     as AvgWISSDReadsSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxWISSDReadsSecNode_SPDSK         ' }}as  DECIMAL(18,3))     as MaxWISSDReadsSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgWISSDWritesSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as AvgWISSDWritesSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxWISSDWritesSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as MaxWISSDWritesSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgWISSDReadResp                   ' }}as  DECIMAL(18,3))     as AvgWISSDReadResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxWISSDReadResp                   ' }}as  DECIMAL(18,3))     as MaxWISSDReadResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgWISSDWriteResp                  ' }}as  DECIMAL(18,3))     as AvgWISSDWriteResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxWISSDWriteResp                  ' }}as  DECIMAL(18,3))     as MaxWISSDWriteResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgRISSDReadMBSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as AvgRISSDReadMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxRISSDReadMBSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as MaxRISSDReadMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgRISSDWriteMBSecNode_SPDSK       ' }}as  DECIMAL(18,3))     as AvgRISSDWriteMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxRISSDWriteMBSecNode_SPDSK       ' }}as  DECIMAL(18,3))     as MaxRISSDWriteMBSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgRISSDReadsSecNode_SPDSK         ' }}as  DECIMAL(18,3))     as AvgRISSDReadsSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxRISSDReadsSecNode_SPDSK         ' }}as  DECIMAL(18,3))     as MaxRISSDReadsSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgRISSDWritesSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as AvgRISSDWritesSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxRISSDWritesSecNode_SPDSK        ' }}as  DECIMAL(18,3))     as MaxRISSDWritesSecNode_SPDSK
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgRISSDReadResp                   ' }}as  DECIMAL(18,3))     as AvgRISSDReadResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxRISSDReadResp                   ' }}as  DECIMAL(18,3))     as MaxRISSDReadResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'AvgRISSDWriteResp                  ' }}as  DECIMAL(18,3))     as AvgRISSDWriteResp
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'MaxRISSDWriteResp                  ' }}as  DECIMAL(18,3))     as MaxRISSDWriteResp
+       ,cast(  AvgPECPUBusy                       as  DECIMAL(18,3))     as AvgPECPUBusy
+       ,cast(  MaxPECPUBusy                       as  DECIMAL(18,3))     as MaxPECPUBusy
+       ,cast(  AvgGTWCPUBusy                      as  DECIMAL(18,3))     as AvgGTWCPUBusy
+       ,cast(  MaxGTWCPUBusy                      as  DECIMAL(18,3))     as MaxGTWCPUBusy
+       ,cast(  AvgAMPCPUBusy                      as  DECIMAL(18,3))     as AvgAMPCPUBusy
+       ,cast(  MaxAMPCPUBusy                      as  DECIMAL(18,3))     as MaxAMPCPUBusy
+       ,cast(  AvgGTW_PECPUBusy                   as  DECIMAL(18,3))     as AvgGTW_PECPUBusy
+       ,cast(  MaxGTW_PECPUBusy                   as  DECIMAL(18,3))     as MaxGTW_PECPUBusy
+       ,cast(  AvgVHAgedOut_SVPR                  as  DECIMAL(18,3))     as AvgVHAgedOut_SVPR
+       ,cast(  AvgVHAgedOutMBSecNode_SVPR         as  DECIMAL(18,3))     as AvgVHAgedOutMBSecNode_SVPR
+       ,cast(  AvgLogVHReads_SVPR                 as  DECIMAL(18,3))     as AvgLogVHReads_SVPR
+       ,cast(  AvgLogVHReadMBSecNode_SVPR         as  DECIMAL(18,3))     as AvgLogVHReadMBSecNode_SVPR
+       ,cast(  AvgPhysVHReads_SVPR                as  DECIMAL(18,3))     as AvgPhysVHReads_SVPR
+       ,cast(  AvgPhysVHReadMBSecNode_SVPR        as  DECIMAL(18,3))     as AvgPhysVHReadMBSecNode_SVPR
+       ,cast(  PreCompMBSecNode_SVPR              as  DECIMAL(18,3))     as PreCompMBSecNode_SVPR
+       ,cast(  PostCompMBSecNode_SVPR             as  DECIMAL(18,3))     as PostCompMBSecNode_SVPR
+       ,cast(  PreUnCompMBSecNode_SVPR            as  DECIMAL(18,3))     as PreUnCompMBSecNode_SVPR
+       ,cast(  PostUnCompMBSecNode_SVPR           as  DECIMAL(18,3))     as PostUnCompMBSecNode_SVPR
+       ,cast(  CompDBsSecNode_SVPR                as  DECIMAL(18,3))     as CompDBsSecNode_SVPR
+       ,cast(  UnCompDBsSecNode_SVPR              as  DECIMAL(18,3))     as UnCompDBsSecNode_SVPR
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'COMPCPU                            ' }}as  DECIMAL(18,3))     as COMPCPU
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'UNCOMPCPU                          ' }}as  DECIMAL(18,3))     as UNCOMPCPU
+       ,cast(  PctCPUComp                         as  DECIMAL(18,3))     as PctCPUComp
+       ,cast(  PctCPUUnComp                       as  DECIMAL(18,3))     as PctCPUUnComp
+       ,cast(  CompRatioComp_SVPR                 as  DECIMAL(18,3))     as CompRatioComp_SVPR
+       ,cast(  CompRatioUnComp_SVPR               as  DECIMAL(18,3))     as CompRatioUnComp_SVPR
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'TtlTCPUComp_Est1                   ' }}as  DECIMAL(18,3))     as TtlTCPUComp_Est1
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'TtlTCPUUnComp_Est1                 ' }}as  DECIMAL(18,3))     as TtlTCPUUnComp_Est1
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'TtlTCPUComp_Est2                   ' }}as  DECIMAL(18,3))     as TtlTCPUComp_Est2
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'TtlTCPUUnComp_Est2                 ' }}as  DECIMAL(18,3))     as TtlTCPUUnComp_Est2
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'TtlTCPUComp_Est3                   ' }}as  DECIMAL(18,3))     as TtlTCPUComp_Est3
+       ,cast(  {{ 'null                               ' if tdv <=15 else 'TtlTCPUUnComp_Est3                 ' }}as  DECIMAL(18,3))     as TtlTCPUUnComp_Est3
+       ,cast(  CPUMSMBComp                        as  DECIMAL(18,3))     as CPUMSMBComp
+       ,cast(  CPUMSMBUnComp                      as  DECIMAL(18,3))     as CPUMSMBUnComp
+       ,cast(  AvgNtwReadMBSecNode                as  DECIMAL(18,3))     as AvgNtwReadMBSecNode
+       ,cast(  MaxNtwReadMBSecNode                as  DECIMAL(18,3))     as MaxNtwReadMBSecNode
+       ,cast(  AvgNtwWriteMBSecNode               as  DECIMAL(18,3))     as AvgNtwWriteMBSecNode
+       ,cast(  MaxNtwWriteMBSecNode               as  DECIMAL(18,3))     as MaxNtwWriteMBSecNode
+       ,cast(  TotalNtwReadMBSecNode              as  DECIMAL(18,3))     as TotalNtwReadMBSecNode
+       ,cast(  TotalNtwWriteMBSecNode             as  DECIMAL(18,3))     as TotalNtwWriteMBSecNode
+      from vt_gssresusage_prework
+      ) with data  primary index(LogDate, LogTime)  on commit preserve rows
+
+
+- name: Collect Stats
+  connect: source
+  execute:
+    sql: |
+      collect stats
+         column(LogDate, LogTime)
+        ,column(LogDate)
+      on vt_gssresusage_core
+
+{% if not save_prework %}
+- name: Drop Prework
+  connect: source
+  execute:
+    sql: drop table vt_gssresusage_prework
+{% endif %}
+
+{% endif %}
+{{ run.completed.append('vt_gssresusage_core') or '' }}
