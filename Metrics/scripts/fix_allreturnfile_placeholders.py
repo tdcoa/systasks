@@ -30,7 +30,7 @@ log.debug(f'jobfilename = {jobfilename}')
 log.debug(f'jobfile = {jobfile}')
 log.debug(f'extrafilenames = {extrafilenames}')
 
-stubbed_column_count = 21
+stubbed_column_count = 30
 csv_stub = ','.join(['no_data_%i' %i for i in range(1,stubbed_column_count+1)])  + '\n' + ','.join(['0' for i in range(1,stubbed_column_count+1)])
 tsv_stub = '\t'.join(['no_data_%i' %i for i in range(1,stubbed_column_count+1)]) + '\n' + '\t'.join(['0' for i in range(1,stubbed_column_count+1)])
 

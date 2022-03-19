@@ -1,0 +1,65 @@
+--------------------------------------------------------------------------------
+-- Copyright (c) 2022 Teradata Corporation. All Rights Reserved.
+-- FOR USE ONLY BY AUTHORIZED PERSONS PURSUANT TO WRITTEN AGREEMENT WITH
+-- TERADATA.
+-- Version:     Teradata Analytic Engine 16.20 and above
+-- File:        Snowflake Consumption Estimate Query V1.sql
+-- Purpose:     SQL to measure active running time for each Workload Definition
+--              (WD) and estimate size according to Snowflake documentation
+--
+-- Description: This query examines Database Query Log (DBQL) data that is
+--              collected in 10 minute intervals to calculate activity metrics
+--              based on the following criteria documented by Snowflake:
+--
+--              1.  "As a starting point, create a separate  virtual  warehouse
+--                  for each  workload"
+--                  - Snowflake, Inc., "Teradata to Snowflake Migration Guide,"
+--                    2019
+--                  This query uses the Workload Definition Name to represent
+--                  each virtual warehouse as a starting point
+--
+--              2.  Snowflake is not "Pay for the compute and storage you
+--                  actually use." According to the Snowflake documentation
+--                  "Snowflake credits are charged based on the number of virtual
+--                  warehouses you use, how long they run, and their size"
+--                  https://docs.snowflake.com/en/user-guide/credits.html#virtual-warehouse-credit-usage
+--
+--                  This query measures the number of virtual warehouses represented
+--                  by workload definitions as defined above, multiplied by how long
+--                  they run, multiplied by their size
+--
+--                  Snowflake charges for length of time running regardless of
+--                  whether 1% or 100% of the warehouse resources are used
+--                  - Snowflake, Inc. "How are Credits Charged for Warehouses?"
+--                  https://docs.snowflake.com/en/user-guide/warehouses-considerations.html#how-are-credits-charged-for-warehouses
+--
+--              3.  Selecting a Warehouse Size by measuring the amount of CPU
+--                  resources demanded to cover all compute demand and
+--                  then mapping to the estimated available CPU resources of
+--                  different warehouse sizes based on number of vCPU per
+--                  warehouse size.
+--                  Warehouse size does not automatically change based on
+--                  consumption demand like how resource allocation levels
+--                  dynamically change in Teradata's workload management driven
+--                  by consumption demand so size selection is either
+--                  manually managed, scheduled for predictable changes in
+--                  workload demand, or one size is chosen to cover most
+--                  consumption demand leaving the rest of the resources unused.
+--
+--  NOTE:   This query summarizes by month over a year period based on workload
+--          consumption demand.
+--          Workload consumption demand is not static, there are periods of peak
+--          demand and minimal demand which could be averaged.
+--          Sizing for Average impacts user experience during peak demand
+--          periods
+--          Sizing for Peak leaves resources unused during minimal demand
+--          periods
+--          This query uses assumes a typical customer approach of sizing for
+--          peak
+--
+-- Modification History
+--
+-- Date         Who Version     Description
+-- 2022-02-15   PA  1           Initial Version to work towards a summarization
+--                              of an entire year into a requested format
+--------------------------------------------------------------------------------

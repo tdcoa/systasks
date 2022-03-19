@@ -17,22 +17,18 @@ try:
     ### ========== START CHART-SPECIFIC CODE ========== ###
 
     # iterate thru all columns in dfY and iterate / generate bar data:
-    log.info('ready to generate stacked vertical bar chart')
-    bottom = [0 for z in data.dfy.iloc[:,0]]
-    log.info('    bottom = %s' %str(bottom) )
+    log.info('ready to generate vertical bar(s) chart')
     log.info('note: if you see an error that says something like: \n   %s\n   it means your csv is returning a TEXT type, not Number.  Maybe you have non-numerics mixed in, like commas or percent signs...?' %"--> unsupported operand type(s) for +: 'int' and 'str' <--")
 
     for itr, col in enumerate(data.dfy.columns):
-        log.info('    building stack = %s' %str(data.dfy.loc[:,col].name) )
+        log.info('    building bar = %s' %str(data.dfy.loc[:,col].name) )
         ydata = list(data.dfy.loc[:,col])
         plt.bar(data.dfx.iloc[:,0],
                  ydata,
                  label = data.dfy.loc[:,col].name,
                  color = data.colormap['dfy'][col],
-                 zorder = int(1/(itr+1)*100),
                  linestyle = '-',
-                 linewidth = 2,
-                 bottom = bottom)
+                 linewidth = 2)
         log.info('    stack built!  Re-calculating new bottom positions...' )
         bottom = [a + b for a,b in zip(bottom, ydata)]
         log.info('    new bottom = %s' %str(bottom) )
