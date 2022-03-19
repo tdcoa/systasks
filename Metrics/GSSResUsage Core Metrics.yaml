@@ -5,6 +5,7 @@ description: Generates volatile table with core GSS ResUsage metrics, mostly aro
 {% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
 {% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
 {% set  save_prework = true    if  save_prework is not defined else  save_prework %}
+{% set tca = false if tca is not defined else tca %}
 {% set totalactive_cod_cpu = wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu | round(6) %}
 {% set fileprefix = 'gssresusage' %}
 
@@ -32,7 +33,7 @@ tasks:
 
 {% include "vt_gssresusage_core.j2" %}
 
-{% if save_prework %}
+{% if save_prework and not tca %}
 - name: export raw (original format) GSSResUsage.csv
   connect: source
   export:
