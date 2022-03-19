@@ -141,6 +141,8 @@
   {% set tdver     = '17.05'   if tdver     is not defined else tdver     %}
   {% set pdcr      = true      if pdcr      is not defined else pdcr      %}
   {% set siteid    = 'siteid'  if siteid    is not defined else siteid    %}
+  {% set reconcile = true      if reconcile is not defined else reconcile %}
+  {% set reconcile_dbqlogrules = false if reconcile_dbqlogrules is not defined else reconcile_dbqlogrules %}
 
   {{ orig.__setitem__('startdate',     startdate    )  or '' }}
   {{ orig.__setitem__('enddate',       enddate      )  or '' }}
@@ -189,6 +191,7 @@
   {% set td16 = true if tdver[:2]=='16' else false %}
   {% set td17 = true if tdver[:2]=='17' else false %}
 
+{% if reconcile %}
 # report out all variables:
 - name: RECONCILE variables (coa_util.validate_variables())
   connect: source
@@ -241,13 +244,15 @@
       ,'{{ reconcile    | default(false) }}' as Reconcile
       ,'{{ custom_decode_folder }}' as Custom_Decode_Folder
 
+{% if reconcile_dbqlogrules %}
 # report out logging rules:
 - name: RECONCILE DBQLogRules
   connect: source
   export:
     file: reconcile_logging_rules.csv
     sql: select * from dbc.dbqlrulesv  order by 1
-
+{% endif %}
+{% endif %}
 
   {% set context.variables = {"startdate":startdate, "enddate":enddate
                             ,"your_name":your_name
