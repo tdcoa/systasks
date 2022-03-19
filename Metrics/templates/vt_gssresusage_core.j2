@@ -10,6 +10,7 @@
 {% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
 {% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
 {% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+{% set  tca = false if tca is not defined else tca %}
 
 {% if reconcile %}
 - name: Copy over the gssresusage query file, just for reconciliation
@@ -18,6 +19,678 @@
     files: ['{{ dirs.systasks }}/Metrics/sql/gssresusage.{{ tdversion }}{{ pdcrstr }}.sql']
 {% endif %}
 
+
+- name: Create GSSResUSage Version-Agnostic Volatile Table
+  connect: source
+  execute:
+    sql: |
+      CREATE VOLATILE MULTISET TABLE vt_gssresusage_core
+      (
+              site_id                                         VARCHAR(255)
+             ,tca_system_id                                   INTEGER
+             ,gss_qry_vrsn                                    VARCHAR(15)
+             ,LogDate                                         VARCHAR(10)
+             ,LogDOW                                          VARCHAR(3)
+             ,LogTime                                         FLOAT
+             ,LogTs                                           TIMESTAMP(0)
+             ,LogHr                                           SMALLINT
+             ,Minute10                                        SMALLINT
+             ,RSSInterval                                     SMALLINT
+             ,NodeGen                                         VARCHAR(8)
+             ,AMPS                                            SMALLINT
+             ,CPUs                                            SMALLINT
+             ,DBSRelease                                      VARCHAR(50)
+             ,PMCOD                                           SMALLINT
+             ,WMCOD                                           FLOAT
+             ,IOCOD                                           FLOAT
+             ,MinMemSizeGB                                    DECIMAL(18,3)
+             ,MaxMemSizeGB                                    DECIMAL(18,3)
+             ,NumNodes                                        INTEGER
+             ,AvgCPUBusy                                      DECIMAL(18,3)
+             ,MaxCPUBusy                                      DECIMAL(18,3)
+             ,AvgPctOSCPU                                     DECIMAL(18,3)
+             ,MaxPctOSCPU                                     DECIMAL(18,3)
+             ,AvgPctIOWait                                    DECIMAL(18,3)
+             ,AvgRunQSz                                       DECIMAL(18,3)
+             ,MaxRunQSz                                       DECIMAL(18,3)
+             ,MaxPctIOWait                                    DECIMAL(18,3)
+             ,PctReadsCnt                                     DECIMAL(18,3)
+             ,PctReadsKB                                      DECIMAL(18,3)
+             ,AvgPosReadSec                                   DECIMAL(18,3)
+             ,AvgPreReadSec                                   DECIMAL(18,3)
+             ,AvgWriteSec                                     DECIMAL(18,3)
+             ,AvgIOPsSec                                      DECIMAL(18,3)
+             ,MaxIOPsSec                                      DECIMAL(18,3)
+             ,AvgMBSecNode                                    DECIMAL(18,3)
+             ,MaxMBSecNode                                    DECIMAL(18,3)
+             ,AvgReadMBSecNode                                DECIMAL(18,3)
+             ,AvgWriteMBSecNode                               DECIMAL(18,3)
+             ,TtlMBSecGen                                     DECIMAL(18,3)
+             ,TtlReadMBSecGen                                 DECIMAL(18,3)
+             ,TtlWriteMBSecGen                                DECIMAL(18,3)
+             ,TtlPosReadSecGen                                DECIMAL(18,3)
+             ,TtlPreReadSecGen                                DECIMAL(18,3)
+             ,TtlWriteSecGen                                  DECIMAL(18,3)
+             ,KBRead                                          DECIMAL(18,3)
+             ,KBWrite                                         DECIMAL(18,3)
+             ,PermCacheEffKB                                  DECIMAL(18,3)
+             ,SpoolCacheEffKB                                 DECIMAL(18,3)
+             ,TotalCacheEffKB                                 DECIMAL(18,3)
+             ,PermCacheEffCnt                                 DECIMAL(18,3)
+             ,SpoolCacheEffCnt                                DECIMAL(18,3)
+             ,PermDBCacheEffCnt                               DECIMAL(18,3)
+             ,PermCICacheEffCnt                               DECIMAL(18,3)
+             ,SpoolDBCacheEffCnt                              DECIMAL(18,3)
+             ,SpoolCICacheEffCnt                              DECIMAL(18,3)
+             ,LogPermDBSecNode_SVPR                           DECIMAL(18,3)
+             ,LogPermCISecNode_SVPR                           DECIMAL(18,3)
+             ,LogSpoolDBSecNode_SVPR                          DECIMAL(18,3)
+             ,LogSpoolCISecNode_SVPR                          DECIMAL(18,3)
+             ,PhySpoolDBSecNode_SVPR                          DECIMAL(18,3)
+             ,PhySpoolCISecNode_SVPR                          DECIMAL(18,3)
+             ,PhyPermDBSecNode_SVPR                           DECIMAL(18,3)
+             ,PhyPermCISecNode_SVPR                           DECIMAL(18,3)
+             ,LogPermReadSecNode_SVPR                         DECIMAL(18,3)
+             ,LogSpoolReadSecNode_SVPR                        DECIMAL(18,3)
+             ,LogPermReadMBSecNode_SVPR                       DECIMAL(18,3)
+             ,LogSpoolReadMBSecNode_SVPR                      DECIMAL(18,3)
+             ,PhyPermPosReadMBSecNode_SVPR                    DECIMAL(18,3)
+             ,PhyPermPreReadMBSecNode_SVPR                    DECIMAL(18,3)
+             ,PhySpoolPosReadMBSecNode_SVPR                   DECIMAL(18,3)
+             ,PhySpoolPreReadMBSecNode_SVPR                   DECIMAL(18,3)
+             ,PhyPermPosReadSecNode_SVPR                      DECIMAL(18,3)
+             ,PhyPermPreReadSecNode_SVPR                      DECIMAL(18,3)
+             ,PhySpoolPosReadSecNode_SVPR                     DECIMAL(18,3)
+             ,PhySpoolPreReadSecNode_SVPR                     DECIMAL(18,3)
+             ,PhyPermWriteSecNode_SVPR                        DECIMAL(18,3)
+             ,PhySpoolWriteSecNode_SVPR                       DECIMAL(18,3)
+             ,PhyPermWriteMBSecNode_SVPR                      DECIMAL(18,3)
+             ,PhySpoolWriteMBSecNode_SVPR                     DECIMAL(18,3)
+             ,TtlPhyPermReadMBSecNode_SVPR                    DECIMAL(18,3)
+             ,TtlPhySpoolReadMBSecNode_SVPR                   DECIMAL(18,3)
+             ,TtlPhyPermWriteMBSecNode_SVPR                   DECIMAL(18,3)
+             ,TtlPhySpoolWriteMBSecNode_SVPR                  DECIMAL(18,3)
+             ,TtlPhyPermReadsSecNode_SVPR                     DECIMAL(18,3)
+             ,TtlPhySpoolReadsSecNode_SVPR                    DECIMAL(18,3)
+             ,TtlPhyWriteSecNode_SVPR                         DECIMAL(18,3)
+             ,TtlPhyWriteMBSecNode_SVPR                       DECIMAL(18,3)
+             ,TtlLogReadMBSecNode_SVPR                        DECIMAL(18,3)
+             ,TtlPhyReadMBSecNode_SVPR                        DECIMAL(18,3)
+             ,CylReadRequestsSecNode_SVPR                     DECIMAL(18,3)
+             ,CylReadSecNode_SVPR                             DECIMAL(18,3)
+             ,CylReadBlocksSecNode_SVPR                       DECIMAL(18,3)
+             ,CylReadDenThrSecNode_SVPR                       DECIMAL(18,3)
+             ,CylReadDenCacheSecNode_SVPR                     DECIMAL(18,3)
+             ,PermDirtyRelSecNode_SVPR                        DECIMAL(18,3)
+             ,PermCleanRelSecNode_SVPR                        DECIMAL(18,3)
+             ,PermDirtyRelMBSecNode_SVPR                      DECIMAL(18,3)
+             ,PermCleanRelMBSecNode_SVPR                      DECIMAL(18,3)
+             ,PermAgedWriteMBSecNode_SVPR                     DECIMAL(18,3)
+             ,SpoolDirtyRelSecNode_SVPR                       DECIMAL(18,3)
+             ,SpoolCleanRelSecNode_SVPR                       DECIMAL(18,3)
+             ,SpoolDirtyRelMBSecNode_SVPR                     DECIMAL(18,3)
+             ,SpoolCleanRelMBSecNode_SVPR                     DECIMAL(18,3)
+             ,SpoolAgedWriteMBSecNode_SVPR                    DECIMAL(18,3)
+             ,WALTJWriteMBSecNode_SVPR                        DECIMAL(18,3)
+             ,WALTJDirtyRelMBSecNode_SVPR                     DECIMAL(18,3)
+             ,PhysWALTJReadMBSecNode_SVPR                     DECIMAL(18,3)
+             ,AvgPtPReadsSec                                  DECIMAL(18,3)
+             ,MaxPtPReadsSec                                  DECIMAL(18,3)
+             ,AvgPtPWritesSec                                 DECIMAL(18,3)
+             ,MaxPtPWritesSec                                 DECIMAL(18,3)
+             ,AvgPtPReadMBSec                                 DECIMAL(18,3)
+             ,MaxPtPReadMBSec                                 DECIMAL(18,3)
+             ,AvgPtPWriteMBSec                                DECIMAL(18,3)
+             ,MaxPtPWriteMBSec                                DECIMAL(18,3)
+             ,AvgBrdReadsSec                                  DECIMAL(18,3)
+             ,MaxBrdReadsSec                                  DECIMAL(18,3)
+             ,AvgBrdWritesSec                                 DECIMAL(18,3)
+             ,MaxBrdWritesSec                                 DECIMAL(18,3)
+             ,AvgBrdReadMBSec                                 DECIMAL(18,3)
+             ,MaxBrdReadMBSec                                 DECIMAL(18,3)
+             ,AvgBrdWriteMBSec                                DECIMAL(18,3)
+             ,MaxBrdWriteMBSec                                DECIMAL(18,3)
+             ,AvgPgSwapInSec                                  DECIMAL(18,3)
+             ,MaxPgSwapInSec                                  DECIMAL(18,3)
+             ,AvgPgSwapOutSec                                 DECIMAL(18,3)
+             ,MaxPgSwapOutSec                                 DECIMAL(18,3)
+             ,AvgHDDReadMBSecNode_SPDSK                       DECIMAL(18,3)
+             ,MaxHDDReadMBSecNode_SPDSK                       DECIMAL(18,3)
+             ,AvgHDDWriteMBSecNode_SPDSK                      DECIMAL(18,3)
+             ,MaxHDDWriteMBSecNode_SPDSK                      DECIMAL(18,3)
+             ,AvgHDDReadsSecNode_SPDSK                        DECIMAL(18,3)
+             ,MaxHDDReadsSecNode_SPDSK                        DECIMAL(18,3)
+             ,AvgHDDWritesSecNode_SPDSK                       DECIMAL(18,3)
+             ,MaxHDDWritesSecNode_SPDSK                       DECIMAL(18,3)
+             ,AvgHDDReadResp                                  DECIMAL(18,3)
+             ,MaxHDDReadResp                                  DECIMAL(18,3)
+             ,AvgHDDWriteResp                                 DECIMAL(18,3)
+             ,MaxHDDWriteResp                                 DECIMAL(18,3)
+             ,AvgSSDReadMBSecNode_SPDSK                       DECIMAL(18,3)
+             ,MaxSSDReadMBSecNode_SPDSK                       DECIMAL(18,3)
+             ,AvgSSDWriteMBSecNode_SPDSK                      DECIMAL(18,3)
+             ,MaxSSDWriteMBSecNode_SPDSK                      DECIMAL(18,3)
+             ,AvgSSDReadsSecNode_SPDSK                        DECIMAL(18,3)
+             ,MaxSSDReadsSecNode_SPDSK                        DECIMAL(18,3)
+             ,AvgSSDWritesSecNode_SPDSK                       DECIMAL(18,3)
+             ,MaxSSDWritesSecNode_SPDSK                       DECIMAL(18,3)
+             ,AvgSSDReadResp                                  DECIMAL(18,3)
+             ,MaxSSDReadResp                                  DECIMAL(18,3)
+             ,AvgSSDWriteResp                                 DECIMAL(18,3)
+             ,MaxSSDWriteResp                                 DECIMAL(18,3)
+             ,AvgWISSDReadMBSecNode_SPDSK                     DECIMAL(18,3)
+             ,MaxWISSDReadMBSecNode_SPDSK                     DECIMAL(18,3)
+             ,AvgWISSDWriteMBSecNode_SPDSK                    DECIMAL(18,3)
+             ,MaxWISSDWriteMBSecNode_SPDSK                    DECIMAL(18,3)
+             ,AvgWISSDReadsSecNode_SPDSK                      DECIMAL(18,3)
+             ,MaxWISSDReadsSecNode_SPDSK                      DECIMAL(18,3)
+             ,AvgWISSDWritesSecNode_SPDSK                     DECIMAL(18,3)
+             ,MaxWISSDWritesSecNode_SPDSK                     DECIMAL(18,3)
+             ,AvgWISSDReadResp                                DECIMAL(18,3)
+             ,MaxWISSDReadResp                                DECIMAL(18,3)
+             ,AvgWISSDWriteResp                               DECIMAL(18,3)
+             ,MaxWISSDWriteResp                               DECIMAL(18,3)
+             ,AvgRISSDReadMBSecNode_SPDSK                     DECIMAL(18,3)
+             ,MaxRISSDReadMBSecNode_SPDSK                     DECIMAL(18,3)
+             ,AvgRISSDWriteMBSecNode_SPDSK                    DECIMAL(18,3)
+             ,MaxRISSDWriteMBSecNode_SPDSK                    DECIMAL(18,3)
+             ,AvgRISSDReadsSecNode_SPDSK                      DECIMAL(18,3)
+             ,MaxRISSDReadsSecNode_SPDSK                      DECIMAL(18,3)
+             ,AvgRISSDWritesSecNode_SPDSK                     DECIMAL(18,3)
+             ,MaxRISSDWritesSecNode_SPDSK                     DECIMAL(18,3)
+             ,AvgRISSDReadResp                                DECIMAL(18,3)
+             ,MaxRISSDReadResp                                DECIMAL(18,3)
+             ,AvgRISSDWriteResp                               DECIMAL(18,3)
+             ,MaxRISSDWriteResp                               DECIMAL(18,3)
+             ,AvgPECPUBusy                                    DECIMAL(18,3)
+             ,MaxPECPUBusy                                    DECIMAL(18,3)
+             ,AvgGTWCPUBusy                                   DECIMAL(18,3)
+             ,MaxGTWCPUBusy                                   DECIMAL(18,3)
+             ,AvgAMPCPUBusy                                   DECIMAL(18,3)
+             ,MaxAMPCPUBusy                                   DECIMAL(18,3)
+             ,AvgGTW_PECPUBusy                                DECIMAL(18,3)
+             ,MaxGTW_PECPUBusy                                DECIMAL(18,3)
+             ,AvgVHAgedOut_SVPR                               DECIMAL(18,3)
+             ,AvgVHAgedOutMBSecNode_SVPR                      DECIMAL(18,3)
+             ,AvgLogVHReads_SVPR                              DECIMAL(18,3)
+             ,AvgLogVHReadMBSecNode_SVPR                      DECIMAL(18,3)
+             ,AvgPhysVHReads_SVPR                             DECIMAL(18,3)
+             ,AvgPhysVHReadMBSecNode_SVPR                     DECIMAL(18,3)
+             ,PreCompMBSecNode_SVPR                           DECIMAL(18,3)
+             ,PostCompMBSecNode_SVPR                          DECIMAL(18,3)
+             ,PreUnCompMBSecNode_SVPR                         DECIMAL(18,3)
+             ,PostUnCompMBSecNode_SVPR                        DECIMAL(18,3)
+             ,CompDBsSecNode_SVPR                             DECIMAL(18,3)
+             ,UnCompDBsSecNode_SVPR                           DECIMAL(18,3)
+             ,COMPCPU                                         DECIMAL(18,3)
+             ,UNCOMPCPU                                       DECIMAL(18,3)
+             ,PctCPUComp                                      DECIMAL(18,3)
+             ,PctCPUUnComp                                    DECIMAL(18,3)
+             ,CompRatioComp_SVPR                              DECIMAL(18,3)
+             ,CompRatioUnComp_SVPR                            DECIMAL(18,3)
+             ,TtlTCPUComp_Est1                                DECIMAL(18,3)
+             ,TtlTCPUUnComp_Est1                              DECIMAL(18,3)
+             ,TtlTCPUComp_Est2                                DECIMAL(18,3)
+             ,TtlTCPUUnComp_Est2                              DECIMAL(18,3)
+             ,TtlTCPUComp_Est3                                DECIMAL(18,3)
+             ,TtlTCPUUnComp_Est3                              DECIMAL(18,3)
+             ,CPUMSMBComp                                     DECIMAL(18,3)
+             ,CPUMSMBUnComp                                   DECIMAL(18,3)
+             ,AvgNtwReadMBSecNode                             DECIMAL(18,3)
+             ,MaxNtwReadMBSecNode                             DECIMAL(18,3)
+             ,AvgNtwWriteMBSecNode                            DECIMAL(18,3)
+             ,MaxNtwWriteMBSecNode                            DECIMAL(18,3)
+             ,TotalNtwReadMBSecNode                           DECIMAL(18,3)
+             ,TotalNtwWriteMBSecNode                          DECIMAL(18,3)
+            )
+            primary index(LogDate, LogTime)
+            on commit preserve rows
+
+
+
+{% if tca %}
+- name: "*** TCA: Collect ResUsage Date from TCA (variable: tca={{ tca }})"
+  connect: source
+  execute:
+    sql: |
+      INSERT INTO vt_gssresusage_core (
+      site_id
+      ,tca_system_id
+      ,gss_qry_vrsn
+      ,"LogDate"
+      ,LogDOW
+      ,LogTime
+      ,LogTs
+      ,LogHr
+      ,"Minute10"
+      ,"RSSInterval"
+      ,"NodeGen"
+      ,"AMPS"
+      ,"CPUs"
+      ,"DBSRelease"
+      ,"PMCOD"
+      ,"WMCOD"
+      ,"IOCOD"
+      ,"MinMemSizeGB"
+      ,"MaxMemSizeGB"
+      ,"NumNodes"
+      ,"AvgCPUBusy"
+      ,"MaxCPUBusy"
+      ,"AvgPctOSCPU"
+      ,"MaxPctOSCPU"
+      ,"AvgPctIOWait"
+      ,"AvgRunQSz"
+      ,"MaxRunQSz"
+      ,"MaxPctIOWait"
+      ,"PctReadsCnt"
+      ,"PctReadsKB"
+      ,"AvgPosReadSec"
+      ,"AvgPreReadSec"
+      ,AvgWriteSec
+      ,AvgIOPsSec
+      ,MaxIOPsSec
+      ,AvgMBSecNode
+      ,MaxMBSecNode
+      ,AvgReadMBSecNode
+      ,AvgWriteMBSecNode
+      ,TtlMBSecGen
+      ,TtlReadMBSecGen
+      ,TtlWriteMBSecGen
+      ,TtlPosReadSecGen
+      ,TtlPreReadSecGen
+      ,TtlWriteSecGen
+      ,KBRead
+      ,KBWrite
+      ,PermCacheEffKB
+      ,SpoolCacheEffKB
+      ,TotalCacheEffKB
+      ,PermCacheEffCnt
+      ,SpoolCacheEffCnt
+      ,PermDBCacheEffCnt
+      ,PermCICacheEffCnt
+      ,SpoolDBCacheEffCnt
+      ,SpoolCICacheEffCnt
+      ,LogPermDBSecNode_SVPR
+      ,LogPermCISecNode_SVPR
+      ,LogSpoolDBSecNode_SVPR
+      ,LogSpoolCISecNode_SVPR
+      ,PhySpoolDBSecNode_SVPR
+      ,PhySpoolCISecNode_SVPR
+      ,PhyPermDBSecNode_SVPR
+      ,PhyPermCISecNode_SVPR
+      ,LogPermReadSecNode_SVPR
+      ,LogSpoolReadSecNode_SVPR
+      ,LogPermReadMBSecNode_SVPR
+      ,LogSpoolReadMBSecNode_SVPR
+      ,PhyPermPosReadMBSecNode_SVPR
+      ,PhyPermPreReadMBSecNode_SVPR
+      ,PhySpoolPosReadMBSecNode_SVPR
+      ,PhySpoolPreReadMBSecNode_SVPR
+      ,PhyPermPosReadSecNode_SVPR
+      ,PhyPermPreReadSecNode_SVPR
+      ,PhySpoolPosReadSecNode_SVPR
+      ,PhySpoolPreReadSecNode_SVPR
+      ,PhyPermWriteSecNode_SVPR
+      ,PhySpoolWriteSecNode_SVPR
+      ,PhyPermWriteMBSecNode_SVPR
+      ,PhySpoolWriteMBSecNode_SVPR
+      ,TtlPhyPermReadMBSecNode_SVPR
+      ,TtlPhySpoolReadMBSecNode_SVPR
+      ,TtlPhyPermWriteMBSecNode_SVPR
+      ,TtlPhySpoolWriteMBSecNode_SVPR
+      ,TtlPhyPermReadsSecNode_SVPR
+      ,TtlPhySpoolReadsSecNode_SVPR
+      ,TtlPhyWriteSecNode_SVPR
+      ,TtlPhyWriteMBSecNode_SVPR
+      ,TtlLogReadMBSecNode_SVPR
+      ,TtlPhyReadMBSecNode_SVPR
+      ,CylReadRequestsSecNode_SVPR
+      ,CylReadSecNode_SVPR
+      ,CylReadBlocksSecNode_SVPR
+      ,CylReadDenThrSecNode_SVPR
+      ,CylReadDenCacheSecNode_SVPR
+      ,PermDirtyRelSecNode_SVPR
+      ,PermCleanRelSecNode_SVPR
+      ,PermDirtyRelMBSecNode_SVPR
+      ,PermCleanRelMBSecNode_SVPR
+      ,PermAgedWriteMBSecNode_SVPR
+      ,SpoolDirtyRelSecNode_SVPR
+      ,SpoolCleanRelSecNode_SVPR
+      ,SpoolDirtyRelMBSecNode_SVPR
+      ,SpoolCleanRelMBSecNode_SVPR
+      ,SpoolAgedWriteMBSecNode_SVPR
+      ,WALTJWriteMBSecNode_SVPR
+      ,WALTJDirtyRelMBSecNode_SVPR
+      ,PhysWALTJReadMBSecNode_SVPR
+      ,AvgPtPReadsSec
+      ,MaxPtPReadsSec
+      ,AvgPtPWritesSec
+      ,MaxPtPWritesSec
+      ,AvgPtPReadMBSec
+      ,MaxPtPReadMBSec
+      ,AvgPtPWriteMBSec
+      ,MaxPtPWriteMBSec
+      ,AvgBrdReadsSec
+      ,MaxBrdReadsSec
+      ,AvgBrdWritesSec
+      ,MaxBrdWritesSec
+      ,AvgBrdReadMBSec
+      ,MaxBrdReadMBSec
+      ,AvgBrdWriteMBSec
+      ,MaxBrdWriteMBSec
+      ,AvgPgSwapInSec
+      ,MaxPgSwapInSec
+      ,AvgPgSwapOutSec
+      ,MaxPgSwapOutSec
+      ,AvgHDDReadMBSecNode_SPDSK
+      ,MaxHDDReadMBSecNode_SPDSK
+      ,AvgHDDWriteMBSecNode_SPDSK
+      ,MaxHDDWriteMBSecNode_SPDSK
+      ,AvgHDDReadsSecNode_SPDSK
+      ,MaxHDDReadsSecNode_SPDSK
+      ,AvgHDDWritesSecNode_SPDSK
+      ,MaxHDDWritesSecNode_SPDSK
+      ,AvgHDDReadResp
+      ,MaxHDDReadResp
+      ,AvgHDDWriteResp
+      ,MaxHDDWriteResp
+      ,AvgSSDReadMBSecNode_SPDSK
+      ,MaxSSDReadMBSecNode_SPDSK
+      ,AvgSSDWriteMBSecNode_SPDSK
+      ,MaxSSDWriteMBSecNode_SPDSK
+      ,AvgSSDReadsSecNode_SPDSK
+      ,MaxSSDReadsSecNode_SPDSK
+      ,AvgSSDWritesSecNode_SPDSK
+      ,MaxSSDWritesSecNode_SPDSK
+      ,AvgSSDReadResp
+      ,MaxSSDReadResp
+      ,AvgSSDWriteResp
+      ,MaxSSDWriteResp
+      ,AvgWISSDReadMBSecNode_SPDSK
+      ,MaxWISSDReadMBSecNode_SPDSK
+      ,AvgWISSDWriteMBSecNode_SPDSK
+      ,MaxWISSDWriteMBSecNode_SPDSK
+      ,AvgWISSDReadsSecNode_SPDSK
+      ,MaxWISSDReadsSecNode_SPDSK
+      ,AvgWISSDWritesSecNode_SPDSK
+      ,MaxWISSDWritesSecNode_SPDSK
+      ,AvgWISSDReadResp
+      ,MaxWISSDReadResp
+      ,AvgWISSDWriteResp
+      ,MaxWISSDWriteResp
+      ,AvgRISSDReadMBSecNode_SPDSK
+      ,MaxRISSDReadMBSecNode_SPDSK
+      ,AvgRISSDWriteMBSecNode_SPDSK
+      ,MaxRISSDWriteMBSecNode_SPDSK
+      ,AvgRISSDReadsSecNode_SPDSK
+      ,MaxRISSDReadsSecNode_SPDSK
+      ,AvgRISSDWritesSecNode_SPDSK
+      ,MaxRISSDWritesSecNode_SPDSK
+      ,AvgRISSDReadResp
+      ,MaxRISSDReadResp
+      ,AvgRISSDWriteResp
+      ,MaxRISSDWriteResp
+      ,AvgPECPUBusy
+      ,MaxPECPUBusy
+      ,AvgGTWCPUBusy
+      ,MaxGTWCPUBusy
+      ,AvgAMPCPUBusy
+      ,MaxAMPCPUBusy
+      ,AvgGTW_PECPUBusy
+      ,MaxGTW_PECPUBusy
+      ,AvgVHAgedOut_SVPR
+      ,AvgVHAgedOutMBSecNode_SVPR
+      ,AvgLogVHReads_SVPR
+      ,AvgLogVHReadMBSecNode_SVPR
+      ,AvgPhysVHReads_SVPR
+      ,AvgPhysVHReadMBSecNode_SVPR
+      ,PreCompMBSecNode_SVPR
+      ,PostCompMBSecNode_SVPR
+      ,PreUnCompMBSecNode_SVPR
+      ,PostUnCompMBSecNode_SVPR
+      ,CompDBsSecNode_SVPR
+      ,UnCompDBsSecNode_SVPR
+      ,COMPCPU
+      ,UNCOMPCPU
+      ,PctCPUComp
+      ,PctCPUUnComp
+      ,CompRatioComp_SVPR
+      ,CompRatioUnComp_SVPR
+      ,TtlTCPUComp_Est1
+      ,TtlTCPUUnComp_Est1
+      ,TtlTCPUComp_Est2
+      ,TtlTCPUUnComp_Est2
+      ,TtlTCPUComp_Est3
+      ,TtlTCPUUnComp_Est3
+      ,CPUMSMBComp
+      ,CPUMSMBUnComp
+      ,AvgNtwReadMBSecNode
+      ,MaxNtwReadMBSecNode
+      ,AvgNtwWriteMBSecNode
+      ,MaxNtwWriteMBSecNode
+      ,TotalNtwReadMBSecNode
+      ,TotalNtwWriteMBSecNode)
+      SELECT tca.cust_site_id
+             ,tca.tca_system_id
+          ,tca.GSS_qry_vrsn
+          ,cast(tca.log_dt as DATE FORMAT 'YYYY-MM-DD')
+          ,tca.log_dow
+          ,tca.log_tm
+          ,tca.log_ts
+          ,tca.log_hr
+          ,tca.log_10min_intrvl
+          ,tca.rss_intvl_ss
+          ,tca.node_type_desc
+          ,tca.amp_cnt
+          ,tca.cpu_cnt
+          ,tca.dbs_vrsn
+          ,tca.pm_cod_pct
+          ,tca.wm_cod_pct
+          ,tca.io_cod_pct
+          ,tca.min_memsize_gb_qty
+          ,tca.max_memsize_gb_qty
+          ,tca.node_cnt
+          ,tca.avg_cpu_busy_pct
+          ,tca.max_cpu_busy_pct
+          ,tca.avg_pct_os_cpu_pct
+          ,tca.max_pct_os_cpu_pct
+          ,tca.avg_iowait_pct
+          ,tca.avg_queue_sz_qty
+          ,tca.max_queue_sz_qty
+          ,tca.max_iowait_pct
+          ,tca.read_cnt_io_pct
+          ,tca.read_kb_io_pct
+          ,tca.avg_read_cnt_ss_qty
+          ,tca.avg_preread_cnt_ss_qty
+          ,tca.avg_write_cnt_ss_qty
+          ,tca.avg_io_cnt_ss_qty
+          ,tca.max_io_cnt_ss_qty
+          ,tca.avg_io_mb_ss_qty
+          ,tca.max_io_mb_ss_qty
+          ,tca.avg_read_mb_ss_qty
+          ,tca.avg_write_mb_ss_qty
+          ,tca.ttl_io_mb_ss_qty
+          ,tca.ttl_read_mb_ss_qty
+          ,tca.ttl_write_mb_ss_qty
+          ,tca.ttl_read_ss_qty
+          ,tca.ttl_preread_ss_qty
+          ,tca.ttl_write_ss_qty
+          ,tca.read_kb_ss_qty
+          ,tca.write_kb_ss_qty
+          ,tca.perm_cache_eff_kb_qty
+          ,tca.spool_cache_eff_kb_qty
+          ,tca.ttl_cache_eff_kb_qty
+          ,tca.perm_cache_eff_cnt
+          ,tca.spool_cache_eff_cnt
+          ,tca.perm_db_cache_eff_cnt
+          ,tca.perm_cyl_indx_cache_eff_cnt
+          ,tca.spool_db_cache_eff_cnt
+          ,tca.spool_cyl_indx_cache_eff_cnt
+          ,tca.perm_data_blk_ss_qty
+          ,tca.node_perm_cyl_indx_ss_qty
+          ,tca.node_spl_data_blk_ss_qty
+          ,tca.node_spl_cyl_indx_ss_qty
+          ,tca.node_phy_Spl_data_blk_ss_qty
+          ,tca.node_phy_Spl_cyl_indx_ss_qty
+          ,tca.node_phy_Perm_data_blk_ss_qty
+          ,tca.node_phy_Perm_cyl_indx_ss_qty
+          ,tca.node_perm_read_ss_qty
+          ,tca.node_spl_read_ss_qty
+          ,tca.node_Perm_read_mb_ss_qty
+          ,tca.node_Spl_read_mb_ss_qty
+          ,tca.node_phyPerm_read_mb_ss_qty
+          ,tca.node_phyPerm_preread_mb_ss_qty
+          ,tca.node_PhySpl_read_mb_ss_qty
+          ,tca.node_physpl_preread_mb_ss_qty
+          ,tca.node_phyPerm_read_ss_qty
+          ,tca.node_phyPerm_preread_ss_qty
+          ,tca.node_phySpl_read_ss_qty
+          ,tca.node_PhySpl_preread_ss_qty
+          ,tca.node_PhyPerm_write_ss_qty
+          ,tca.node_PhySpl_write_ss_qty
+          ,tca.node_PhyPerm_write_mb_ss_qty
+          ,tca.node_PhySpl_write_mb_ss_qty
+          ,tca.ttl_phyPerm_read_mb_ss_qty
+          ,tca.ttl_PhySpl_read_mb_ss_qty
+          ,tca.ttl_PhyPerm_write_mb_ss_qty
+          ,tca.ttl_PhySpl_write_mb_ss_qty
+          ,tca.ttl_PhyPerm_read_ss_qty
+          ,tca.ttl_phySpl_read_ss_qty
+          ,tca.ttl_Phy_Write_ss_qty
+          ,tca.ttl_Phy_write_mb_ss_qty
+          ,tca.ttl_logRead_mb_ss_qty
+          ,tca.ttl_PhyRead_mb_ss_qty
+          ,tca.node_cyl_read_Req_ss_qty
+          ,tca.node_cyl_read_ss_qty
+          ,tca.node_cyl_read_blks_ss_qty
+          ,tca.node_cyl_read_den_thrsh_ss_qty
+          ,tca.node_cyl_read_den_cache_ss_qty
+          ,tca.node_perm_dirty_rlse_ss_qty
+          ,tca.node_perm_clean_rlse_ss_qty
+          ,tca.node_perm_dirty_rlse_mb_ss_qty
+          ,tca.node_perm_clean_rlse_mb_ss_qty
+          ,tca.node_perm_aged_write_MB_ss_qty
+          ,tca.node_spl_dirty_rlse_ss_qty
+          ,tca.node_spl_clean_rlse_ss_qty
+          ,tca.node_spl_dirty_rlse_mb_ss_qty
+          ,tca.node_spl_clean_rlse_mb_ss_qty
+          ,tca.node_spl_aged_write_mb_ss_qty
+          ,tca.node_waltj_write_mb_ss_qty
+          ,tca.node_waltj_dirty_rlse_mb_ss_qty
+          ,tca.node_phy_waltj_read_mb_ss_qty
+          ,tca.avg_ptp_read_ss_qty
+          ,tca.max_ptp_read_ss_qty
+          ,tca.avg_ptp_write_ss_qty
+          ,tca.max_ptp_write_ss_qty
+          ,tca.avg_ptp_read_mb_ss_qty
+          ,tca.max_ptp_read_mb_ss_qty
+          ,tca.avg_ptp_write_mb_ss_qty
+          ,tca.max_ptp_write_mb_ss_qty
+          ,tca.avg_brd_read_ss_qty
+          ,tca.max_brd_read_ss_qty
+          ,tca.avg_brd_write_ss_qty
+          ,tca.max_brd_write_ss_qty
+          ,tca.avg_brd_read_mb_ss_qty
+          ,tca.max_brd_read_mb_ss_qty
+          ,tca.avg_brd_write_mb_ss_qty
+          ,tca.max_brd_write_mb_ss_qty
+          ,tca.avg_pg_swap_in_ss_qty
+          ,tca.max_pg_swap_in_ss_qty
+          ,tca.avg_pg_swap_out_ss_qty
+          ,tca.max_pg_swap_out_ss_qty
+          ,tca.node_avg_hdd_read_mb_ss_qty
+          ,tca.node_max_hdd_read_mb_ss_qty
+          ,tca.node_avg_hdd_write_mb_ss_qty
+          ,tca.node_max_hdd_write_mb_ss_qty
+          ,tca.node_avg_hdd_read_ss_qty
+          ,tca.node_max_hdd_read_ss_qty
+          ,tca.node_avg_hdd_write_ss_qty
+          ,tca.node_max_hdd_write_ss_qty
+          ,tca.avg_hdd_read_resp_qty
+          ,tca.max_hdd_read_resp_qty
+          ,tca.avg_hdd_write_resp_qty
+          ,tca.max_hdd_write_resp_qty
+          ,tca.node_avg_ssd_read_mb_ss_qty
+          ,tca.node_max_ssd_read_mb_ss_qty
+          ,tca.node_avg_ssd_write_mb_ss_qty
+          ,tca.node_max_ssd_write_mb_ss_qty
+          ,tca.node_avg_ssd_read_ss_qty
+          ,tca.node_max_ssd_read_ss_qty
+          ,tca.node_avg_ssd_write_ss_qty
+          ,tca.node_max_ssd_write_ss_qty
+          ,tca.avg_ssd_read_resp_qty
+          ,tca.max_ssd_read_resp_qty
+          ,tca.avg_ssd_write_resp_qty
+          ,tca.max_ssd_write_resp_qty
+          ,tca.node_avg_wissd_read_mb_ss_qty
+          ,tca.node_max_wissd_read_mb_ss_qty
+          ,tca.node_avg_wissd_write_mb_ss_qty
+          ,tca.node_max_wissd_write_mb_ss_qty
+          ,tca.node_avg_wissd_read_ss_qty
+          ,tca.node_max_missd_read_ss_qty
+          ,tca.node_avg_wissd_write_ss_qty
+          ,tca.node_max_wissd_write_ss_qty
+          ,tca.avg_wissd_read_resp_qty
+          ,tca.max_wissd_read_resp_qty
+          ,tca.avg_wissd_write_resp_qty
+          ,tca.max_wissd_write_resp_qty
+          ,tca.node_avg_rissd_read_mb_ss_qty
+          ,tca.node_max_rissd_read_mb_ss_qty
+          ,tca.node_avg_rissd_write_mb_ss_qty
+          ,tca.node_max_rissd_write_mb_ss_qty
+          ,tca.node_avg_rissd_read_ss_qty
+          ,tca.node_max_rissd_read_ss_qty
+          ,tca.node_avg_rissd_writes_ss_qty
+          ,tca.node_max_rissd_write_sec_qty
+          ,tca.avg_rissd_read_resp_qty
+          ,tca.max_rissd_read_resp_qty
+          ,tca.avg_rissd_write_resp_qty
+          ,tca.max_rissd_write_resp_qty
+          ,tca.avg_pe_cpu_busy_pct
+          ,tca.max_pe_cpu_busy_pct
+          ,tca.ttl_gtw_cpu_busy_pct
+          ,tca.max_gtw_cpu_busy_pct
+          ,tca.avg_amp_cpu_busy_pct
+          ,tca.max_amp_cpu_busy_pct
+          ,tca.avg_gtw_pe_cpu_busy_pct
+          ,tca.max_gtw_pe_cpu_busy_pct
+          ,tca.node_avg_vh_aged_out_qty
+          ,tca.node_avg_vh_aged_out_mb_ss_qty
+          ,tca.node_avg_log_vh_read_ss_qty
+          ,tca.node_avg_log_vh_read_mb_ss_qty
+          ,tca.node_avg_phy_vh_read_ss_qty
+          ,tca.node_avg_phy_bh_read_mb_ss_qty
+          ,tca.node_precomp_mb_ss_qty
+          ,tca.node_post_comp_mb_ss_qty
+          ,tca.node_pre_uncomp_mb_ss_qty
+          ,tca.node_post_uncomp_mb_ss_qty
+          ,tca.node_comp_datablk_time_ss_qty
+          ,tca.node_uncomp_datablk_time_ss_qty
+          ,tca.comp_tm_secs
+          ,tca.uncomp_tm_secs
+          ,tca.cpu_comp_pct
+          ,tca.cpu_uncomp_pct
+          ,tca.comp_ratio_pct
+          ,tca.uncompr_ratio_pct
+          ,tca.ttl_cpu_comp_estim1_qty
+          ,tca.ttl_cpu_uncomp_estim1_qty
+          ,tca.ttl_cpu_comp_estim2_qty
+          ,tca.ttl_cpu_uncomp_estim2_qty
+          ,tca.ttl_cpu_comp_estim3_qty
+          ,tca.ttl_cpu_uncomp_estim3_qty
+          ,tca.cpu_comp_mb_msec_qty
+          ,tca.cpu_uncomp_mb_ss_qty
+          ,tca.node_avg_ntwk_read_mb_ss_qty
+          ,tca.node_max_ntwk_read_mb_ss_qty
+          ,tca.node_avg_ntwk_write_mb_ss_qty
+          ,tca.node_max_ntwk_write_mb_ss_qty
+          ,tca.node_ntwk_ttl_read_mb_ss_qty
+          ,tca.node_ntwk_ttl_write_mb_ss_qty
+      FROM acc_ted_con_vw.dbp_resUsage_szng_agg AS tca
+      WHERE cust_site_id = '{{ siteid }}'
+        AND Log_DT between {{ startdate }} and {{ enddate }}
+
+{% else %}
 - name: Create the vt_gssresusage_prework table from GSSResUsage logic for {{ tdversion }}{{ pdcrstr }} (family {{tdv}})
   connect: source
   execute:
@@ -27,7 +700,7 @@
   connect: source
   execute:
     sql: |
-      create volatile table  vt_gssresusage_core  as (
+      insert into  vt_gssresusage_core
       Select
         cast(  '{{ siteid }}'                     as  VARCHAR(255) )     as site_id
        ,cast(  0                                  as  INTEGER)           as tca_system_id
@@ -246,8 +919,7 @@
        ,cast(  TotalNtwReadMBSecNode              as  DECIMAL(18,3))     as TotalNtwReadMBSecNode
        ,cast(  TotalNtwWriteMBSecNode             as  DECIMAL(18,3))     as TotalNtwWriteMBSecNode
       from vt_gssresusage_prework
-      ) with data  primary index(LogDate, LogTime)  on commit preserve rows
-
+{% endif %}
 
 - name: Collect Stats
   connect: source
@@ -258,7 +930,7 @@
         ,column(LogDate)
       on vt_gssresusage_core
 
-{% if not save_prework %}
+{% if not save_prework and not tca %}
 - name: Drop Prework
   connect: source
   execute:
