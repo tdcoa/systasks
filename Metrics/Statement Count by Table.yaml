@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_statement_count_by_table.j2" %}
 
 - name: Export summary of vt_statement_count_by_table to csv (at 2m row/mth, default select is summary, not detail)
@@ -76,3 +85,6 @@ tasks:
       - "title:Table Count over 1500 daily Inserts/Updates/Deletes - {{ siteid }}"
       - "height:4"
       - "width:10"
+
+## end TCA Check
+{% endif %}

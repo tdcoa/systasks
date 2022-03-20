@@ -34,6 +34,14 @@ tasks:
 {% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
 ### ============= STANDARD PRE-PROCESSING =============
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
 
 {% include "vt_decode_user.j2" %}
 {% include "vt_site_info.j2" %}
@@ -518,3 +526,6 @@ tasks:
 - name: PPTx final build for Cloud_Migration_Considerations-vsf1.pptx
   ppt:
     file: ppt/Cloud_Migration_Considerations-vsf1.pptx
+
+## end TCA Check
+{% endif %}

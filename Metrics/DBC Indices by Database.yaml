@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_dbc_indices_by_database.j2" %}
 
 - name: Export vt_dbc_indices_by_database for reconciliation
@@ -63,3 +72,6 @@ tasks:
       - "legendy:1.00"
       - "barlogscale:True"
       - "pngfile:dbc_indices_by_database_summary_log.png"
+
+## end TCA Check
+{% endif %}

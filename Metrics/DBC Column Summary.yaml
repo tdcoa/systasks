@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_dbc_column_summary.j2" %}
 
 - name: Export vt_dbc_column_summary for reconciliation
@@ -61,3 +70,7 @@ tasks:
       - "xrotate:90"
       - "barlogscale:True"
       - "pngfile:dbc_column_count_by_datatype_log.png"
+
+
+## end TCA Check
+{% endif %}

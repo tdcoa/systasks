@@ -26,6 +26,16 @@ tasks:
 {% set sp_db         = 'APP_TCA_TBL' if sp_db  is not defined else sp_db %}
 {% set dbprefix      = 'DEV_' if dev else '' %}
 
+
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_feature_usage.j2" %}
 
 - name: Export Feature Usage for Transcend Upload
@@ -89,3 +99,6 @@ tasks:
     proc: {{ dbprefix }}{{ sp_db }}.sp1_coa_dat_feature
     params:
     - Null
+
+## end TCA Check
+{% endif %}

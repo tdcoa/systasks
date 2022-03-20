@@ -26,6 +26,15 @@ tasks:
 
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_decode_tablekind.j2" %}
 
 - name: "Export vt_decode_tablekind.csv"
@@ -116,3 +125,6 @@ tasks:
       - decode_user.csv
       - decode_appid.csv
       - decode_feature.csv
+
+## end TCA Check
+{% endif %}

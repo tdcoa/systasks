@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include 'vt_queries_by_runtime_bucket.j2' %}
 
 - name: "export SUM of Queries by Runtime"
@@ -200,4 +209,7 @@ tasks:
       Select * from vt_queries_by_runtime_bucket
       order by LogDate, Username
 
+{% endif %}
+
+## end TCA Check
 {% endif %}

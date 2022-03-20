@@ -26,6 +26,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_join_graph.j2" %}
 
 - name: Export full vt_join_graph
@@ -33,3 +42,6 @@ tasks:
   export:
     file: join_graph.csv
     sql: Select * from vt_join_graph order by 1,2
+
+## end TCA Check
+{% endif %}

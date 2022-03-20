@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_site_info.j2" %}
 
 - name: Export vt_site_info for reconciliation
@@ -29,3 +38,6 @@ tasks:
     file: site_info.csv
     sql: |
       Select * from vt_site_info
+
+## end TCA Check
+{% endif %}

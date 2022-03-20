@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_transfer_bytes_in_out.j2" %}
 
 - name: "Export transfer bytes in/out of platform, by day, for charting"
@@ -50,3 +59,6 @@ tasks:
   export:
     file: transfer_bytes_in_out.csv
     sql:  Select * from vt_transfer_bytes_in_out order by 1
+
+## end TCA Check
+{% endif %}

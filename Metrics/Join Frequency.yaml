@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_join_frequency.j2" %}
 
 - name: Export full vt_join_frequency
@@ -51,3 +60,6 @@ tasks:
       - "height:4"
       - "width:9"
       - "barlogscale:False"
+
+## end TCA Check
+{% endif %}

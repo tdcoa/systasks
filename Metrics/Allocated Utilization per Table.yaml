@@ -24,6 +24,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_allocated_utilization_per_table.j2" %}
 
 {% if export_all %}
@@ -91,3 +100,6 @@ tasks:
       - "legendx:0.5"
       - "barlogscale:False"
 {% endfor %}
+
+## end TCA Check
+{% endif %}

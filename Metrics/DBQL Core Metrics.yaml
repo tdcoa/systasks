@@ -21,6 +21,14 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
 
 {% include "vt_dbql_core.j2" %}
 {% set export_all = True if export_all is not defined else export_all %}
@@ -74,4 +82,7 @@ tasks:
 
 {% endfor %}
 {% endfor %}
+{% endif %}
+
+## end TCA Check
 {% endif %}

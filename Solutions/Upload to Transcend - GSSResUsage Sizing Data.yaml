@@ -33,6 +33,15 @@ tasks:
 {% set pdcrstr = 'pdcr' if pdcr else 'dbc' %}
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 ### the "skip_export" flag skips the data export, and
 ### drops right down to data import.  This allows for the
 ### introduction of older / preexisting files for upload
@@ -293,3 +302,6 @@ tasks:
     proc: {{ dbprefix }}{{ sp_db }}.sp1_coa_gss_manual_upload
     params:
      - Null
+
+## end TCA Check
+{% endif %}

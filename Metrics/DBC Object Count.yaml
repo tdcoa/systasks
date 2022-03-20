@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_dbc_object_count.j2" %}
 
 - name: Export reconciliation file for vt_dbc_object_count
@@ -45,3 +54,6 @@ tasks:
     sql: |
       Select * from vt_dbc_object_count
       order by DatabaseName, Object_Group12
+
+## end TCA Check
+{% endif %}

@@ -26,6 +26,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_system_io_by_day.j2" %}
 
 
@@ -156,4 +165,7 @@ tasks:
       - ycolumns:[1,3]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
+
+## end TCA Check
 {% endif %}

@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_concurrency.j2" %}
 
 - name: Export vt_concurrency for charting
@@ -51,3 +60,7 @@ tasks:
   export:
     file: concurrency.csv
     sql:  Select * from vt_concurrency
+
+
+## end TCA Check
+{% endif %}

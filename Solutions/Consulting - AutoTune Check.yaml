@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_site_info.j2" %}
 {% include "vt_decode_tdbinternal.j2" %}
 
@@ -39,3 +48,6 @@ tasks:
 - name: PPTx final build for AutoTune_Check deck
   ppt:
     file: ppt/Vantage AutoTune TCA Check Deck.pptx
+
+## end TCA Check
+{% endif %}

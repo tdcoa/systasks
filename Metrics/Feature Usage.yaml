@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% set chart = true if chart is not defined else chart %}
 {% set upload = false if upload is not defined else upload %}
 {% set dev = false if dev is not defined else dev %}
@@ -185,4 +194,7 @@ tasks:
     sql: |
       select * from vt_Feature_Usage as f
       order by LogDate, Request_Total_Cnt desc
+{% endif %}
+
+## end TCA Check
 {% endif %}

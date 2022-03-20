@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_decode_statement.j2" %}
 
 - name: Export vt_decode_statement with all data
@@ -28,3 +37,6 @@ tasks:
   export:
     file: decode_statement.csv
     sql: Select * from vt_decode_statement order by 2,1
+
+## end TCA Check
+{% endif %}

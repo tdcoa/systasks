@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_disk_space.j2" %}
 
 
@@ -36,3 +45,6 @@ tasks:
       qualify LogDate = max(LogDate)over()
       {% endif %}
       Order by Table_System_Fill_Pct desc
+
+## end TCA Check
+{% endif %}

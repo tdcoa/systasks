@@ -35,6 +35,14 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
 
 {% include "vt_site_info.j2" %}
 
@@ -507,3 +515,6 @@ tasks:
 - name: PPTx final build for Cloud_Migration_Considerations-vbq1.pptx
   ppt:
     file: ppt/Cloud_Migration_Considerations-vbq1.pptx
+
+## end TCA Check
+{% endif %}

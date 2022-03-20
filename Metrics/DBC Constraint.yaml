@@ -21,6 +21,15 @@ tasks:
 ### ============= STANDARD PRE-PROCESSING =============
 
 
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
 {% include "vt_dbc_constraint.j2" %}
 
 - name: Export vt_dbc_constraint for reconciliation
@@ -52,3 +61,6 @@ tasks:
       - "title:Constraints - {{ siteid }}"
       - "height:6"
       - "width:12"
+
+## end TCA Check
+{% endif %}
