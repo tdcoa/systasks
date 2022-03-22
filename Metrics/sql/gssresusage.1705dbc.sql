@@ -46,6 +46,7 @@
 -- enddate: {{ enddate }}
 
 CREATE VOLATILE MULTISET TABLE vt_gssresusage_prework as (
+/* gss_resusage_td1700-R004 */
 sel
 'TD17v1.0' (named "Version")
 ,spma_dt.LogDate (named "LogDate")
@@ -63,11 +64,17 @@ sel
  else 'PE-only Node'
 end (Named "AMPS")
 ,spma_dt.NCPUs (Named "CPUs")
-,info.infodata (named "DBSRelease")
+,cast(info.infodata as varchar(20)) (named "DBSRelease")
 
 ,PM_COD (Named "PMCOD")
 ,WM_COD (Named "WMCOD")
 ,IO_COD (Named "IOCOD")
+
+,spma_dt.TDEnabledCPUs (named "ETcoreCPUs")
+,diskspacev_dt.SumCurrPerm (named "SumCurrPerm")
+,diskspacev_dt.SumMaxPerm (named "SumMaxPerm")
+,diskspacev_dt.SumPeakSpool (named "SumPeakSpool")
+,diskspacev_dt.SumPeakTemp (named "SumPeakTemp")
 
 /*** end grouping fields ***/
 
@@ -94,8 +101,8 @@ nullifzero(sum(SPMAPhysReadKB + SPMAPhysPreReadKB + SPMAPhysWriteKB)) * 100) (fo
 ,sum(SPMAPhysPreReads) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9') (named "AvgPreReadSec")
 ,sum(SPMAPhysWrites) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9') (named "AvgWriteSec")
 
-,sum(SPMAPhysReads + SPMAPhysPreReads + SPMAPhysWrites) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9') (named "AvgIOPsSec")
-,max(SPMAPhysReads + SPMAPhysPreReads + SPMAPhysWrites) / RSSInterval (format 'ZZ,ZZ9.9') (named "MaxIOPsSec")
+,sum(SPMAPhysReads + SPMAPhysPreReads + SPMAPhysWrites) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9') (named "AvgIOPsSecNode")
+,max(SPMAPhysReads + SPMAPhysPreReads + SPMAPhysWrites) / RSSInterval (format 'ZZ,ZZ9.9') (named "MaxIOPsSecNode")
 ,sum(SPMAPhysReadKB + SPMAPhysPreReadKB + SPMAPhysWriteKB) / 1024.0 / NumNodes / RSSInterval (format 'ZZZ,ZZ9.9') (named "AvgMBSecNode")
 ,max(SPMAPhysReadKB + SPMAPhysPreReadKB + SPMAPhysWriteKB) / 1024.0 / RSSInterval (format 'ZZZ,ZZ9.9') (named "MaxMBSecNode")
 ,sum(SPMAPhysReadKB + SPMAPhysPreReadKB) / 1024.0 / NumNodes / RSSInterval (format 'ZZZ,ZZ9.9') (named "AvgReadMBSecNode")
@@ -181,7 +188,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 ,PhyPermPosReadSecNode_SVPR + PhyPermPreReadSecNode_SVPR (format 'ZZ,ZZ9.9')(named "TtlPhyPermReadsSecNode_SVPR")
 ,PhySpoolPosReadSecNode_SVPR + PhySpoolPreReadSecNode_SVPR (format 'ZZ,ZZ9.9')(named "TtlPhySpoolReadsSecNode_SVPR")
-,PhyPermWriteSecNode_SVPR + PhyPermWriteSecNode_SVPR (format 'ZZ,ZZ9.9')(named "TtlPhyWriteSecNode_SVPR")
+,PhyPermWriteSecNode_SVPR + PhySpoolWriteSecNode_SVPR (format 'ZZ,ZZ9.9')(named "TtlPhyWriteSecNode_SVPR")
 ,PhyPermWriteMBSecNode_SVPR + PhySpoolWriteMBSecNode_SVPR (format 'ZZ,ZZ9.9')(named "TtlPhyWriteMBSecNode_SVPR")
 
 ,LogPermReadMBSecNode_SVPR + LogSpoolReadMBSecNode_SVPR (format 'ZZZ,ZZ9.9')(named "TtlLogReadMBSecNode_SVPR")
@@ -368,6 +375,15 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 from dbc.dbcinfo info,
 (
+sel
+sum(CurrentPerm) (named "SumCurrPerm")
+,sum(MaxPerm) (named "SumMaxPerm")
+,sum(PeakSpool) (named "SumPeakSpool")
+,sum(PeakTemp) (named "SumPeakTemp")
+FROM DBC.DiskSpaceV
+
+) diskspacev_dt,
+(
 
 sel
 thedate (format 'yyyy-mm-dd')(named "LogDate")
@@ -382,6 +398,7 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,PM_COD_CPU / 10.0 (Named "PM_COD")
 ,WM_COD_CPU / 10.0 (Named "WM_COD")
 ,CASE when PM_COD_IO > WM_COD_IO then WM_COD_IO ELSE PM_COD_IO END (Named "IO_COD")
+,CASE WHEN COALESCE (TDEnabledCPUs,0) = 0 OR NCPUs = TDEnabledCPUs THEN NCPUs ELSE TDEnabledCPUs END (Named "TDEnabledCPUs")
 
 /* CPU */
 
@@ -437,7 +454,7 @@ WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ star
 AND
 ( ( THEDATE = {{ enddate | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
 ( THEDATE < {{ enddate | default ('date-1')  }} ) )
-group by 1,2,3,4,5,6,7,8,9,10,11,12
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13
 
 ) spma_dt left join
 
@@ -623,7 +640,7 @@ on spma_dt.LogDate = spdsk_dt.LogDate
 and spma_dt.LogTime = spdsk_dt.LogTime
 and spma_dt.nodeid = spdsk_dt.nodeid
 where  info.infokey (NOT CS) = 'VERSION' (NOT CS)
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 --- order by 5,14
 
 
