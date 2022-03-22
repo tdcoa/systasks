@@ -42,6 +42,39 @@ class sj_Misc():
                 break
         return string.strip()
 
+    def parse_namevalue_args(self, args:list, nvdelim:str=':', defaults={}, first_item_name:str='scriptfilepath') -> dict:
+        """Parse list of argments and split into dictionary based on delimiter. Both name/values are trimmed, to remove leading/trailing white-space.
+        If delimiter is not found for a list item, that item is added as the dict name(key), and the value is left as None.
+        For example, passing in the list (with default delim):
+            [  'dog :fluffy',   'cat: spikey',   ' fish']       will result in a dict of:
+            {  'dog':'fluffy',  'cat':'spikey',  'fish':None} 
+ 
+        Args:
+            args (list): list of arguments.
+            nvdelim (str, optional): delimiter used for splitting list items into dict entries. Defaults to ':'.
+            first_item_name (str, optional): name of the first list item supplied.  sys.argv[0] is the script path, so defaults to 'scriptpath'.
+            defaults (dict): dict of defaulted items to include, if missing.  Defaults to empty dict.
+
+        Returns:
+            dict: parsed dict of argments from list passed in.
+        """
+        rtn = {}
+        self.log.debug(f'parsing argument list with delimiter   {nvdelim}')
+        for i, arg in enumerate(args):
+            argname = str(arg.split(nvdelim)[0]).strip()
+            argval = str(arg).replace(argname,"").strip()
+            if argval[:1]==nvdelim: argval = argval[1:].strip()
+            if i==0 and argval=='' and len(first_item_name)>0: 
+                argval = argname
+                argname = first_item_name.strip()
+            rtn[argname] = argval if len(argval)>0 else None
+            self.log.debug(f'  added name:  {argname} == {rtn[argname]}')
+        for n,v in defaults.items():
+            if n not in rtn:
+                rtn[n] = v
+        return rtn 
+
+
 
     def translate_simple_dateformat(self, input_dateformat:str) -> str:
         """Translates a simplified date format into python strftime format, for consumption in datetime.datetime. 
