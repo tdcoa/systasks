@@ -59,8 +59,8 @@
              ,AvgPosReadSec                                   DECIMAL(18,3)
              ,AvgPreReadSec                                   DECIMAL(18,3)
              ,AvgWriteSec                                     DECIMAL(18,3)
-             ,AvgIOPsSec                                      DECIMAL(18,3)
-             ,MaxIOPsSec                                      DECIMAL(18,3)
+             ,AvgIOPsSecNode                                  DECIMAL(18,3)
+             ,MaxIOPsSecNode                                  DECIMAL(18,3)
              ,AvgMBSecNode                                    DECIMAL(18,3)
              ,MaxMBSecNode                                    DECIMAL(18,3)
              ,AvgReadMBSecNode                                DECIMAL(18,3)
@@ -287,8 +287,8 @@
       ,"AvgPosReadSec"
       ,"AvgPreReadSec"
       ,AvgWriteSec
-      ,AvgIOPsSec
-      ,MaxIOPsSec
+      ,AvgIOPsSecNode
+      ,MaxIOPsSecNode
       ,AvgMBSecNode
       ,MaxMBSecNode
       ,AvgReadMBSecNode
@@ -735,8 +735,8 @@
        ,cast(  AvgPosReadSec                      as  DECIMAL(18,3))     as AvgPosReadSec
        ,cast(  AvgPreReadSec                      as  DECIMAL(18,3))     as AvgPreReadSec
        ,cast(  AvgWriteSec                        as  DECIMAL(18,3))     as AvgWriteSec
-       ,cast(  AvgIOPsSec                         as  DECIMAL(18,3))     as AvgIOPsSec
-       ,cast(  MaxIOPsSec                         as  DECIMAL(18,3))     as MaxIOPsSec
+       ,cast(  AvgIOPsSecNode                         as  DECIMAL(18,3))     as AvgIOPsSecNode
+       ,cast(  MaxIOPsSecNode                         as  DECIMAL(18,3))     as MaxIOPsSecNode
        ,cast(  AvgMBSecNode                       as  DECIMAL(18,3))     as AvgMBSecNode
        ,cast(  MaxMBSecNode                       as  DECIMAL(18,3))     as MaxMBSecNode
        ,cast(  AvgReadMBSecNode                   as  DECIMAL(18,3))     as AvgReadMBSecNode
