@@ -1,0 +1,24 @@
+source_path: /Users/stephen.hilton/Teradata/Sales GTM - ResUsage Data Resources
+gss_script_mapping:
+- 14.00.dbc:  td140_gss_sql_v1.72.txt
+- 14.00.pdcr: td140_gss_sql_pdcr_v1.72.txt
+- 14.10.dbc:  td1410_gss_sql_v1.72.txt
+- 14.10.pdcr: td1410_gss_sql_pdcr_v1.72.txt
+- 15.00.dbc:  td150_gss_sql_v1.72.txt
+- 15.00.pdcr: td150_gss_sql_pdcr_v1.72.txt
+- 15.10.dbc:  td150_gss_sql_v1.72.txt
+- 15.10.pdcr: td150_gss_sql_pdcr_v1.72.txt
+- 16.00.dbc:  td160_gss_sql_v1.72.txt      # this is a guess...
+- 16.00.pdcr: td160_gss_sql_pdcr_v1.72.txt # this is a guess...
+- 16.10.dbc:  td160_gss_sql_v1.72.txt
+- 16.10.pdcr: td160_gss_sql_pdcr_v1.72.txt
+- 16.20.dbc:  td160_gss_sql_v20.txt
+- 16.20.pdcr: td160_gss_pdcr_v20.txt
+- 17.00.dbc:  td170_gss_sql_v1.0.txt
+- 17.00.pdcr: td170_gss_pdcr_v1.0.txt
+- 17.05.dbc:  td170_gss_sql_v1.0.txt
+- 17.05.pdcr: td170_gss_pdcr_v1.0.txt
+- 17.10.dbc:  td170_gss_sql_v1.0.txt
+- 17.10.pdcr: td170_gss_pdcr_v1.0.txt
+- 17.20.dbc:  td170_gss_sql_v1.0.txt
+- 17.20.pdcr: td170_gss_pdcr_v1.0.txt

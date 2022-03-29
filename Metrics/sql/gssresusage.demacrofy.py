@@ -1,7 +1,34 @@
-import os
+import os, sys, shutil
 from pathlib import Path
+from glob import glob
+import yaml 
 
-for file in os.scandir('.'):
+# cheat a little bit to get sj_misc loaded relatively from a parent directory:
+scriptpath = Path(sys.argv[0]).resolve().parent.parent / 'scripts'
+if scriptpath not in sys.path: sys.path.append(str(scriptpath))
+from sj_misc import sj_Misc as sjmisc
+
+# define script args
+misc = sjmisc()
+args = misc.parse_namevalue_args(sys.argv, defaults={'configfile':'gssresusage_script_mapping.yaml'})
+args['configfilepath'] = Path(args['scriptfilepath']).parent / args['configfile']
+
+# load config file
+with open(args['configfilepath'],'r') as fh:
+    config = yaml.load(fh, yaml.BaseLoader)
+
+# copy over all gss source files into destpath
+srcpath  = Path(config['source_path']).resolve()
+destpath = Path(args['scriptfilepath']).parent
+for filedef in config['gss_script_mapping']:
+    verdef  = list(filedef.keys())[0]
+    srcfilepath = Path(srcpath / filedef[verdef])
+    dstfilepath = Path(destpath / f"gssresusagemacro.{ verdef.replace('.','') }.sql")
+    shutil.copy(srcfilepath, dstfilepath)
+
+
+# crawl all files in the current directory and de-macrofy:
+for file in os.scandir(destpath):
     if file.name.startswith('gssresusagemacro.') and file.name.endswith('.sql'):
         newfilename = file.name.replace('gssresusagemacro.','gssresusage.')
         print("transforming   %s into    %s" %(file.name.ljust(33,' '), newfilename))

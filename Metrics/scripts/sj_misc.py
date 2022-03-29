@@ -1,4 +1,6 @@
-from datetime import datetime 
+import logging, sys
+from datetime import datetime
+from tkinter import EXCEPTION 
 # from .sj_logger import sj_Logger
 
 print(f'loaded {__name__}')
@@ -9,18 +11,15 @@ print(f'loaded {__name__}')
 class sj_Misc():
 
     def __init__(self, log=None) -> None:
-        if log == None: 
-            self.log = self.non_logger
-        else:
+        if log:
             self.log = log
+        else:
+            #Creating and Configuring Logger
+            logging.basicConfig(stream = sys.stdout, 
+                                format =  "%(asctime)s %(levelname)s - %(message)s", 
+                                level = logging.DEBUG)
+            self.log = logging.getLogger()
 
-    class non_logger():
-        @staticmethod
-        def debug(msg):   print('DEBUG   - ', msg)
-        def warning(msg): print('WARNING - ', msg)
-        def info(msg):    print('INFO    - ', msg)
-        def error(msg):   print('ERROR   - ', msg)
-            
 
     def nowish(self, datetime_format:str='yyyy-mm-dd_hhmmss') ->str:
         return datetime.now().strftime( self.translate_simple_dateformat(datetime_format) )
@@ -47,40 +46,61 @@ class sj_Misc():
         If delimiter is not found for a list item, that item is added as the dict name(key), and the value is left as None.
         For example, passing in the list (with default delim):
             [  'dog :fluffy',   'cat: spikey',   ' fish']       will result in a dict of:
-            {  'dog':'fluffy',  'cat':'spikey',  'fish':None} 
+            {  'dog' : 'fluffy',  'cat' : 'spikey',  'fish' : None} 
  
         Args:
             args (list): list of arguments.
-            nvdelim (str, optional): delimiter used for splitting list items into dict entries. Defaults to ':'.
-            first_item_name (str, optional): name of the first list item supplied.  sys.argv[0] is the script path, so defaults to 'scriptpath'.
+            nvdelim (str, optional): delimiter used for splitting items into name:value as dict entries. Defaults to ':'.
+            first_item_name (str, optional): name of the first list item supplied, if name is not supplied (expecting sys.argv[0]). Defaults to 'scriptpath'.
             defaults (dict): dict of defaulted items to include, if missing.  Defaults to empty dict.
 
         Returns:
             dict: parsed dict of argments from list passed in.
         """
         rtn = {}
-        self.log.debug(f'parsing argument list with delimiter   {nvdelim}')
-        for i, arg in enumerate(args):
-            argname = str(arg.split(nvdelim)[0]).strip()
-            argval = str(arg).replace(argname,"").strip()
-            if argval[:1]==nvdelim: argval = argval[1:].strip()
-            if i==0 and argval=='' and len(first_item_name)>0: 
-                argval = argname
-                argname = first_item_name.strip()
-            rtn[argname] = argval if len(argval)>0 else None
-            self.log.debug(f'  added name:  {argname} == {rtn[argname]}')
-        for n,v in defaults.items():
-            if n not in rtn:
-                rtn[n] = v
+        try:
+            self.log.info(f'parsing argument list with delimiter   {nvdelim}')
+            # for each arg in list, 
+            for i, arg in enumerate(args):
+                argname = str(arg.split(nvdelim)[0]).strip()  # define argument name as: first string split by delim
+                argval = str(arg).replace(argname,"").strip() # define argument value as: everything that's not argname (regardless how many other delims)
+                if argval[:1]==nvdelim: argval = argval[1:].strip() # if argval is left starting with delimiter, clean up /remove
+                if i==0 and argval=='' and len(first_item_name)>0:  # if arg[0] doesn't suppply delimiter, assign first_item_name (assumption is sys.argv[0]) 
+                    argval = argname
+                    argname = first_item_name.strip()
+                rtn[argname] = argval if len(argval)>0 else None # add to return dict 
+                self.log.debug(f'  added name:  {argname} == {rtn[argname]}')
+            for n,v in defaults.items():  # add any missing defaults
+                if n not in rtn:
+                    self.log.debug(f'  added default:  {n} == {v}')
+                    rtn[n] = v
+        except Exception as ex:
+            self.log.exception(f'ERROR IN sj_misc.parse_namevalue_args\n{ex}')
         return rtn 
 
 
+    def dict_to_class(self, srcdict:dict) -> object:
+        """Converts a dictionary into a class object.
+
+        Args:
+            srcdict (dict): dictionary to convert.
+
+        Returns:
+            object: class object with dict items translated to class properties.
+        """
+        class dict2class(): pass 
+        rtn = dict2class()
+        for n, v in srcdict.items():
+            rtn.__setattr__(n,v)
+        return rtn 
+
+            
 
     def translate_simple_dateformat(self, input_dateformat:str) -> str:
         """Translates a simplified date format into python strftime format, for consumption in datetime.datetime. 
-        Simplified format will visually look similar to the final output, and is useful for bridging between MSOffice and Python. 
+        Simplified format will look visually similar to the final output, and is useful for bridging between MSOffice and Python. 
         Also performs context-specific classification of shared characters, such as "m" for both month and minute.  
-        For example, supplying  yyyy-mm-dd hh:mm:dd  will work as expected, using the context of characters surrounding the "m" 
+        For example, supplying  yyyy-mm-dd hh:mm:dd will work as expected, using the context of surrounding characters  
         to interpret between Month and Minute.  
 
         Args:
