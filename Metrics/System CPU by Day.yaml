@@ -173,7 +173,7 @@ tasks:
       - pngfilepath:system_cpu_by_day_heatmap_AVG.png
       - title:Average Active CPU (COD Adjusted) - {{ siteid }}
       - height:6
-      - width:12
+      - "width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}"
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]
@@ -238,7 +238,7 @@ tasks:
       - pngfilepath:system_cpu_by_day_heatmap_MAX.png
       - title:Peak CPU (COD Adjusted) - {{ siteid }}
       - height:6
-      - width:12
+      - "width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}"
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapcolorcount:4
       - colors:[white,green,yellow,red]

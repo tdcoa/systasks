@@ -17,18 +17,22 @@
           {% if pdcr %}
           from pdcrinfo.TableSpace_Hst
           where LogDate between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
+          and currentperm > 0
           {% else %}
           from dbc.TableSize
+          where currentperm > 0
           {% endif %}
           group by 1,2,3
-      ) with data primary index (LogDate, DatabaseName)  on commit preserve rows
+      ) with data primary index (LogDate, DatabaseName, TableName)  on commit preserve rows
 
 - name: Collect Stats on vt_disk_space_prework_tablesize
   connect: source
   execute:
     sql: |
       collect stats
-           column (LogDate, DatabaseName)
+            column (LogDate, DatabaseName, TableName)
+           ,column (LogDate, DatabaseName)
+           ,column (LogDate)
       on vt_disk_space_prework_tablesize
 
 
