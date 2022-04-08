@@ -155,7 +155,7 @@
   {% set tdver = '17.05' if tca else tdver %}
 
   # make dates more flexible: StartDate
-  {% set startdate = 'date-31' if startdate is not defined else startdate %}
+  {% set startdate = 'date-31' if startdate is not defined else startdate|string %}
   {% if "date" in startdate.lower() %}
   {% elif "select" in startdate.lower() %}
   {% elif "/" in startdate %}
@@ -171,7 +171,7 @@
   {% endif %}
 
   # make dates more flexible: EndDate
-  {% set enddate = 'date-1' if enddate is not defined else enddate %}
+  {% set enddate = 'date-1' if enddate is not defined else enddate|string %}
   {% if "date" in enddate.lower() %}
   {% elif "select" in enddate.lower() %}
   {% elif "/" in enddate %}
