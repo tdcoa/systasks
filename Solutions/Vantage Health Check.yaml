@@ -236,7 +236,7 @@ tasks:
          ,Statement_Outcome as StatementOutcome
          ,SUM(CPU_Total_Sec) as SUMCPUTime
          ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
-         ,SUMCPUTime/TotalSUMCPUTimeDay * 100 as ConsuptionPercentage
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsuptionPercentage
         FROM vt_dbql_core
         GROUP BY 1,2) as tmp
         group by 1
@@ -258,7 +258,7 @@ tasks:
          ,Statement_Outcome as StatementOutcome
          ,SUM(CPU_Total_Sec) as SUMCPUTime
          ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
-         ,SUMCPUTime/TotalSUMCPUTimeDay * 100 as ConsuptionPercentage
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsuptionPercentage
         FROM vt_dbql_core
         GROUP BY 1,2) as tmp
         group by 1
@@ -283,7 +283,7 @@ tasks:
          ,Statement_Outcome as StatementOutcome
          ,SUM(CPU_Total_Sec) as SUMCPUTime
          ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
-         ,SUMCPUTime/TotalSUMCPUTimeDay * 100 as ConsuptionPercentage
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsuptionPercentage
         FROM vt_dbql_core
         GROUP BY 1,2) as tmp
       ) as src
@@ -313,7 +313,7 @@ tasks:
          ,Statement_Outcome as StatementOutcome
          ,SUM(CPU_Total_Sec) as SUMCPUTime
          ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
-         ,SUMCPUTime/TotalSUMCPUTimeDay * 100 as ConsuptionPercentage
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsuptionPercentage
         FROM vt_dbql_core
         GROUP BY 1,2) as tmp
       ) as src
