@@ -6,3 +6,6 @@ _*
 Metrics/scripts/\.vscode
 Metrics/scripts/test
 Metrics/scripts/temp
+Metrics/scripts/logs
+Metrics/test
+Metrics/temp
