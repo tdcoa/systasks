@@ -124,15 +124,15 @@
         ,Statement_QueryGrid_Cnt       BIGINT compress (null, 0)
 
         /* ====== Metrics: RunTimes ====== */
-        ,DelayTime_Sec                 DECIMAL(18,4) compress (null, 0)
-        ,RunTime_Parse_Sec             DECIMAL(18,4) compress (null, 0)
-        ,Runtime_AMP_Sec               DECIMAL(18,4) compress (null, 0)
-        ,RunTime_Total_Sec             DECIMAL(18,4) compress (null, 0)
-        ,TransferTime_Sec              DECIMAL(18,4) compress (null, 0)
+        ,DelayTime_Sec                 DECIMAL(38,4) compress (null, 0)
+        ,RunTime_Parse_Sec             DECIMAL(38,4) compress (null, 0)
+        ,Runtime_AMP_Sec               DECIMAL(38,4) compress (null, 0)
+        ,RunTime_Total_Sec             DECIMAL(38,4) compress (null, 0)
+        ,TransferTime_Sec              DECIMAL(38,4) compress (null, 0)
 
         /* ====== Metrics: CPU & IO ====== */
-        ,CPU_Total_Sec                 DECIMAL(18,4) compress (null, 0)
-        ,CPU_AMP_Sec                   DECIMAL(18,4) compress (null, 0)
+        ,CPU_Total_Sec                 DECIMAL(38,4) compress (null, 0)
+        ,CPU_AMP_Sec                   DECIMAL(38,4) compress (null, 0)
         ,IO_Total_CntM                 DECIMAL(38,4) compress (null, 0)
         ,IO_Physical_CntM              DECIMAL(38,4) compress (null, 0)
         ,IO_Total_GB                   DECIMAL(38,4) compress (null, 0)
@@ -140,15 +140,15 @@
         ,IOTA_Used_CntB                DECIMAL(38,4) compress (null, 0)
 
         /* ====== Metrics: Other ====== */
-        ,Spool_GB                      DECIMAL(18,4) compress (null, 0)
+        ,Spool_GB                      DECIMAL(38,4) compress (null, 0)
         ,Returned_Row_Cnt              BIGINT        compress (null, 0)
-        ,NumOfActiveAMPs_Avg           DECIMAL(18,4) compress (null, 0)
+        ,NumOfActiveAMPs_Avg           DECIMAL(38,4) compress (null, 0)
         ,QueryGrid_Bytes               DECIMAL(38,4) compress (null, 0)
-        ,CacheMiss_IOCnt_Pct           DECIMAL(18,4) compress (null, 0)
-        ,CacheMiss_IOGB_Pct            DECIMAL(18,4) compress (null, 0)
-        ,CacheMiss_IOCnt_Score         DECIMAL(18,4) compress (null, 0)
-        ,CacheMiss_IOGB_Score          DECIMAL(18,4) compress (null, 0)
-        ,Total_AMPs                    SMALLINT
+        ,CacheMiss_IOCnt_Pct           DECIMAL(38,4) compress (null, 0)
+        ,CacheMiss_IOGB_Pct            DECIMAL(38,4) compress (null, 0)
+        ,CacheMiss_IOCnt_Score         DECIMAL(38,4) compress (null, 0)
+        ,CacheMiss_IOGB_Score          DECIMAL(38,4) compress (null, 0)
+        ,Total_AMPs                    INTEGER
         ,AMP_Use01_Flag                BIGINT  compress (null, 0)
         ,AMP_Use02_Flag                BIGINT  compress (null, 0)
         ,AMP_LT10pct_Flag              BIGINT  compress (null, 0)
@@ -157,7 +157,7 @@
 
         /* ====== Audit Fields ====== */
         ,Insert_TS                     TIMESTAMP(0)
-        ,Process_Chunk                 SMALLINT compress(null,0,1,2,3,4,5,6,7,8,9,10,11,12)
+        ,Process_Chunk                 INTEGER compress(null,0,1,2,3,4,5,6,7,8,9,10,11,12)
       )
        primary index(LogDate, Application, Statement_Bucket, Department {{ ',LogTS' if 'LogTS' in run.included else '' }} {{ ',UserName' if 'UserName' in run.included else '' }})
        on commit preserve rows
