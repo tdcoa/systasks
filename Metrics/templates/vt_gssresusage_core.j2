@@ -267,7 +267,7 @@
       ,"RSSInterval"
       ,"NodeGen"
       ,"AMPS"
-      ,Null as PE_Only_Node_Flag -- TCA does not allow "PE-Only Node" string
+      ,"PE_Only_Node_Flag"
       ,"CPUs"
       ,"DBSRelease"
       ,"PMCOD"
@@ -484,6 +484,7 @@
           ,tca.rss_intvl_ss
           ,tca.node_type_desc
           ,tca.amp_cnt
+          ,Null as PE_Only_Node_Flag -- TCA does not allow "PE-Only Node" string
           ,tca.cpu_cnt
           ,tca.dbs_vrsn
           ,tca.pm_cod_pct
