@@ -339,7 +339,7 @@ tasks:
       - width:12
       - ylabel:CPU Consumption Break down
       - legendxy:(0.5, -0.2)
-      - colors:(#AFAFAF,#142CF6,#43A9BD,#F01D1D)
+      - colors:(#EFEFEF,#142CF6,#43A9BD,#F01D1D)
 
 
 {% include "vt_concurrency.j2" %}
@@ -568,7 +568,7 @@ tasks:
        as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
       from(
           Select DatabaseName, TableName -- Avg away LogDate
-          ,Avg(Table_CurrentPerm_GB) as CurrentPerm_GB
+          ,Avg(Table_CurrentPerm_GB) * Max(Table_Scale_Pct) as CurrentPerm_GB
           ,Avg(Database_MaxPerm_GB) as Database_MaxPerm_GB
           ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
           from vt_disk_space
@@ -808,7 +808,7 @@ tasks:
        as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
       from(
           Select DatabaseName, TableName -- Avg away LogDate
-          ,Avg(Table_CurrentPerm_GB) as CurrentPerm_GB
+          ,Avg(Table_CurrentPerm_GB) * Max(Table_Scale_Pct) as CurrentPerm_GB
           ,Avg(Database_MaxPerm_GB) as Database_MaxPerm_GB
           ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
           from vt_disk_space
@@ -1181,7 +1181,7 @@ tasks:
     file: vhc--system_cpu_by_day.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#AFAFAF"
+      ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#EFEFEF"
       ,cast(sum(CPU_IOWait ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#C39BD3"
       ,cast(sum(CPU_OS     ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
       ,cast(sum(CPU_DBS    ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
@@ -1797,164 +1797,6 @@ tasks:
 
 
 #######################################################
-### Pirated from the "Feature Usage" Metric
-#######################################################
-{% include "vt_feature_usage.j2" %}
-
-
-# produce list of all Features by count:
-- name: "Create vt_feature_usage_detail for detailed graphing"
-  connect: source
-  execute:
-    sql: |
-      create volatile table vt_feature_usage_detail as (
-      with dat as
-          (   select FeatureName
-              ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
-              ,sum(   cast(sum_parsercputime as decimal(38,2))
-                    + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
-              ,1 as ActiveFlag
-              from vt_Feature_Usage
-              group by 1)
-      , dim as
-          (
-              select Feature_Name as FeatureName from vt_decode_feature where DBQL_FeatureInfo_Flag = 'Y'
-          )
-      Select
-       coalesce(dat.FeatureName, dim.FeatureName)                  as "Feature"
-      ,cast(coalesce(Average_Daily_Use_Count, 0) as BigInt)        as "Average Daily Use Count"
-      ,cast(coalesce(Average_CPU_Seconds_per_Query, 0) as BigInt)  as "Average CPU Seconds per Query"
-      ,coalesce(dat.ActiveFlag, 0) as ActiveFlag
-      from dat
-      right outer join dim
-       on dim.FeatureName = dat.FeatureName
-      ) with data primary index ("Feature") on commit preserve rows
-
-
-- name: "Export for charting: ALL detailed Features by Name"
-  connect: source
-  export:
-    file: vhc--feature_usage_x_Feature2.csv
-    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 desc
-
-- name: "Export for charting: ALL detailed Features by Name"
-  connect: source
-  export:
-    file: vhc--feature_usage_x_Feature3.csv
-    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 3 desc
-
-
-- name: "Export for charting: ALL detailed Features by Name"
-  connect: source
-  export:
-    file: vhc--feature_usage_x_Feature.csv
-    sql: Select * from vt_feature_usage_detail order by 2 asc
-
-- name: "Chart for charting: ALL detailed Features by Name"
-  chart:
-    command: chart/barh_yLabel_xElseStack.py
-    params:
-      - "file:vhc--feature_usage_x_Feature.csv"
-      - "title:Average Count Usage by Feature - {{ siteid }}"
-      - "height:25"
-      - "width:5"
-      - "labelsize:8"
-      - "xcolumns:[1]"
-      - "ycolumns:[0]"
-      - "legendxy:(0,0)"  # disable
-      - "xlabel:"
-      - "ylabel:"
-
-- name: "Export for charting: all ACTIVE Features by Name"
-  connect: source
-  export:
-    file: vhc--feature_usage_x_Feature_active.csv
-    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 asc
-
-- name: "Chart for charting: all ACTIVE Features by Name"
-  chart:
-    command: chart/barh_yLabel_xElseStack.py
-    params:
-      - "file:vhc--feature_usage_x_Feature_active.csv"
-      - "title:Average Count Usage by Active Feature - {{ siteid }}"
-      - "height:20"
-      - "width:5"
-      - "labelsize:8"
-      - "xcolumns:[1]"
-      - "ycolumns:[0]"
-      - "legendxy:(0,0)"  # disable
-      - "xlabel:"
-      - "ylabel:"
-
-
-- name: "Export for charting: all INACTIVE Features by Name"
-  connect: source
-  export:
-    file: vhc--feature_usage_x_Feature_inactive.csv
-    sql: Select * from vt_feature_usage_detail where ActiveFlag = 0 order by 2 asc
-
-- name: "Chart for charting: all INACTIVE Features by Name"
-  chart:
-    command: chart/barh_yLabel_xElseStack.py
-    params:
-      - "file:vhc--feature_usage_x_Feature_inactive.csv"
-      - "title:Average Count Usage by Inactive Feature - {{ siteid }}"
-      - "height:10"
-      - "width:3"
-      - "labelsize:8"
-      - "xcolumns:[1]"
-      - "ycolumns:[0]"
-      - "legendxy:(0,0)"  # disable
-      - "xlabel:"
-      - "ylabel:"
-
-# see creation of list:  feature_columns  at the very beginning of this script
-{% for feature_column in feature_columns %}
-
-- name: "Export for charting: {{ feature_column }}"
-  connect: source
-  export:
-    file: vhc--feature_usage_x_{{ feature_column }}.csv
-    sql: |
-      select {{ feature_column }}
-      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) as "Feature Count"
-      ,sum(   cast(sum_parsercputime as decimal(38,2))
-            + cast(sum_ampcputime    as decimal(38,2))
-          ) / nullifzero("Feature Count") as "Average CPU Seconds"
-      from vt_Feature_Usage
-      group by 1
-      order by 2 desc
-
-
-- name: "Chart (linear): {{ feature_column }}"
-  chart:
-    command: chart/barline_xLabels_yBar_yLine.py
-    params:
-      - "file:vhc--feature_usage_x_{{ feature_column }}.csv"
-      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
-      - "height:5"
-      - "width:9"
-      - "xrotate:90"
-      - "legendy:1.1"
-      - "pngfile:vhc--feature_usage_x_{{ feature_column }}_linear.png"
-
-- name: "Chart (log): {{ feature_column }}"
-  chart:
-    command: chart/barline_xLabels_yBar_yLine.py
-    params:
-      - "file:vhc--feature_usage_x_{{ feature_column }}.csv"
-      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
-      - "height:5"
-      - "width:9"
-      - "xrotate:90"
-      - "legendy:1.1"
-      - "pngfile:vhc--feature_usage_x_{{ feature_column }}_log.png"
-      - "logscale:true"
-
-{% endfor %}
-
-
-#######################################################
 ### Pirated from "Allocated Utilization per Table" metric
 #######################################################
 {% include "vt_allocated_utilization_per_table.j2" %}
@@ -2201,17 +2043,184 @@ tasks:
       - "pngfile:queries_by_runtime_unpivot_log.png"
 
 
+
+#######################################################
+### Pirated from the "Feature Usage" Metric
+#######################################################
+{% include "vt_feature_usage.j2" %}
+
+
+# produce list of all Features by count:
+- name: "Create vt_feature_usage_detail for detailed graphing"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_feature_usage_detail as (
+      with dat as
+          (   select FeatureName
+              ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
+              ,sum(   cast(sum_parsercputime as decimal(38,2))
+                    + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+              ,1 as ActiveFlag
+              from vt_Feature_Usage
+              group by 1)
+      , dim as
+          (
+              select Feature_Name as FeatureName from vt_decode_feature where DBQL_FeatureInfo_Flag = 'Y'
+          )
+      Select
+       coalesce(dat.FeatureName, dim.FeatureName)                  as "Feature"
+      ,cast(coalesce(Average_Daily_Use_Count, 0) as BigInt)        as "Average Daily Use Count"
+      ,cast(coalesce(Average_CPU_Seconds_per_Query, 0) as BigInt)  as "Average CPU Seconds per Query"
+      ,coalesce(dat.ActiveFlag, 0) as ActiveFlag
+      from dat
+      right outer join dim
+       on dim.FeatureName = dat.FeatureName
+      ) with data primary index ("Feature") on commit preserve rows
+
+
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature2.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 desc
+
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature3.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 3 desc
+
+
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature.csv
+    sql: Select * from vt_feature_usage_detail order by 2 asc
+
+- name: "Chart for charting: ALL detailed Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--feature_usage_x_Feature.csv"
+      - "title:Average Count Usage by Feature - {{ siteid }}"
+      - "height:25"
+      - "width:5"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+- name: "Export for charting: all ACTIVE Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature_active.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 asc
+
+- name: "Chart for charting: all ACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--feature_usage_x_Feature_active.csv"
+      - "title:Average Count Usage by Active Feature - {{ siteid }}"
+      - "height:20"
+      - "width:5"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+
+- name: "Export for charting: all INACTIVE Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature_inactive.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 0 order by 2 asc
+
+- name: "Chart for charting: all INACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--feature_usage_x_Feature_inactive.csv"
+      - "title:Average Count Usage by Inactive Feature - {{ siteid }}"
+      - "height:10"
+      - "width:3"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+# see creation of list:  feature_columns  at the very beginning of this script
+{% for feature_column in feature_columns %}
+
+- name: "Export for charting: {{ feature_column }}"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_{{ feature_column }}.csv
+    sql: |
+      select {{ feature_column }}
+      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) as "Feature Count"
+      ,sum(   cast(sum_parsercputime as decimal(38,2))
+            + cast(sum_ampcputime    as decimal(38,2))
+          ) / nullifzero("Feature Count") as "Average CPU Seconds"
+      from vt_Feature_Usage
+      group by 1
+      order by 2 desc
+
+
+- name: "Chart (linear): {{ feature_column }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--feature_usage_x_{{ feature_column }}.csv"
+      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
+      - "height:5"
+      - "width:9"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:vhc--feature_usage_x_{{ feature_column }}_linear.png"
+
+- name: "Chart (log): {{ feature_column }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--feature_usage_x_{{ feature_column }}.csv"
+      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
+      - "height:5"
+      - "width:9"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:vhc--feature_usage_x_{{ feature_column }}_log.png"
+      - "logscale:true"
+
+{% endfor %}
+
+
+
+
+# if full VHC (not on-a-page)
 - name: PPTx final build for Vantage Health Check (v4.2)
   ppt:
     file: ppt/Vantage Health Check v4.2.pptx
 
 {% else %}
 
+# if VHC-on-a-page
 - name: PPTx final build for Vantage Health Check On-a-Page (v4.2)
   ppt:
     file: ppt/Vantage Health Check On a Page.pptx
 
 {% endif %}
+
+
+
+
 
 ## End TCA
 {% endif %}

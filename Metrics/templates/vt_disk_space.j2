@@ -14,6 +14,9 @@
           ,TableName
           ,cast(sum(CurrentPerm)/1e9 as decimal(32,6)) as Table_CurrentPerm_GB
           ,cast(sum(PeakPerm)/1e9    as decimal(32,6)) as Table_PeakPerm_GB
+          ,count(Logdate)over(partition by DatabaseName, TableName) as Days_Table_Exists
+          ,({{ enddate | default('DATE-1') }}(DATE)) - ({{ startdate | default('DATE-15') }}(DATE)) + 1 as Total_Days_in_Range
+          ,Days_Table_Exists / (Total_Days_in_Range * 1.0000) as Table_Scale_Pct
           {% if pdcr %}
           from pdcrinfo.TableSpace_Hst
           where LogDate between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
@@ -69,6 +72,7 @@
     sql: |
       collect stats
            column (LogDate, DatabaseName)
+          ,column (LogDate)
       on vt_disk_space_prework_databasespace
 
 
@@ -98,11 +102,14 @@
         ,zeroifnull(Table_CurrentPerm_GB / nullifzero(Database_CurrentPerm_GB))  as Table_Database_CurPerm_Pct
         ,zeroifnull(Table_CurrentPerm_GB / nullifzero(System_MaxPerm_GB))        as Table_System_Fill_Pct
         ,zeroifnull(Table_CurrentPerm_GB / nullifzero(System_CurrentPerm_GB))    as Table_System_CurPerm_Pct
+        ,Days_Table_Exists
+        ,Total_Days_in_Range
+        ,Table_Scale_Pct
         from vt_disk_space_prework_tablesize as t
         join vt_disk_space_prework_databasespace as d
          on t.LogDate = d.LogDate
         and t.DatabaseName = d.DatabaseName
-      ) with data primary index (LogDate, DatabaseName) on commit preserve rows
+      ) with data primary index (LogDate, DatabaseName, TableName) on commit preserve rows
 
 
 - name: Collect Stats on vt_disk_space
@@ -110,10 +117,10 @@
   execute:
     sql: |
       collect stats
-           column (LogDate, TableName)
+           column (LogDate, DatabaseName, TableName)
+          ,column (LogDate, DatabaseName)
+          ,column (LogDate, TableName)
           ,column (LogDate)
-          ,column (TableName)
-          ,column (DatabaseName)
       on vt_disk_space
 
 

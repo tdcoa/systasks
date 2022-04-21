@@ -45,7 +45,7 @@ tasks:
     file: system_cpu_by_day_AVG.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,cast(sum(CPU_Full_Idle   ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU Idle %--#AFAFAF"
+      ,cast(sum(CPU_Full_Idle   ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU Idle %--#E7E7E7"
       ,cast(sum(CPU_Full_IOWait ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU IOWait %--#C39BD3"
       ,cast(sum(CPU_Full_OS     ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU OS %--#43A9BD"
       ,cast(sum(CPU_Full_DBS    ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU DBS %--#142CF6"
