@@ -301,7 +301,7 @@ class sj_Misc():
            oldfmt = oldfmt.replace(fmtfind, fmtreplace)
         charlist = []
         date_markers = ['y','d','/','-','w']
-        time_markers = ['h','s',':','i','p','a']
+        time_markers = ['h','s',':','i','p','a','f']
         both_markers = ['m']
 
         # iterate each character of format, and assign a type (date/time/unknown)
@@ -357,6 +357,7 @@ class sj_Misc():
                     if   c['repeat'] ==1: cd = '%S' # %-S
                     elif c['repeat'] >=2: cd = '%S'
                 elif c['char'] in ['a','p']: cd = '%p' # am/pm
+                elif c['char'] == 'f':    cd = '%f' # fractional seconds
 
             elif c['type'] == 'd':
                 if   c['char'] == 'y': 
