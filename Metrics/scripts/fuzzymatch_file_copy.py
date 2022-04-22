@@ -14,8 +14,9 @@ version = 'v1.0'
 
 
 # use misc logger:
-misc = sjmisc(logfilepath='./{logdate}--fuzzymatch_file_copy.log')
+misc = sjmisc(logfilepath='log/{logdate}--fuzzymatch_file_copy.log')
 log = misc.log
+log.info('\n'+('-'*30)+'\n\tNEW RUN\n'+('-'*30))
 log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
 # parse commandlines

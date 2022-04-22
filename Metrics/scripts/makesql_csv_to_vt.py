@@ -9,8 +9,9 @@ version = 'v1.1'
 
 
 # use misc logger:
-misc = sjmisc(logfilepath='./{logdate}--makesql_csv_to_vt.log')
+misc = sjmisc(logfilepath='log/{logdate}--makesql_csv_to_vt.log')
 log = misc.log
+log.info('\n'+('-'*30)+'\n\tNEW RUN\n'+('-'*30))
 log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
 # parse commandlines

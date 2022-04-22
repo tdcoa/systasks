@@ -16,15 +16,19 @@ print(f'loaded {__name__} { version }')
 
 class sj_Misc():
     log: logging.Logger = None
+    logfilepath:Path = None
     tokens: dict 
 
     def __init__(self, log=None, logfilepath=None) -> None:
         self.tokens = {'version':version}
         if log:
+            self.logfilepath = ''
             self.log = log 
         else:
             if logfilepath:
-                self.log = self.get_logger(logfilepath) if logfilepath else None 
+                self.logfilepath = logfilepath
+                self.log = self.get_logger(logfilepath)
+
         
 
     @property

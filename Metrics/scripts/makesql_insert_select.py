@@ -20,8 +20,9 @@ version = 'v1.1'
 #              ]
 
 # use misc logger:
-misc = sjmisc(logfilepath='./{logdate}--makesql_insert_select.log')
+misc = sjmisc(logfilepath='log/{logdate}--makesql_insert_select.log')
 log = misc.log
+log.info('\n'+('-'*30)+'\n\tNEW RUN\n'+('-'*30))
 log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
 # parse commandlines
