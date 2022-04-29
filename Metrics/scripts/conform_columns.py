@@ -16,9 +16,9 @@ if False:
                 ,'integer_columns: AMPs, CPUs']
 
 # use misc logger:
-misc = sjmisc(logfilepath='log/{logdate}--conform_date_columns.log')
+misc = sjmisc(logfilepath='log/{logdate}--run.log')
 log = misc.log
-log.info('\n'+('-'*30)+'\n\tNEW RUN\n'+('-'*30))
+log.info('\n'+('-'*30)+'\n\tCONFORM COLUMNS\n'+('-'*30))
 log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
 # parse commandlines
@@ -27,30 +27,34 @@ args = misc.parse_namevalue_args(sys.argv,
                                 defaults={'date_columns':None, 'integer_columns':None, 'required_columns':None, 
                                           'date_format':'yyyy-mm-dd', 'time_format':'hh:mm:ss', 'timestamp_format':'yyyy-mm-dd hh:mm:ss.f',
                                           'integer_error_replace':'NULL', 'savefilepath':None })
+try:
+    scriptfilepath   = Path(args['scriptfilepath']).resolve()
+    csvfilepath      = Path(str(args['csvfilepath']).strip()).resolve()   # name of excel / csv file (i.e., "system_cpu.csv")
+    savefilepath     = Path(str(args['savefilepath']).strip()).resolve() if args['savefilepath'] else Path(csvfilepath[:-4] + '--out.csv')
+    date_columns     = [] if not args['date_columns']     else [str(x).strip() for x in list(str(args['date_columns']).lower().replace('[','').replace(']','').split(',')) ]
+    integer_columns  = [] if not args['integer_columns']  else [str(x).strip() for x in list(str(args['integer_columns']).lower().replace('[','').replace(']','').split(',')) ]
+    required_columns = [] if not args['required_columns'] else [str(x).strip() for x in list(str(args['required_columns']).lower().replace('[','').replace(']','').split(',')) ]
+    date_format      = misc.translate_simple_dateformat(str(args['date_format']).strip(),      skip_log=True) 
+    timestamp_format = misc.translate_simple_dateformat(str(args['timestamp_format']).strip(), skip_log=True) 
+    time_format      = misc.translate_simple_dateformat(str(args['time_format']).strip(),      skip_log=True) 
+    integer_error_replace = str(args['integer_error_replace']).strip() 
+    if integer_error_replace.lower() in ['none','null','nan','empty']: integer_error_replace = None
 
-scriptfilepath   = Path(args['scriptfilepath']).resolve()
-csvfilepath      = Path(str(args['csvfilepath']).strip()).resolve()   # name of excel / csv file (i.e., "system_cpu.csv")
-savefilepath     = Path(str(args['savefilepath']).strip()).resolve() if args['savefilepath'] else Path(csvfilepath[:-4] + '--out.csv')
-date_columns     = [] if not args['date_columns']     else [str(x).strip() for x in list(str(args['date_columns']).lower().replace('[','').replace(']','').split(',')) ]
-integer_columns  = [] if not args['integer_columns']  else [str(x).strip() for x in list(str(args['integer_columns']).lower().replace('[','').replace(']','').split(',')) ]
-required_columns = [] if not args['required_columns'] else [str(x).strip() for x in list(str(args['required_columns']).lower().replace('[','').replace(']','').split(',')) ]
-date_format      = misc.translate_simple_dateformat(str(args['date_format']).strip(),      skip_log=True) 
-timestamp_format = misc.translate_simple_dateformat(str(args['timestamp_format']).strip(), skip_log=True) 
-time_format      = misc.translate_simple_dateformat(str(args['time_format']).strip(),      skip_log=True) 
-integer_error_replace = str(args['integer_error_replace']).strip() 
-if integer_error_replace.lower() in ['none','null','nan','empty']: integer_error_replace = None
 
+    log.debug(f'scriptfilepath        = { str(scriptfilepath) }'        )        
+    log.debug(f'csvfilepath           = { str(csvfilepath) }'           )     
+    log.debug(f'savefilepath          = { str(savefilepath) }'          )      
+    log.debug(f'date_columns          = { str(date_columns) }'          )           
+    log.debug(f'integer_columns       = { str(integer_columns) }'       )         
+    log.debug(f'required_columns      = { str(required_columns) }'      )          
+    log.debug(f'date_format           = { str(date_format) }'           )     
+    log.debug(f'timestamp_format      = { str(timestamp_format) }'      )          
+    log.debug(f'time_format           = { str(time_format) }'           )     
+    log.debug(f'integer_error_replace = { str(integer_error_replace) }' ) 
 
-log.debug(f'scriptfilepath        = { str(scriptfilepath) }'        )        
-log.debug(f'csvfilepath           = { str(csvfilepath) }'           )     
-log.debug(f'savefilepath          = { str(savefilepath) }'          )      
-log.debug(f'date_columns          = { str(date_columns) }'          )           
-log.debug(f'integer_columns       = { str(integer_columns) }'       )         
-log.debug(f'required_columns      = { str(required_columns) }'      )          
-log.debug(f'date_format           = { str(date_format) }'           )     
-log.debug(f'timestamp_format      = { str(timestamp_format) }'      )          
-log.debug(f'time_format           = { str(time_format) }'           )     
-log.debug(f'integer_error_replace = { str(integer_error_replace) }' )               
+except Exception as ex:
+    log.exception(f'UNHANDLED EXCEPTION in mapping commandline arguments to variables: \n{ex}')
+    raise Exception
 
 date_delims = ['/','-', '.']
 time_delims = [':'] 

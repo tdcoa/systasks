@@ -20,40 +20,45 @@ version = 'v1.1'
 #              ]
 
 # use misc logger:
-misc = sjmisc(logfilepath='log/{logdate}--makesql_insert_select.log')
+misc = sjmisc(logfilepath='log/{logdate}--run.log')
 log = misc.log
-log.info('\n'+('-'*30)+'\n\tNEW RUN\n'+('-'*30))
+log.info('\n'+('-'*30)+'\n\tMAKESQL - INSERT-SELECT BY COLUMN FUZZY-MATCH\n'+('-'*30))
 log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
-# parse commandlines
-args = misc.parse_namevalue_args(sys.argv, 
-                                required=[  'insertinto_csvfilepath','selectfrom_csvfilepath',
-                                            'insertinto_tablename'  ,'selectfrom_tablename'],
-                                defaults={'sqlinsert_filepath': Path('.') / 'temp' / 'makesql_insert_select.sql', 'debug':False })
-scriptfilepath         = Path(args['scriptfilepath']).resolve()
-insertinto_csvfilepath = Path(args['insertinto_csvfilepath']).resolve()
-selectfrom_csvfilepath = Path(args['selectfrom_csvfilepath']).resolve()
-insertinto_tablename   = args['insertinto_tablename']
-selectfrom_tablename   = args['selectfrom_tablename']
-sqlinsert_filepath     = Path(args['sqlinsert_filepath']).resolve() 
-finaltablename      = args['tablename'] if 'tablename' in args else 'vt_csv2vt'
-preworktablename    = finaltablename + '_prework'
-debug               = str(args['debug']).lower() == 'true'
+try:
+    # parse commandlines
+    args = misc.parse_namevalue_args(sys.argv, 
+                                    required=[  'insertinto_csvfilepath','selectfrom_csvfilepath',
+                                                'insertinto_tablename'  ,'selectfrom_tablename'],
+                                    defaults={'sqlinsert_filepath': Path('.') / 'temp' / 'makesql_insert_select.sql', 'debug':False
+                                            , 'scriptfilepath':'' })
+    scriptfilepath         = Path(args['scriptfilepath']).resolve()
+    insertinto_csvfilepath = Path(args['insertinto_csvfilepath']).resolve()
+    selectfrom_csvfilepath = Path(args['selectfrom_csvfilepath']).resolve()
+    insertinto_tablename   = args['insertinto_tablename']
+    selectfrom_tablename   = args['selectfrom_tablename']
+    sqlinsert_filepath     = Path(args['sqlinsert_filepath']).resolve() 
+    finaltablename      = args['tablename'] if 'tablename' in args else 'vt_csv2vt'
+    preworktablename    = finaltablename + '_prework'
+    debug               = str(args['debug']).lower() == 'true'
 
-# error testing:
-if not insertinto_csvfilepath.exists() or not selectfrom_csvfilepath.exists():
-    errmsg = f'required CSV file missing (either or both):\nInsert Into Path: { insertinto_csvfilepath}\nSelect From Path: { selectfrom_csvfilepath }'
-    log.error(errmsg)
-    raise FileNotFoundError(errmsg)  # hard error please
+    # error testing:
+    if not insertinto_csvfilepath.exists() or not selectfrom_csvfilepath.exists():
+        errmsg = f'required CSV file missing (either or both):\nInsert Into Path: { insertinto_csvfilepath}\nSelect From Path: { selectfrom_csvfilepath }'
+        log.error(errmsg)
+        raise FileNotFoundError(errmsg)  # hard error please
 
-sqlinsert_filepath.parent.mkdir(exist_ok=True, parents=True)
+    sqlinsert_filepath.parent.mkdir(exist_ok=True, parents=True)
 
-log.debug(f'this filepath = {scriptfilepath}')
-log.debug(f'csv with Insert Into structure = { insertinto_csvfilepath }')
-log.debug(f'csv with Select From structure = { selectfrom_csvfilepath }')
-log.debug(f'Insert Into TableName = { insertinto_tablename }')
-log.debug(f'Select From TableName = { selectfrom_tablename }')
-log.debug(f'SQL-final filepath = { sqlinsert_filepath }')
+    log.debug(f'this filepath = {scriptfilepath}')
+    log.debug(f'csv with Insert Into structure = { insertinto_csvfilepath }')
+    log.debug(f'csv with Select From structure = { selectfrom_csvfilepath }')
+    log.debug(f'Insert Into TableName = { insertinto_tablename }')
+    log.debug(f'Select From TableName = { selectfrom_tablename }')
+    log.debug(f'SQL-final filepath = { sqlinsert_filepath }')
+except Exception as ex:
+    log.exception(f'UNHANDLED EXCEPTION in mapping commandline arguments to variables: \n{ex}')
+    raise Exception
 
 
 

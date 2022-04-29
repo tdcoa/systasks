@@ -159,7 +159,6 @@ class sj_Misc():
             part.append(replace_token)  # save the final replace_token 
             s1 = p2+1
         return ''.join(part)
-        
 
             
 
@@ -209,12 +208,14 @@ class sj_Misc():
                 break
         return string.strip()
 
+
     def parse_namevalue_args(self, args:list, nvdelim:str=':', defaults={}, required=[], first_item_name:str='scriptfilepath') -> dict:
         """Parse list of argments and split into dictionary based on delimiter. Both name/values are trimmed, to remove leading/trailing white-space.
         If delimiter is not found for a list item, that item is added as the dict name(key), and the value is left as None.
         For example, passing in the list (with default delim):
             [  'dog :fluffy',   'cat: spikey',   ' fish']       will result in a dict of:
             {  'dog' : 'fluffy',  'cat' : 'spikey',  'fish' : None} 
+        Note: if using the default name/value delimiter (nvdelim) of ':' your name must be at least 3 characters long (to avoid confusion with WIN directory paths).
  
         Args:
             args (list): list of arguments.
@@ -232,8 +233,18 @@ class sj_Misc():
             self.log.info(f'parsing argument list with delimiter   {nvdelim}')
             # for each arg in list, 
             for i, arg in enumerate(args):
-                argname = str(arg.split(nvdelim)[0]).strip()  # define argument name as: first string split by delim
-                argval = str(arg[len(argname)+1:]).strip() # define argument value as: everything that's not argname (regardless how many other delims)
+
+                # name must be at least 3 characters long (to avoid WIN drive letters)
+                if (nvdelim == ':' and nvdelim in arg[:3]):
+                    start_argname_at = 3
+                    preargname = arg[:start_argname_at]
+                else:
+                    start_argname_at = 0
+                    preargname = ''
+
+                # split name and value apart based on n/v delim
+                argname = preargname + str(arg[start_argname_at:].split(nvdelim)[0]).strip()  # define argument name as: first string split by delim
+                argval = str(arg[len(argname)+1:]).strip()    # define argument value as: everything that's not argname (regardless how many other delims)
                 if argval[:1]==nvdelim: argval = argval[1:].strip() # if argval is left starting with delimiter, clean up /remove
                 if i==0 and argval=='' and len(first_item_name)>0:  # if arg[0] doesn't suppply delimiter, assign first_item_name (assumption is sys.argv[0]) 
                     argval = argname

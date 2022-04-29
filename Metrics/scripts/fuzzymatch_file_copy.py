@@ -12,39 +12,46 @@ from sj_misc import sj_Misc as sjmisc
 version = 'v1.0'
 #sys.argv = [sys.argv[0], 'destfilepath: temp_gssresusage_upload.csv', 'fuzzyfilepath: ../temp/test/*gssresusage -- Transcend02 -- 2022-03-01*.csv' ]
 
+try:
+    # use misc logger:
+    misc = sjmisc(logfilepath='log/{logdate}--run.log')
+    log = misc.log
+    log.info('\n'+('-'*30)+'\n\tFUZZY-MATCH FILE COPY\n'+('-'*30))
+    log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
-# use misc logger:
-misc = sjmisc(logfilepath='log/{logdate}--fuzzymatch_file_copy.log')
-log = misc.log
-log.info('\n'+('-'*30)+'\n\tNEW RUN\n'+('-'*30))
-log.debug(f'Subscript started: { sys.argv[0] } version { version }')
+    # parse commandlines
+    args = misc.parse_namevalue_args(sys.argv, defaults = {'destfilepath':'./temp.tmp', 'scriptfilepath':''},
+                                            required=['fuzzyfilepath'] )
 
-# parse commandlines
-args = misc.parse_namevalue_args(sys.argv, defaults = {'destfilepath':'./temp.tmp'},
-                                           required=['fuzzyfilepath'] )
+    # do glob search to find valid csv file (allowing for glob wildcard characters)
+    fuzzyfilepath = Path(args['fuzzyfilepath']).resolve()
+    files = misc.globi(fuzzyfilepath.parent, str(fuzzyfilepath), case_sensitive = False )
+    srcfilesfound = ''
+    destexists = ''
+except Exception as ex:
+    log.exception(f'UNHANDLED EXCEPTION in mapping commandline arguments to variables: \n{ex}')
+    raise Exception
 
-# do glob search to find valid csv file (allowing for glob wildcard characters)
-fuzzyfilepath = Path(args['fuzzyfilepath']).resolve()
-files = misc.globi(fuzzyfilepath.parent, str(fuzzyfilepath), case_sensitive = False )
-srcfilesfound = ''
-destexists = ''
+try:
+    # if no files are found, abort the rest of the processing with an ERROR 
+    if len(files) == 0:
+        log.exception(f"ABORTING: Could not find any files matching the pattern: { fuzzyfilepath }")
+        raise FileNotFoundError(f"ABORTING: Could not find any files matching the pattern: { fuzzyfilepath }")
 
-# if no files are found, abort the rest of the processing with an ERROR 
-if len(files) == 0:
-    log.exception(f"ABORTING: Could not find any files matching the pattern: { fuzzyfilepath }")
-    raise FileNotFoundError(f"ABORTING: Could not find any files matching the pattern: { fuzzyfilepath }")
-
-elif len(files) >1: # more than one file found, raise WARNING
-    log.warning(f"found more than one qualifying file... using the first one encountered.")
-    srcfilesfound = f'\n    (found total of {len(files)} qualifying files, using the first recorded)'
+    elif len(files) >1: # more than one file found, raise WARNING
+        log.warning(f"found more than one qualifying file... using the first one encountered.")
+        srcfilesfound = f'\n    (found total of {len(files)} qualifying files, using the first recorded)'
 
 
-# set all variables
-srcfilepath = Path(files[0]).resolve() # take first one found
-destfilepath = Path(args['destfilepath']).resolve()
-if destfilepath.exists(): 
-    log.warning(f'the destination path provided already contains a file - overwriting...')
-    destexists = f'\n    (destination file path existed, and will be overwritten)'
+    # set all variables
+    srcfilepath = Path(files[0]).resolve() # take first one found
+    destfilepath = Path(args['destfilepath']).resolve()
+    if destfilepath.exists(): 
+        log.warning(f'the destination path provided already contains a file - overwriting...')
+        destexists = f'\n    (destination file path existed, and will be overwritten)'
+
+except Exception as ex:
+    log.exception(f'UNHANDLED EXCEPTION in preparing file source/destination paths: \n{ex}')
 
 log.info(f"""Attempting to copy file:
   source:      {srcfilepath}{srcfilesfound}
