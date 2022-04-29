@@ -55,9 +55,9 @@
       ,0 as Exclude_VantageUnit_Flag, 0 as Exclude_Performance_Flag
       from pdcrinfo.UserInfo
       where
-        (RecordStartDate between current_date - 7 and current_date - 1  or
-         RecordEndDate   between current_date - 7 and current_date - 1  or
-         coalesce(RecordEndDate, DATE+1) >= current_date - 1 )
+        (RecordStartDate between {{ startdate }} and {{ enddate }}  or
+         RecordEndDate   between {{ startdate }} and {{ enddate }}  or
+         coalesce(RecordEndDate, {{ enddate }}) >= {{ enddate }} )
       and trim(UserName) not in (Select UserName from vt_decode_user)
       qualify coalesce(RecordEndDate,DATE+1) = max(coalesce(RecordEndDate,DATE+1)) over(partition by UserName)
         and rank()over(partition by trim(UserName) order by RecordEndDate desc) = 1
