@@ -38,15 +38,16 @@ try:
     insertinto_tablename   = args['insertinto_tablename']
     selectfrom_tablename   = args['selectfrom_tablename']
     sqlinsert_filepath     = Path(args['sqlinsert_filepath']).resolve() 
-    finaltablename      = args['tablename'] if 'tablename' in args else 'vt_csv2vt'
-    preworktablename    = finaltablename + '_prework'
-    debug               = str(args['debug']).lower() == 'true'
+    finaltablename         = args['tablename'] if 'tablename' in args else 'vt_csv2vt'
+    preworktablename       = finaltablename + '_prework'
+    debug                  = str(args['debug']).lower() == 'true'
 
     # error testing:
     if not insertinto_csvfilepath.exists() or not selectfrom_csvfilepath.exists():
         errmsg = f'required CSV file missing (either or both):\nInsert Into Path: { insertinto_csvfilepath}\nSelect From Path: { selectfrom_csvfilepath }'
         log.error(errmsg)
-        raise FileNotFoundError(errmsg)  # hard error please
+        log.error(f"\n\n  you're probably missing the mapping file ({ insertinto_csvfilepath }) that defines the structure of the insert.\nThis should be produced by the previous step, so in theory, you should never see this message.  Please explain yourself.\n")
+        raise FileNotFoundError()  # hard error please
 
     sqlinsert_filepath.parent.mkdir(exist_ok=True, parents=True)
 

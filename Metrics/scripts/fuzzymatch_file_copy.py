@@ -9,8 +9,8 @@ from sj_misc import sj_Misc as sjmisc
 # provided a file match string, will copy the first match to a consistent location
 # this overcomes a weakness in COA's IMPORT function, which requires a fixed file name
 
-version = 'v1.0'
-#sys.argv = [sys.argv[0], 'destfilepath: temp_gssresusage_upload.csv', 'fuzzyfilepath: ../temp/test/*gssresusage -- Transcend02 -- 2022-03-01*.csv' ]
+version = 'v1.1'
+# sys.argv = [sys.argv[0], 'destfilepath: temp_gssresusage_upload.csv', 'fuzzyfilepath: %s/test/*gssresusage -- Transcend02 -- 2022-03-01*.csv' %str(Path(sys.argv[0]).parent) ]
 
 try:
     # use misc logger:
@@ -24,7 +24,8 @@ try:
                                             required=['fuzzyfilepath'] )
 
     # do glob search to find valid csv file (allowing for glob wildcard characters)
-    fuzzyfilepath = Path(args['fuzzyfilepath']).resolve()
+    fuzzyfilepath = Path(args['fuzzyfilepath'])
+    log.info(f'Searching for files matching pattern: { fuzzyfilepath }')
     files = misc.globi(fuzzyfilepath.parent, str(fuzzyfilepath), case_sensitive = False )
     srcfilesfound = ''
     destexists = ''
