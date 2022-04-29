@@ -1,31 +1,4 @@
 
-{% macro setup() -%}
-  ## tbd
-  {% set run = namespace(completed=[]) if run is not defined else run %}
-{% endmacro %}
-
-
-{% macro test() -%}
-{% set run = namespace(completed=[]) if run is not defined else run %}
-- name: "Macro imported and called: test()"
-  connect: source
-  execute:
-    sql: Select 'test()' as MacroNameCalled
-{% endmacro %}
-
-
-
-{% macro remove_completed_flag(context, vtname) -%}
-{% set run = namespace(completed=[]) if run is not defined else run %}
-
-- name: "Macro imported and called: test()"
-  connect: source
-  execute:
-    sql: Select 'test()' as MacroNameCalled
-{% endmacro %}
-
-
-
 
 ###### build a run.includes list of flags for included fields.
 ######   these flags can be set via include_flagname or the includes csv list
@@ -78,48 +51,6 @@
     {{ context.included.append(default) or '' }}
   {% endfor %}
 
-{%- endmacro %}
-
-
-
-###### make the StartDate//EndDate a little more hardy...
-{% macro harden_dates(context, startdate, enddate) -%}
-
-  # make dates more flexible: StartDate
-  {% set startdate = 'date-31' if startdate is not defined else startdate %}
-  {% if "date" in startdate.lower() %}
-  {% elif "select" in startdate.lower() %}
-  {% elif "/" in startdate %}
-    {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
-    {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
-    {% set startyear  = startdate.split("/")[2] %}
-    {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
-  {% elif "-" in startdate %}
-    {% set startyear  = startdate.replace("'","").split("-")[0] %}
-    {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
-    {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
-    {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
-  {% endif %}
-
-  # make dates more flexible: EndDate
-  {% set enddate = 'date-1' if enddate is not defined else enddate %}
-  {% if "date" in enddate.lower() %}
-  {% elif "select" in enddate.lower() %}
-  {% elif "/" in enddate %}
-    {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
-    {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
-    {% set endyear  = enddate.split("/")[2] %}
-    {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
-  {% elif "-" in startdate %}
-    {% set endyear  = enddate.replace("'","").split("-")[0] %}
-    {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
-    {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
-    {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
-  {% endif %}
-
-  {% set context.dates = [] %}
-  {{ context.dates.append( startdate ) or '' }}
-  {{ context.dates.append(  enddate  ) or '' }}
 {%- endmacro %}
 
 
