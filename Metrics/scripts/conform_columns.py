@@ -1,19 +1,25 @@
 from pathlib import Path
 from datetime import datetime
 import sys, shutil
-import pandas as pd 
+import pandas as pd
 
 from sj_misc import sj_Misc as sjmisc
 
 
 version = 'v1.0'
 if False:
-    sys.argv = [sys.argv[0] 
-                ,'csvfilepath: ./test/conform_columns_TEST.csv'
+    sys.argv = [sys.argv[0]
+                ,'csvfilepath: ./test/gssresusage -- SWEDBANKSE06 -- 03012022 to 03032022.csv'
                 ,'savefilepath: ./test/conform_columns_TEST--results.csv'
-                ,'date_columns: LogTime, Timestamp, LogDate'
-                ,'required_columns: LogTime'
-                ,'integer_columns: AMPs, CPUs']
+                ,'date_columns: LogDate, LogTime, Timestamp, LogTS'
+                ,'integer_columns: AMPs, CPUs'
+                ,'required_columns: LogDate'
+                ,'date_format: yyyy-mm-dd'
+                ,'timestamp_format: yyyy-mm-dd hh:mm:ss'
+                ,'time_format: hhmmss'
+                ,'integer_error_replace: null'
+                ,'global_replace: { ?:null, 0:0 }'
+                ]
 
 # use misc logger:
 misc = sjmisc(logfilepath='log/{logdate}--run.log')
@@ -22,9 +28,9 @@ log.info('\n'+('-'*30)+'\n\tCONFORM COLUMNS\n'+('-'*30))
 log.debug(f'Subscript started: { sys.argv[0] } version { version }')
 
 # parse commandlines
-args = misc.parse_namevalue_args(sys.argv, 
+args = misc.parse_namevalue_args(sys.argv,
                                 required=['csvfilepath'],
-                                defaults={'date_columns':None, 'integer_columns':None, 'required_columns':None, 
+                                defaults={'date_columns':None, 'integer_columns':None, 'required_columns':None, 'global_replace':'{ ?:null }',
                                           'date_format':'yyyy-mm-dd', 'time_format':'hh:mm:ss', 'timestamp_format':'yyyy-mm-dd hh:mm:ss.f',
                                           'integer_error_replace':'NULL', 'savefilepath':None })
 try:
@@ -34,36 +40,41 @@ try:
     date_columns     = [] if not args['date_columns']     else [str(x).strip() for x in list(str(args['date_columns']).lower().replace('[','').replace(']','').split(',')) ]
     integer_columns  = [] if not args['integer_columns']  else [str(x).strip() for x in list(str(args['integer_columns']).lower().replace('[','').replace(']','').split(',')) ]
     required_columns = [] if not args['required_columns'] else [str(x).strip() for x in list(str(args['required_columns']).lower().replace('[','').replace(']','').split(',')) ]
-    date_format      = misc.translate_simple_dateformat(str(args['date_format']).strip(),      skip_log=True) 
-    timestamp_format = misc.translate_simple_dateformat(str(args['timestamp_format']).strip(), skip_log=True) 
-    time_format      = misc.translate_simple_dateformat(str(args['time_format']).strip(),      skip_log=True) 
-    integer_error_replace = str(args['integer_error_replace']).strip() 
+    date_format      = misc.translate_simple_dateformat(str(args['date_format']).strip(),      skip_log=True)
+    timestamp_format = misc.translate_simple_dateformat(str(args['timestamp_format']).strip(), skip_log=True)
+    time_format      = misc.translate_simple_dateformat(str(args['time_format']).strip(),      skip_log=True)
+    integer_error_replace = str(args['integer_error_replace']).strip()
     if integer_error_replace.lower() in ['none','null','nan','empty']: integer_error_replace = None
+    global_replace   = {'nan':''}
+    for replace_item in [x.strip() for x in str(args['global_replace'].strip()[1:-1] if args['global_replace'].strip()[:1]=='{' else args['global_replace'].strip() ) .split(',')] :
+        tmpName  = '' if replace_item.split(':')[0].strip().lower()  in ['none','null'] else  replace_item.split(':')[0].strip()
+        tmpValue = '' if replace_item.split(':')[1].strip().lower()  in ['none','null'] else  replace_item.split(':')[1].strip()
+        global_replace[tmpName] = tmpValue
 
-
-    log.debug(f'scriptfilepath        = { str(scriptfilepath) }'        )        
-    log.debug(f'csvfilepath           = { str(csvfilepath) }'           )     
-    log.debug(f'savefilepath          = { str(savefilepath) }'          )      
-    log.debug(f'date_columns          = { str(date_columns) }'          )           
-    log.debug(f'integer_columns       = { str(integer_columns) }'       )         
-    log.debug(f'required_columns      = { str(required_columns) }'      )          
-    log.debug(f'date_format           = { str(date_format) }'           )     
-    log.debug(f'timestamp_format      = { str(timestamp_format) }'      )          
-    log.debug(f'time_format           = { str(time_format) }'           )     
-    log.debug(f'integer_error_replace = { str(integer_error_replace) }' ) 
+    log.debug(f'scriptfilepath        = { str(scriptfilepath) }'        )
+    log.debug(f'csvfilepath           = { str(csvfilepath) }'           )
+    log.debug(f'savefilepath          = { str(savefilepath) }'          )
+    log.debug(f'date_columns          = { str(date_columns) }'          )
+    log.debug(f'integer_columns       = { str(integer_columns) }'       )
+    log.debug(f'required_columns      = { str(required_columns) }'      )
+    log.debug(f'date_format           = { str(date_format) }'           )
+    log.debug(f'timestamp_format      = { str(timestamp_format) }'      )
+    log.debug(f'time_format           = { str(time_format) }'           )
+    log.debug(f'integer_error_replace = { str(integer_error_replace) }' )
+    log.debug(f'global_replace        = { str(global_replace) }'        )
 
 except Exception as ex:
     log.exception(f'UNHANDLED EXCEPTION in mapping commandline arguments to variables: \n{ex}')
     raise Exception
 
 date_delims = ['/','-', '.']
-time_delims = [':'] 
+time_delims = [':']
 
 # initial check if file exists:
 if not csvfilepath.exists():
     errmsg = f'csvfilepath not found: { csvfilepath }'
     log.error(errmsg)
-    raise Exception(errmsg)  # hard error please    
+    raise Exception(errmsg)  # hard error please
 
 # load CSV into DataFrame and prep
 df = pd.read_csv(csvfilepath)
@@ -73,17 +84,24 @@ df.columns = [x[1] for x in colmap]  # 0 = original , 1 = lower
 # remove any offending records:
 for reqcol in required_columns:
     log.info(f'dropping any rows with NULL in {reqcol}')
-    df.dropna(subset=[reqcol], inplace = True) 
-    
+    df.dropna(subset=[reqcol], inplace = True)
+
     log.info(f'changing all datatypes to string (easier processing)')
     df=df.applymap(str)
+
+
+# do global find/replaces first:
+for find_value, replace_value in global_replace.items():
+    log.info(f'Global Find/Replace of: "{ find_value }"  with  { "NULL" if str(replace_value) == "" else str(chr(34) + replace_value + chr(34)) }')
+    df = df.applymap(lambda x: replace_value if x == find_value else x )  
+
 
 
 
     # ------------------------------------
     # conform datetime columns:
     # ------------------------------------
-for datetimecol in date_columns: 
+for datetimecol in date_columns:
     try:
         datetimecol = datetimecol.strip().lower()
         log.info('\n' + '-'*30 + ' ' + datetimecol.upper())
@@ -101,17 +119,17 @@ for datetimecol in date_columns:
         log.info('examining delimiters to determine whether date, time, or both (timestamp)')
         sample_value = dfdates.iloc[int(len(dfdates)/2)][datetimecol]
         log.info(f' sampled value: {sample_value}')
-        dtdelim = tmdelim = None 
-        has_date = has_time = False 
+        dtdelim = tmdelim = None
+        has_date = has_time = False
         for d in date_delims:
             if dfdates[datetimecol].str.split(d, expand=False).agg(len).median() > 1.9:
-                dtdelim = d 
+                dtdelim = d
                 has_date = True
                 break
         for t in time_delims:
             if dfdates[datetimecol].str.split(t, expand=False).agg(len).median() > 1.9:
-                tmdelim = t 
-                has_time = True 
+                tmdelim = t
+                has_time = True
                 break
 
         timecol = f'{datetimecol}_time'
@@ -122,7 +140,7 @@ for datetimecol in date_columns:
             continue #skip column
 
         elif has_date and has_time:
-            dfdates[datecol] = dfdates[datetimecol].apply(lambda x: str(x).split(' ')[0].strip()) # assumption: date always comes first 
+            dfdates[datecol] = dfdates[datetimecol].apply(lambda x: str(x).split(' ')[0].strip()) # assumption: date always comes first
             dfdates[timecol] = dfdates[datetimecol].apply(lambda x: str(x)[str(x).find(' ')+1:].strip()) # everything after the date
             applied_format = timestamp_format
             log.info('structure determined to be TIMESTAMP (date + time, single-space delimited)')
@@ -131,13 +149,13 @@ for datetimecol in date_columns:
             dfdates[datecol] = dfdates[datetimecol]
             applied_format = date_format
             log.info('structure determined to be DATE')
-            
-        elif has_time and not has_date: 
+
+        elif has_time and not has_date:
             dfdates[timecol] = dfdates[datetimecol]
             applied_format = time_format
             log.info('structure determined to be TIME')
 
-            
+
         # DATE LOGIC
         # ----------------------------------------
         current_date_format = ''
@@ -146,7 +164,7 @@ for datetimecol in date_columns:
             dfparts = dfdates[datecol].str.split(dtdelim, expand=True)
             dfpartCounts = dfparts.nunique().sort_values()
             dfpartMax = dfparts.max()
-            if len(dfpartCounts) != 3: 
+            if len(dfpartCounts) != 3:
                 msg = 'date supplied only had 2 parts, requires 3 (d,m,y).  Check your date field and resubmit.'
                 log.error(msg)
                 raise Exception(msg)
@@ -157,14 +175,14 @@ for datetimecol in date_columns:
                 allparts[['yr','mth','day'][i]] =  {'pos':pos, 'count':cnt, 'maxvalue':int(dfpartMax[[pos]]) }
 
 
-                
-            
-            
+
+
+
             # correct for rare cases where count of month and year are same, then look at max value (max 12 vs max 20 or 2020)
-            if allparts['yr']['count'] ==  allparts['mth']['count']  and  allparts['yr']['maxvalue'] < allparts['mth']['maxvalue']: 
+            if allparts['yr']['count'] ==  allparts['mth']['count']  and  allparts['yr']['maxvalue'] < allparts['mth']['maxvalue']:
                 yr_tmp = allparts['yr']
                 mth_tmp = allparts['mth']
-                allparts['yr'] = mth_tmp 
+                allparts['yr'] = mth_tmp
                 allparts['mth'] = yr_tmp
 
 
@@ -172,7 +190,7 @@ for datetimecol in date_columns:
             allparts['yr']['parser']  = '%Y' if len(str(allparts['yr']['maxvalue'])) == 4 else '%y'
             allparts['mth']['parser'] = '%m'
             allparts['day']['parser'] = '%d'
-            
+
 
             # put it back together into one format
             current_date_format = []
@@ -181,48 +199,48 @@ for datetimecol in date_columns:
             current_date_format = dtdelim.join(current_date_format)
 
 
-            
+
         # TIME LOGIC
         # ----------------------------------------
         current_time_format = ''
         if has_time:
-            timedelims_found = round(dfdates[timecol].apply(lambda x: len(str(x).split(tmdelim))).median()) - 1 
+            timedelims_found = round(dfdates[timecol].apply(lambda x: len(str(x).split(tmdelim))).median()) - 1
 
             if   timedelims_found == 1:  current_time_format = '%H:%M'
             elif timedelims_found == 2:  current_time_format = '%H:%M:%S'
             else:
                 msg = f'bad time format: column  {timecol}  is either missing delimiter ({tmdelim}), or has more than 3 sections (hr, min, sec)'
                 log.error(msg)
-                raise ValueError(msg) 
+                raise ValueError(msg)
 
             # check for 24 vs 12 hour clock
             hours = dfdates[timecol].apply(lambda x: int(str(x).split(tmdelim)[0])).unique().min()
-            if hours.max() > 12: current_time_format = current_time_format.replace('%I','%H') 
-            
+            if hours.max() > 12: current_time_format = current_time_format.replace('%I','%H')
+
             # check for fractional seconds:
             fractional_Seconds = round(dfdates[timecol].apply(lambda x: 1 if '.' in x else 0 ).median())
             if fractional_Seconds == 1: current_time_format = current_time_format + '.%f'
-        
-            # check for AM/PM 
+
+            # check for AM/PM
             ampm_found = round(dfdates[timecol].apply(lambda x: 1 if str(x).strip().lower()[-1:] == 'm' else 0).median())
             if ampm_found == 1: current_time_format = current_time_format.replace('%H','%I') + ' %p'
-            
+
 
 
         # APPLY LOGIC FOR DATA
         # ----------------------------------------
         def apply_dateformat(inputdate:str) ->str:
-            if pd.isnull(inputdate): return None 
+            if pd.isnull(inputdate): return None
             inputdate = str(inputdate).strip()
             msg = [f'    parse  {inputdate}  using format  {current_format} ']
 
             try:  # Parse old format
                 dtobj = datetime.strptime(inputdate, current_format)
             except Exception as ex:
-                msg.append(f' FAILED: could not parse date to supplied format, check the csv date format.') 
+                msg.append(f' FAILED: could not parse date to supplied format, check the csv date format.')
                 log.error(''.join(msg))
-                return inputdate 
-            
+                return inputdate
+
             try:  # Apply new format
                 strdate = str(dtobj.strftime(applied_format))
             except Exception as ex:
@@ -232,8 +250,8 @@ for datetimecol in date_columns:
 
             msg.append(f' and translate to  {applied_format} == {strdate}')
             # log.debug(''.join(msg))
-            return strdate 
-            
+            return strdate
+
 
         # Final application of format to data
         # ----------------------------------------
@@ -246,13 +264,13 @@ for datetimecol in date_columns:
 
     except Exception as ex:
         log.exception(f'Something when wrong with conforming date/time column { datetimecol } - check the log: \n\t { misc.logfilepath }')
-                
+
 
 
     # ------------------------------------
     # conform integer columns:
     # ------------------------------------
-for intcol in integer_columns:    
+for intcol in integer_columns:
     try:
         intcol = intcol.strip().lower()
         log.info('\n' + '-'*30 + ' ' + intcol.upper())
@@ -261,24 +279,33 @@ for intcol in integer_columns:
             log.warning(f'COLUMN NOT FOUND IN CSV FILE: {intcol}')
             continue
 
+        checkfails = {}
 
         def apply_intcheck(inputint:str) ->int:
-            try: 
+            try:
                 if '.' in inputint and inputint.split('.')[1] == '0': inputint = inputint.split('.')[0]
                 return int(inputint)
             except:
-                log.warning(f'non-integer record found: "{ inputint }" -- replacing with  { integer_error_replace }')
+                msg = f'value: "{ inputint }", replaced with: "{ integer_error_replace }"'
+                if msg in checkfails.keys():
+                    checkfails[msg] +=1
+                else:
+                    checkfails[msg] = 1
+                # log.warning(f'non-integer record found: "{ inputint }" -- replacing with  { integer_error_replace }')
                 return integer_error_replace
 
-        log.info(f"Replacing any non-integer values in column  {intcol}  with  {integer_error_replace}")
         df[intcol] = df[intcol].apply(apply_intcheck)
+
+        # report results:
+        for checkfail, count in checkfails.items():
+            log.warning(f'Column "{intcol}" contained {count} violation instances of {checkfail}')
         log.info("Complete!!!")
 
     except Exception as ex:
         log.exception(f'Something when wrong with conforming integer column { datetimecol } - check the log: \n\t { misc.logfilepath }')
-                
 
-        
+
+
 
 # restore original column case:
 df.columns = [x[0] for x in colmap]  # 0 = original , 1 = lower
