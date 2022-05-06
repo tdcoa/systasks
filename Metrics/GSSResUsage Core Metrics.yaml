@@ -1,14 +1,5 @@
-description: Generates volatile table with core GSS ResUsage metrics, mostly around System CPU and IO.
-
-# set defaults:
-{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
-{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
-{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
-{% set  save_prework = true    if  save_prework is not defined else  save_prework %}
-{% set tca = false if tca is not defined else tca %}
-{% set totalactive_cod_cpu = wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu | round(6) %}
-{% set fileprefix = 'gssresusage' %}
-
+description: >
+  Generates GSSResUsage Core Metrics, including GSS-Ready Output
 
 tasks:
 
@@ -30,32 +21,267 @@ tasks:
 {% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
 ### ============= STANDARD PRE-PROCESSING =============
 
+# job specific defaults:
+{% set reconcile     = true if reconcile is not defined else reconcile %}
+{% set fileprefix    = 'gssresusage' if fileprefix is not defined else fileprefix %}
+{% set filesuffix    = ' -- ' ~ siteid ~ ' -- ' ~ startdate.replace("'","") ~ ' to ' ~ enddate.replace("'","") %}
+{% set fuzzyfilename = '*gssresusage -- ' ~ siteid ~ ' -- ' ~ startdate.replace("'","") ~ '*.csv' %}
+{% set save_prework  = true if  save_prework is not defined else  save_prework %}
+{% set debug = True %}
+{% set stop_on_error = True if stop_on_error is not defined else stop_on_error %}
+
+
+
+# there are really only 2 GSSResUsage operations: (a) pulling GSSResUsage and (b) Uploading GSSResUsage
+# This breaks the various COA jobs into like-processes:
+#  - Metric:   "GSSResUsage Core Metrics"
+#              pulls from a customer system, or TCA   (just operation a)
+#  - Custom:   "GSS Team Only - Manual CSV Upload"
+#              uploads supplied file to Transcend (just operation b)
+#  - Solution: "Upload to Transcend - GSSResUsage Sizing Data"
+#              pulls from a customer system, or TCA, and uploads to Transcend (operations a & b)
+
+{% set tca = false if tca is not defined else tca %}
+{% set pull_gssresusage = True %}
+{% set upload_gssresusage = False %}
+# --- set above two flags based on the job this is running !!!!!!!!!!!!!!!!!!!!!
+
+
+{% if reconcile %}
+- name: RECONCILE - build reconciliation table for on-going rowcount capture
+  connect: source
+  execute:
+    sql: |
+      create volatile table   vt_reconcile (
+        id         int
+      , table_name varchar(100)
+      , table_use  varchar(100)
+      , rowcount   int
+      ) primary index (id) on commit preserve rows
+{% set counter = 0 %}
+{% endif %}
+
+
+
+# -------- this pulls the GSS Resusage data, either from customer system or from TCA
+{% if pull_gssresusage %}
 
 {% include "vt_gssresusage_core.j2" %}
 
 {% if save_prework and not tca %}
-- name: export raw (original format) GSSResUsage.csv
+- name: export raw (original format) GSSResUsage
   connect: source
   export:
     sql: Select * from vt_gssresusage_prework order by 5
-    file: {{ fileprefix }}--{{ siteid }}_raw.csv
+    file: {{ fileprefix }}Raw{{ filesuffix }}.csv
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: RECONCILE - Capture RowCount for raw gssresusage SQL (prework) pull from customer system
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'vt_gssresusage_prework' as Table_Name, 'Prework (original raw GSSResUsage) from Customer System' as Table_Use, count(*) as RowCount
+      from vt_gssresusage_prework
 {% endif %}
 
-- name: export final (tdver agnostic) GSSResUsage_Core.csv
+{% endif %}
+
+- name: export final (tdver agnostic) GSSResUsage Core
   connect: source
   export:
     sql: Select * from vt_gssresusage_core order by logts
-    file: {{ fileprefix }}--{{ siteid }}_full.csv
+    file: {{ fileprefix }}{{ filesuffix }}.csv
 
-- name: export system details from GSSResUsage
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount for version agnostic gssresusage pull from {{ 'TCA' if tca else 'Customer System' }}"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'vt_gssresusage_core' as Table_Name, 'Generate version agnostic GSSResUsage from {{ 'TCA' if tca else 'Customer System' }}' as Table_Use, count(*) as RowCount
+      from vt_gssresusage_core
+{% endif %}
+
+
+{% endif %}
+# -------- end "pull_gssresusage" processing
+
+
+
+
+
+# -------- this uploads a csv file (of dubious orgin) to GTT in Transcend
+{% if upload_gssresusage %}
+
+{% set vt_tablename    = "vt_gssresuage_from_csv" %}
+{% set sqlcreate_filepath  = dirs.systasks ~ "/Metrics/temp/gss/tmp_gssresusage_" ~ siteid ~ "_create.sql"  %}
+{% set sqlinsert_filepath  = dirs.systasks ~ "/Metrics/temp/gss/tmp_gssresusage_" ~ siteid ~ "_insert.sql"  %}
+
+{% set workfile = 'workfile_gssresusage_source.csv' %}
+{% set workfile_gtt = 'workfile_gssresusage_gtt.csv' %}
+
+{% set gtt_db        = 'APP_TCA_TMP' if gtt_db is not defined else gtt_db %}
+{% set sp_db         = 'APP_TCA_TBL' if sp_db  is not defined else sp_db %}
+{% set dbprefix      = '' %}
+{% set gtt_table     = 'stg_gss_manual_upload' %}
+
+
+- name: VALIDATE SITE_ID -- this procedure will ERROR if your Site_ID is not valid.  If you see an error here, VALIDATE & CORRECT THE SITE_ID AND RE-START THE JOB.
+  connect: source
+  call:
+    proc: {{ dbprefix }}{{ sp_db }}.sp0_Validate_SiteID
+    params:
+     - '{{ siteid }}'
+
+- name: "Perform fuzzy file match, and copy to working file"
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/fuzzymatch_file_copy.py
+    params:
+      - "fuzzyfilepath: {{ fuzzyfilename }}"
+      - "destfilepath: {{ workfile }}"
+
+- name: "Conform Column Formats"
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/conform_columns.py
+    params:
+      - "scriptfilepath: '.'"
+      - "csvfilepath: {{ workfile }}"
+      - "savefilepath: {{ workfile }}"
+      - "date_columns: LogDate, LogTime, Timestamp, LogTS"
+      - "integer_columns: AMPs, CPUs"
+      - "required_columns: LogDate"
+      - "date_format: yyyy-mm-dd"
+      - "timestamp_format: yyyy-mm-dd hh:mm:ss"
+      - "time_format: hhmmss"
+      - "integer_error_replace: null"
+      - "global_replace: { ?:null }"
+
+- name: Build CREATE VOLATILE TABLE sql that exactly matches the working.CSV file - {{ sqlcreate_filepath }}
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/makesql_csv_to_vt.py
+    params:
+      - "scriptfilepath: '.'"
+      - "tablename: {{ vt_tablename }}"
+      - "csvfilepath: {{ workfile }}"
+      - sqlcreate_filepath:{{ sqlcreate_filepath }}
+      - "volatile: True"
+      - "debug: False"
+
+- name: "Execute newly build CREATE VOLATILE TABLE sql"
+  connect: source
+  execute:
+    sqlfile: {{ dirs.systasks }}/Metrics/temp/gss/tmp_gssresusage_{{ siteid }}_create.sql
+
+- name: "Upload contents of CSV file to newly build Volatile Table"
+  connect: source
+  import:
+    file: {{ workfile }}
+    table: {{ vt_tablename }}
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount for CSV uploaded to VT_Table"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'{{ vt_tablename }}' as Table_Name, 'CSV - Volatile Table data loaded from Excel' as Table_Use, count(*) as RowCount
+      from {{ vt_tablename }}
+{% endif %}
+
+- name: "Download table structure for Transcend GTT table"
   connect: source
   export:
-    file: {{ fileprefix }}--system_detail.csv
+    file: {{ workfile_gtt }}
+    sql: select top 1 * from {{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}
+
+- name: Build INSERT INTO Transcend GTT sql via auto-reconciliation of table structures - {{ sqlinsert_filepath }}
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/makesql_insert_select.py
+    params:
+      - "scriptfilepath: '.'"
+      - "insertinto_csvfilepath: {{ workfile_gtt }}"
+      - "insertinto_tablename:   {{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}"
+      - "selectfrom_csvfilepath: {{ workfile }}"
+      - sqlinsert_filepath:{{ sqlinsert_filepath }}
+      - "selectfrom_tablename:   {{ vt_tablename }}"
+      - "cust_site_id: '{{ siteid }}' "
+      - "AvgIOPsSec: AvgIOPsSecNode"
+      - "MaxIOPsSec: MaxIOPsSecNode"
+      - "tca_system_id: '-1' "
+      - "gss_qry_vrsn:  Version"
+      - "LogDOW:        '' "
+      - 'LogTs:         cast("Timestamp" as Timestamp(0)) '
+      - 'LogHr:         "Hour" '
+      - "Minute10:      '-1' "
+      - "RSSInterval:   '-1' "
+      - "NodeGen:       '-1' "
+      - "AMPS:          '-1' "
+      - "CPUs:          '-1' "
+      - "DBSRelease:    '' "
+      - "PMCOD:         '-1' "
+      - "WMCOD:          '0' "
+      - "IOCOD:         '-1' "
+
+- name: "Execute newly build INSERT INTO SQL"
+  connect: source
+  execute:
+    sqlfile: {{ sqlinsert_filepath }}
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount from GTT table, Post-Insert"
+  connect: source
+  execute:
     sql: |
-      select Site_ID, NodeGen, DBSRelease, PMCOD, WMCOD, IOCOD, Amps as AMPs_perNode, CPUs as CPUs_perNode, avg(MaxMemSizeGB) as MemGB_perNode
-      ,NumNodes as NodeCount
-      ,Amps_perNode  * NodeCount as AMPs_Total
-      ,CPUs_perNode  * NodeCount as CPUs_Total
-      ,MemGB_perNode * NodeCount as MemGB_Total
-      from vt_gssresusage_core
-      group by Site_ID, NodeGen, DBSRelease, PMCOD, WMCOD, IOCOD, Amps, CPUs, NumNodes
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'{{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}'(varchar(100)) as Table_Name, 'TCA - Global Temp Table before Merge-StoredProc' as Table_Use, count(*) as RowCount
+      from {{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}
+{% endif %}
+
+- name: "Call StoredProc to merge data into final Transcend PROD-Stage Table"
+  connect: source
+  call:
+    proc: {{ dbprefix }}{{ sp_db }}.sp1_coa_gss_manual_upload
+    params:
+      - Null
+
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount from PROD Upload Table in TCA"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'APP_TCA_TBL.coa_gss_manual_upload' as Table_Name, 'TCA - PROD Upload Table' as Table_Use, count(*) as RowCount
+      from APP_TCA_TBL.coa_gss_manual_upload
+      where cust_site_id = '{{ siteid }}'
+        and di_created_ts = DATE
+        and LogDate between {{ startdate }} and {{ enddate }}
+{% endif %}
+
+
+{% endif %} # -- end "upload_gssresusage" processing
+
+
+# -- finally, export Reconcile file if requested
+{% if reconcile %}
+- name: "RECONCILE - Export Results"
+  connect: source
+  export:
+    file: reconcile_Lineage_RowCount.csv
+    sql: select * from vt_reconcile order by 1 asc
+{% endif %}

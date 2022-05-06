@@ -1,12 +1,6 @@
-description: "Selects and Runs the GSSResUsage sizing SQL, and upload results to Transcend."
-
-# set defalts:
-{% set upload = True if upload is not defined else upload %}
-{% set reconcile = True if reconcile is not defined else reconcile %}
-{% set save_prework = true if save_prework is not defined else save_prework %}
-{% set gtt_db        = 'APP_TCA_TMP' if gtt_db is not defined else gtt_db %}
-{% set sp_db         = 'APP_TCA_TBL' if sp_db  is not defined else sp_db %}
-{% set dbprefix      = '' %}
+description: >
+  Generates GSSResUsage Core Metrics, including GSS-Ready Output
+  and upload to Transcend (may have to switch VPNs)
 
 tasks:
 
@@ -28,280 +22,267 @@ tasks:
 {% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
 ### ============= STANDARD PRE-PROCESSING =============
 
-{% set tdv = tdver[:2] | int %}
-{% set tdversion = tdver.replace('.','') %}
-{% set pdcrstr = 'pdcr' if pdcr else 'dbc' %}
+# job specific defaults:
+{% set reconcile     = true if reconcile is not defined else reconcile %}
+{% set fileprefix    = 'gssresusage' if fileprefix is not defined else fileprefix %}
+{% set filesuffix    = ' -- ' ~ siteid ~ ' -- ' ~ startdate.replace("'","") ~ ' to ' ~ enddate.replace("'","") %}
+{% set fuzzyfilename = '*gssresusage -- ' ~ siteid ~ ' -- ' ~ startdate.replace("'","") ~ '*.csv' %}
+{% set save_prework  = true if  save_prework is not defined else  save_prework %}
+{% set debug = True %}
+{% set stop_on_error = True if stop_on_error is not defined else stop_on_error %}
 
 
-### -- TCA Not implemented yet:
-{% if tca %}
-- name: "*** TCA is not yet implemented for this process"
+
+# there are really only 2 GSSResUsage operations: (a) pulling GSSResUsage and (b) Uploading GSSResUsage
+# This breaks the various COA jobs into like-processes:
+#  - Metric:   "GSSResUsage Core Metrics"
+#              pulls from a customer system, or TCA   (just operation a)
+#  - Custom:   "GSS Team Only - Manual CSV Upload"
+#              uploads supplied file to Transcend (just operation b)
+#  - Solution: "Upload to Transcend - GSSResUsage Sizing Data"
+#              pulls from a customer system, or TCA, and uploads to Transcend (operations a & b)
+
+{% set tca = false if tca is not defined else tca %}
+{% set pull_gssresusage = True %}
+{% set upload_gssresusage = True %}
+# --- set above two flags based on the job this is running !!!!!!!!!!!!!!!!!!!!!
+
+
+{% if reconcile %}
+- name: RECONCILE - build reconciliation table for on-going rowcount capture
   connect: source
-  copy:
-    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
-{% else %}
+  execute:
+    sql: |
+      create volatile table   vt_reconcile (
+        id         int
+      , table_name varchar(100)
+      , table_use  varchar(100)
+      , rowcount   int
+      ) primary index (id) on commit preserve rows
+{% set counter = 0 %}
+{% endif %}
 
 
-### the "skip_export" flag skips the data export, and
-### drops right down to data import.  This allows for the
-### introduction of older / preexisting files for upload
-{% if not skip_export %}
+
+# -------- this pulls the GSS Resusage data, either from customer system or from TCA
+{% if pull_gssresusage %}
+
 {% include "vt_gssresusage_core.j2" %}
 
-{% if save_prework %}
-- name: export raw (original format) GSSResUsage.csv
+{% if save_prework and not tca %}
+- name: export raw (original format) GSSResUsage
   connect: source
   export:
     sql: Select * from vt_gssresusage_prework order by 5
-    file: {{ fileprefix }}--{{ siteid }}_raw.csv
+    file: {{ fileprefix }}Raw{{ filesuffix }}.csv
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: RECONCILE - Capture RowCount for raw gssresusage SQL (prework) pull from customer system
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'vt_gssresusage_prework' as Table_Name, 'Prework (original raw GSSResUsage) from Customer System' as Table_Use, count(*) as RowCount
+      from vt_gssresusage_prework
 {% endif %}
 
-- name: export final (tdver agnostic) GSSResUsage_Core.csv
+{% endif %}
+
+- name: export final (tdver agnostic) GSSResUsage Core
   connect: source
   export:
-    file: gssresusage_core.csv
-    sql: |
-      Select
-         Site_ID as cust_site_id
-        ,tca_system_id
-        ,gss_qry_vrsn
-        ,LogDate
-        ,LogDOW
-        ,LogTime
-        ,LogTs
-        ,LogHr
-        ,Minute10
-        ,RSSInterval
-        ,NodeGen
-        ,AMPS
-        ,CPUs
-        ,DBSRelease
-        ,PMCOD
-        ,WMCOD
-        ,IOCOD
-        ,MinMemSizeGB
-        ,MaxMemSizeGB
-        ,NumNodes
-        ,AvgCPUBusy
-        ,MaxCPUBusy
-        ,AvgPctOSCPU
-        ,MaxPctOSCPU
-        ,AvgPctIOWait
-        ,AvgRunQSz
-        ,MaxRunQSz
-        ,MaxPctIOWait
-        ,PctReadsCnt
-        ,PctReadsKB
-        ,AvgPosReadSec
-        ,AvgPreReadSec
-        ,AvgWriteSec
-        ,AvgIOPsSec
-        ,MaxIOPsSec
-        ,AvgMBSecNode
-        ,MaxMBSecNode
-        ,AvgReadMBSecNode
-        ,AvgWriteMBSecNode
-        ,TtlMBSecGen
-        ,TtlReadMBSecGen
-        ,TtlWriteMBSecGen
-        ,TtlPosReadSecGen
-        ,TtlPreReadSecGen
-        ,TtlWriteSecGen
-        ,KBRead
-        ,KBWrite
-        ,PermCacheEffKB
-        ,SpoolCacheEffKB
-        ,TotalCacheEffKB
-        ,PermCacheEffCnt
-        ,SpoolCacheEffCnt
-        ,PermDBCacheEffCnt
-        ,PermCICacheEffCnt
-        ,SpoolDBCacheEffCnt
-        ,SpoolCICacheEffCnt
-        ,LogPermDBSecNode_SVPR
-        ,LogPermCISecNode_SVPR
-        ,LogSpoolDBSecNode_SVPR
-        ,LogSpoolCISecNode_SVPR
-        ,PhySpoolDBSecNode_SVPR
-        ,PhySpoolCISecNode_SVPR
-        ,PhyPermDBSecNode_SVPR
-        ,PhyPermCISecNode_SVPR
-        ,LogPermReadSecNode_SVPR
-        ,LogSpoolReadSecNode_SVPR
-        ,LogPermReadMBSecNode_SVPR
-        ,LogSpoolReadMBSecNode_SVPR
-        ,PhyPermPosReadMBSecNode_SVPR
-        ,PhyPermPreReadMBSecNode_SVPR
-        ,PhySpoolPosReadMBSecNode_SVPR
-        ,PhySpoolPreReadMBSecNode_SVPR
-        ,PhyPermPosReadSecNode_SVPR
-        ,PhyPermPreReadSecNode_SVPR
-        ,PhySpoolPosReadSecNode_SVPR
-        ,PhySpoolPreReadSecNode_SVPR
-        ,PhyPermWriteSecNode_SVPR
-        ,PhySpoolWriteSecNode_SVPR
-        ,PhyPermWriteMBSecNode_SVPR
-        ,PhySpoolWriteMBSecNode_SVPR
-        ,TtlPhyPermReadMBSecNode_SVPR
-        ,TtlPhySpoolReadMBSecNode_SVPR
-        ,TtlPhyPermWriteMBSecNode_SVPR
-        ,TtlPhySpoolWriteMBSecNode_SVPR
-        ,TtlPhyPermReadsSecNode_SVPR
-        ,TtlPhySpoolReadsSecNode_SVPR
-        ,TtlPhyWriteSecNode_SVPR
-        ,TtlPhyWriteMBSecNode_SVPR
-        ,TtlLogReadMBSecNode_SVPR
-        ,TtlPhyReadMBSecNode_SVPR
-        ,CylReadRequestsSecNode_SVPR
-        ,CylReadSecNode_SVPR
-        ,CylReadBlocksSecNode_SVPR
-        ,CylReadDenThrSecNode_SVPR
-        ,CylReadDenCacheSecNode_SVPR
-        ,PermDirtyRelSecNode_SVPR
-        ,PermCleanRelSecNode_SVPR
-        ,PermDirtyRelMBSecNode_SVPR
-        ,PermCleanRelMBSecNode_SVPR
-        ,PermAgedWriteMBSecNode_SVPR
-        ,SpoolDirtyRelSecNode_SVPR
-        ,SpoolCleanRelSecNode_SVPR
-        ,SpoolDirtyRelMBSecNode_SVPR
-        ,SpoolCleanRelMBSecNode_SVPR
-        ,SpoolAgedWriteMBSecNode_SVPR
-        ,WALTJWriteMBSecNode_SVPR
-        ,WALTJDirtyRelMBSecNode_SVPR
-        ,PhysWALTJReadMBSecNode_SVPR
-        ,AvgPtPReadsSec
-        ,MaxPtPReadsSec
-        ,AvgPtPWritesSec
-        ,MaxPtPWritesSec
-        ,AvgPtPReadMBSec
-        ,MaxPtPReadMBSec
-        ,AvgPtPWriteMBSec
-        ,MaxPtPWriteMBSec
-        ,AvgBrdReadsSec
-        ,MaxBrdReadsSec
-        ,AvgBrdWritesSec
-        ,MaxBrdWritesSec
-        ,AvgBrdReadMBSec
-        ,MaxBrdReadMBSec
-        ,AvgBrdWriteMBSec
-        ,MaxBrdWriteMBSec
-        ,AvgPgSwapInSec
-        ,MaxPgSwapInSec
-        ,AvgPgSwapOutSec
-        ,MaxPgSwapOutSec
-        ,AvgHDDReadMBSecNode_SPDSK
-        ,MaxHDDReadMBSecNode_SPDSK
-        ,AvgHDDWriteMBSecNode_SPDSK
-        ,MaxHDDWriteMBSecNode_SPDSK
-        ,AvgHDDReadsSecNode_SPDSK
-        ,MaxHDDReadsSecNode_SPDSK
-        ,AvgHDDWritesSecNode_SPDSK
-        ,MaxHDDWritesSecNode_SPDSK
-        ,AvgHDDReadResp
-        ,MaxHDDReadResp
-        ,AvgHDDWriteResp
-        ,MaxHDDWriteResp
-        ,AvgSSDReadMBSecNode_SPDSK
-        ,MaxSSDReadMBSecNode_SPDSK
-        ,AvgSSDWriteMBSecNode_SPDSK
-        ,MaxSSDWriteMBSecNode_SPDSK
-        ,AvgSSDReadsSecNode_SPDSK
-        ,MaxSSDReadsSecNode_SPDSK
-        ,AvgSSDWritesSecNode_SPDSK
-        ,MaxSSDWritesSecNode_SPDSK
-        ,AvgSSDReadResp
-        ,MaxSSDReadResp
-        ,AvgSSDWriteResp
-        ,MaxSSDWriteResp
-        ,AvgWISSDReadMBSecNode_SPDSK
-        ,MaxWISSDReadMBSecNode_SPDSK
-        ,AvgWISSDWriteMBSecNode_SPDSK
-        ,MaxWISSDWriteMBSecNode_SPDSK
-        ,AvgWISSDReadsSecNode_SPDSK
-        ,MaxWISSDReadsSecNode_SPDSK
-        ,AvgWISSDWritesSecNode_SPDSK
-        ,MaxWISSDWritesSecNode_SPDSK
-        ,AvgWISSDReadResp
-        ,MaxWISSDReadResp
-        ,AvgWISSDWriteResp
-        ,MaxWISSDWriteResp
-        ,AvgRISSDReadMBSecNode_SPDSK
-        ,MaxRISSDReadMBSecNode_SPDSK
-        ,AvgRISSDWriteMBSecNode_SPDSK
-        ,MaxRISSDWriteMBSecNode_SPDSK
-        ,AvgRISSDReadsSecNode_SPDSK
-        ,MaxRISSDReadsSecNode_SPDSK
-        ,AvgRISSDWritesSecNode_SPDSK
-        ,MaxRISSDWritesSecNode_SPDSK
-        ,AvgRISSDReadResp
-        ,MaxRISSDReadResp
-        ,AvgRISSDWriteResp
-        ,MaxRISSDWriteResp
-        ,AvgPECPUBusy
-        ,MaxPECPUBusy
-        ,AvgGTWCPUBusy
-        ,MaxGTWCPUBusy
-        ,AvgAMPCPUBusy
-        ,MaxAMPCPUBusy
-        ,AvgGTW_PECPUBusy
-        ,MaxGTW_PECPUBusy
-        ,AvgVHAgedOut_SVPR
-        ,AvgVHAgedOutMBSecNode_SVPR
-        ,AvgLogVHReads_SVPR
-        ,AvgLogVHReadMBSecNode_SVPR
-        ,AvgPhysVHReads_SVPR
-        ,AvgPhysVHReadMBSecNode_SVPR
-        ,PreCompMBSecNode_SVPR
-        ,PostCompMBSecNode_SVPR
-        ,PreUnCompMBSecNode_SVPR
-        ,PostUnCompMBSecNode_SVPR
-        ,CompDBsSecNode_SVPR
-        ,UnCompDBsSecNode_SVPR
-        ,COMPCPU
-        ,UNCOMPCPU
-        ,PctCPUComp
-        ,PctCPUUnComp
-        ,CompRatioComp_SVPR
-        ,CompRatioUnComp_SVPR
-        ,TtlTCPUComp_Est1
-        ,TtlTCPUUnComp_Est1
-        ,TtlTCPUComp_Est2
-        ,TtlTCPUUnComp_Est2
-        ,TtlTCPUComp_Est3
-        ,TtlTCPUUnComp_Est3
-        ,CPUMSMBComp
-        ,CPUMSMBUnComp
-        ,AvgNtwReadMBSecNode
-        ,MaxNtwReadMBSecNode
-        ,AvgNtwWriteMBSecNode
-        ,MaxNtwWriteMBSecNode
-        ,TotalNtwReadMBSecNode
-        ,TotalNtwWriteMBSecNode
-      from vt_gssresusage_core order by logts
+    sql: Select * from vt_gssresusage_core order by logts
+    file: {{ fileprefix }}{{ filesuffix }}.csv
 
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount for version agnostic gssresusage pull from {{ 'TCA' if tca else 'Customer System' }}"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'vt_gssresusage_core' as Table_Name, 'Generate version agnostic GSSResUsage from {{ 'TCA' if tca else 'Customer System' }}' as Table_Use, count(*) as RowCount
+      from vt_gssresusage_core
 {% endif %}
 
 
-- name: VALIDATE SITE_ID -- this procedure will ERROR if your Site_ID is not valid.  If you see an error here, VALIDATE/CORRECT THE SITE_ID AND RE-START THE JOB.
-  connect: transcend
+{% endif %}
+# -------- end "pull_gssresusage" processing
+
+
+
+
+
+# -------- this uploads a csv file (of dubious orgin) to GTT in Transcend
+{% if upload_gssresusage %}
+
+{% set vt_tablename    = "vt_gssresuage_from_csv" %}
+{% set sqlcreate_filepath  = dirs.systasks ~ "/Metrics/temp/gss/tmp_gssresusage_" ~ siteid ~ "_create.sql"  %}
+{% set sqlinsert_filepath  = dirs.systasks ~ "/Metrics/temp/gss/tmp_gssresusage_" ~ siteid ~ "_insert.sql"  %}
+
+{% set workfile = 'workfile_gssresusage_source.csv' %}
+{% set workfile_gtt = 'workfile_gssresusage_gtt.csv' %}
+
+{% set gtt_db        = 'APP_TCA_TMP' if gtt_db is not defined else gtt_db %}
+{% set sp_db         = 'APP_TCA_TBL' if sp_db  is not defined else sp_db %}
+{% set dbprefix      = '' %}
+{% set gtt_table     = 'stg_gss_manual_upload' %}
+
+
+- name: VALIDATE SITE_ID -- this procedure will ERROR if your Site_ID is not valid.  If you see an error here, VALIDATE & CORRECT THE SITE_ID AND RE-START THE JOB.
+  connect: source
   call:
     proc: {{ dbprefix }}{{ sp_db }}.sp0_Validate_SiteID
     params:
      - '{{ siteid }}'
 
-- name: Import Data from vt_gssresusage into the GTTable on Transcend
-  connect: transcend
-  import:
-    file: gssresusage_core.csv
-    table: {{ dbprefix }}{{ gtt_db }}.stg_gss_manual_upload
+- name: "Perform fuzzy file match, and copy to working file"
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/fuzzymatch_file_copy.py
+    params:
+      - "fuzzyfilepath: {{ fuzzyfilename }}"
+      - "destfilepath: {{ workfile }}"
 
-- name: Call StoredProc to merge data into final Transcend GSS Table
-  connect: transcend
+- name: "Conform Column Formats"
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/conform_columns.py
+    params:
+      - "scriptfilepath: '.'"
+      - "csvfilepath: {{ workfile }}"
+      - "savefilepath: {{ workfile }}"
+      - "date_columns: LogDate, LogTime, Timestamp, LogTS"
+      - "integer_columns: AMPs, CPUs"
+      - "required_columns: LogDate"
+      - "date_format: yyyy-mm-dd"
+      - "timestamp_format: yyyy-mm-dd hh:mm:ss"
+      - "time_format: hhmmss"
+      - "integer_error_replace: null"
+      - "global_replace: { ?:null }"
+
+- name: Build CREATE VOLATILE TABLE sql that exactly matches the working.CSV file - {{ sqlcreate_filepath }}
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/makesql_csv_to_vt.py
+    params:
+      - "scriptfilepath: '.'"
+      - "tablename: {{ vt_tablename }}"
+      - "csvfilepath: {{ workfile }}"
+      - sqlcreate_filepath:{{ sqlcreate_filepath }}
+      - "volatile: True"
+      - "debug: False"
+
+- name: "Execute newly build CREATE VOLATILE TABLE sql"
+  connect: source
+  execute:
+    sqlfile: {{ dirs.systasks }}/Metrics/temp/gss/tmp_gssresusage_{{ siteid }}_create.sql
+
+- name: "Upload contents of CSV file to newly build Volatile Table"
+  connect: source
+  import:
+    file: {{ workfile }}
+    table: {{ vt_tablename }}
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount for CSV uploaded to VT_Table"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'{{ vt_tablename }}' as Table_Name, 'CSV - Volatile Table data loaded from Excel' as Table_Use, count(*) as RowCount
+      from {{ vt_tablename }}
+{% endif %}
+
+- name: "Download table structure for Transcend GTT table"
+  connect: source
+  export:
+    file: {{ workfile_gtt }}
+    sql: select top 1 * from {{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}
+
+- name: Build INSERT INTO Transcend GTT sql via auto-reconciliation of table structures - {{ sqlinsert_filepath }}
+  connect: source
+  script:
+    command: {{ dirs.systasks }}/Metrics/scripts/makesql_insert_select.py
+    params:
+      - "scriptfilepath: '.'"
+      - "insertinto_csvfilepath: {{ workfile_gtt }}"
+      - "insertinto_tablename:   {{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}"
+      - "selectfrom_csvfilepath: {{ workfile }}"
+      - sqlinsert_filepath:{{ sqlinsert_filepath }}
+      - "selectfrom_tablename:   {{ vt_tablename }}"
+      - "cust_site_id: '{{ siteid }}' "
+      - "AvgIOPsSec: AvgIOPsSecNode"
+      - "MaxIOPsSec: MaxIOPsSecNode"
+      - "tca_system_id: '-1' "
+      - "gss_qry_vrsn:  Version"
+      - "LogDOW:        '' "
+      - 'LogTs:         cast("Timestamp" as Timestamp(0)) '
+      - 'LogHr:         "Hour" '
+      - "Minute10:      '-1' "
+      - "RSSInterval:   '-1' "
+      - "NodeGen:       '-1' "
+      - "AMPS:          '-1' "
+      - "CPUs:          '-1' "
+      - "DBSRelease:    '' "
+      - "PMCOD:         '-1' "
+      - "WMCOD:          '0' "
+      - "IOCOD:         '-1' "
+
+- name: "Execute newly build INSERT INTO SQL"
+  connect: source
+  execute:
+    sqlfile: {{ sqlinsert_filepath }}
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount from GTT table, Post-Insert"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'{{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}'(varchar(100)) as Table_Name, 'TCA - Global Temp Table before Merge-StoredProc' as Table_Use, count(*) as RowCount
+      from {{ dbprefix }}{{ gtt_db }}.{{ gtt_table }}
+{% endif %}
+
+- name: "Call StoredProc to merge data into final Transcend PROD-Stage Table"
+  connect: source
   call:
     proc: {{ dbprefix }}{{ sp_db }}.sp1_coa_gss_manual_upload
     params:
-     - Null
+      - Null
 
-## end TCA Check
+
+{% if reconcile %}
+{% set counter = counter +1 %}
+- name: "RECONCILE - Capture RowCount from PROD Upload Table in TCA"
+  connect: source
+  execute:
+    sql: |
+      insert into  vt_reconcile
+      select {{ counter }} as ID
+         ,'APP_TCA_TBL.coa_gss_manual_upload' as Table_Name, 'TCA - PROD Upload Table' as Table_Use, count(*) as RowCount
+      from APP_TCA_TBL.coa_gss_manual_upload
+      where cust_site_id = '{{ siteid }}'
+        and di_created_ts = DATE
+        and LogDate between {{ startdate }} and {{ enddate }}
+{% endif %}
+
+
+{% endif %} # -- end "upload_gssresusage" processing
+
+
+# -- finally, export Reconcile file if requested
+{% if reconcile %}
+- name: "RECONCILE - Export Results"
+  connect: source
+  export:
+    file: reconcile_Lineage_RowCount.csv
+    sql: select * from vt_reconcile order by 1 asc
 {% endif %}
