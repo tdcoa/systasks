@@ -1,0 +1,7 @@
+description: Simply downloads a "ReadMe.txt" file for inclusion with Assisted Runs.
+tasks:
+
+- name: copy in README.txt (for assisted run)
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/+README.txt"]
