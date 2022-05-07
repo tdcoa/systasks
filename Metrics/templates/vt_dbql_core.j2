@@ -49,29 +49,33 @@
                           {"metric":"CPU_AMP_Sec",      "name":"CPU_AMP_Bucket     ", "format":"%06d", "upperbounds":[1,10,100,1000,10000,100000] },
                           {"metric":"TotalIOCount_",    "name":"IOCnt_Total_Bucket ", "format":"%07d", "upperbounds":[1,10,100,1000,10000,100000,1000000] },] %}
 
+{% set debug   = False if debug is not defined else debug %}
+{% set varchar = 'VARCHAR(128)' if varchar is not defined else varchar %}
+{% set bigint  = 'BIGINT' if bigint is not defined else bigint %}
+{% set bigdec  = 'DECIMAL(38,4)' if bigdec is not defined else bigdec %}
 
 - name: "Create table: vt_dbql_core (td15 = {{td15}})"
   connect: source
   execute:
     sql: |
       create volatile table vt_dbql_core (
-         Site_ID                       VARCHAR(128)
+         Site_ID                       {{ varchar }}
         ,LogDate                       DATE format 'yyyy-mm-dd'
         {% if 'LogTS' in run.included %}
         ,LogTS                         TIMESTAMP(0)
         {% endif %}
 
         /* ====== Dimensions: Usage ======= */
-        ,Application                   VARCHAR(128)
-        ,Application_Use               VARCHAR(128)
-        ,Application_Company           VARCHAR(128)
-        ,Statement_Bucket              VARCHAR(128)
-        ,Statement_Outcome             VARCHAR(128)
+        ,Application                   {{ varchar }}
+        ,Application_Use               {{ varchar }}
+        ,Application_Company           {{ varchar }}
+        ,Statement_Bucket              {{ varchar }}
+        ,Statement_Outcome             {{ varchar }}
         {{ ',Workload_Definition           VARCHAR(128) compress (null)' if 'Workload_Definition' in run.included }}
         {{ ',UserName                      VARCHAR(128)' if 'UserName' in run.included }}
-        ,UserType                      VARCHAR(128)
-        ,Organization                  VARCHAR(128)
-        ,Department                    VARCHAR(128)
+        ,UserType                      {{ varchar }}
+        ,Organization                  {{ varchar }}
+        ,Department                    {{ varchar }}
 
         /* ====== Dimensions: Flags (optional) ======= */
         {{ ',SubSecond_Flag                BYTEINT compress (null,0,1)' if 'SubSecond_Flag'  in run.included }}
@@ -95,65 +99,65 @@
 
 
         /* ====== Request and Statement Counts ======= */
-        ,  Request_Total_Cnt           BIGINT compress (null, 0)
-        ,Statement_Total_Cnt           BIGINT compress (null, 0)
-        ,  Request_MultiStatement_Cnt  BIGINT compress (null, 0)
-        ,  Request_SubSecond_Cnt       BIGINT compress (null, 0)
-        ,Statement_SubSecond_Cnt       BIGINT compress (null, 0)
-        ,  Request_Tactical_Cnt        BIGINT compress (null, 0)
-        ,Statement_Tactical_Cnt        BIGINT compress (null, 0)
-        ,  Request_Error_Cnt           BIGINT compress (null, 0)
-        ,Statement_Error_Cnt           BIGINT compress (null, 0)
-        ,  Request_Spool_Error_Cnt     BIGINT compress (null, 0)
-        ,Statement_Spool_Error_Cnt     BIGINT compress (null, 0)
-        ,  Request_TASM_Abort_Cnt      BIGINT compress (null, 0)
-        ,Statement_TASM_Abort_Cnt      BIGINT compress (null, 0)
-        ,  Request_Abort_Cnt           BIGINT compress (null, 0)
-        ,Statement_Abort_Cnt           BIGINT compress (null, 0)
-        ,  Request_NoIO_Cnt            BIGINT compress (null, 0)
-        ,Statement_NoIO_Cnt            BIGINT compress (null, 0)
-        ,  Request_InMem_Cnt           BIGINT compress (null, 0)
-        ,Statement_InMem_Cnt           BIGINT compress (null, 0)
-        ,  Request_PhysIO_Cnt          BIGINT compress (null, 0)
-        ,Statement_PhysIO_Cnt          BIGINT compress (null, 0)
-        ,  Request_AllAMP_Cnt          BIGINT compress (null, 0)
-        ,Statement_AllAMP_Cnt          BIGINT compress (null, 0)
-        ,  Request_Utility_Cnt         BIGINT compress (null, 0)
-        ,Statement_Utility_Cnt         BIGINT compress (null, 0)
-        ,  Request_QueryGrid_Cnt       BIGINT compress (null, 0)
-        ,Statement_QueryGrid_Cnt       BIGINT compress (null, 0)
+        ,  Request_Total_Cnt           {{ bigint }} compress (null, 0)
+        ,Statement_Total_Cnt           {{ bigint }} compress (null, 0)
+        ,  Request_MultiStatement_Cnt  {{ bigint }} compress (null, 0)
+        ,  Request_SubSecond_Cnt       {{ bigint }} compress (null, 0)
+        ,Statement_SubSecond_Cnt       {{ bigint }} compress (null, 0)
+        ,  Request_Tactical_Cnt        {{ bigint }} compress (null, 0)
+        ,Statement_Tactical_Cnt        {{ bigint }} compress (null, 0)
+        ,  Request_Error_Cnt           {{ bigint }} compress (null, 0)
+        ,Statement_Error_Cnt           {{ bigint }} compress (null, 0)
+        ,  Request_Spool_Error_Cnt     {{ bigint }} compress (null, 0)
+        ,Statement_Spool_Error_Cnt     {{ bigint }} compress (null, 0)
+        ,  Request_TASM_Abort_Cnt      {{ bigint }} compress (null, 0)
+        ,Statement_TASM_Abort_Cnt      {{ bigint }} compress (null, 0)
+        ,  Request_Abort_Cnt           {{ bigint }} compress (null, 0)
+        ,Statement_Abort_Cnt           {{ bigint }} compress (null, 0)
+        ,  Request_NoIO_Cnt            {{ bigint }} compress (null, 0)
+        ,Statement_NoIO_Cnt            {{ bigint }} compress (null, 0)
+        ,  Request_InMem_Cnt           {{ bigint }} compress (null, 0)
+        ,Statement_InMem_Cnt           {{ bigint }} compress (null, 0)
+        ,  Request_PhysIO_Cnt          {{ bigint }} compress (null, 0)
+        ,Statement_PhysIO_Cnt          {{ bigint }} compress (null, 0)
+        ,  Request_AllAMP_Cnt          {{ bigint }} compress (null, 0)
+        ,Statement_AllAMP_Cnt          {{ bigint }} compress (null, 0)
+        ,  Request_Utility_Cnt         {{ bigint }} compress (null, 0)
+        ,Statement_Utility_Cnt         {{ bigint }} compress (null, 0)
+        ,  Request_QueryGrid_Cnt       {{ bigint }} compress (null, 0)
+        ,Statement_QueryGrid_Cnt       {{ bigint }} compress (null, 0)
 
         /* ====== Metrics: RunTimes ====== */
-        ,DelayTime_Sec                 DECIMAL(38,4) compress (null, 0)
-        ,RunTime_Parse_Sec             DECIMAL(38,4) compress (null, 0)
-        ,Runtime_AMP_Sec               DECIMAL(38,4) compress (null, 0)
-        ,RunTime_Total_Sec             DECIMAL(38,4) compress (null, 0)
-        ,TransferTime_Sec              DECIMAL(38,4) compress (null, 0)
+        ,DelayTime_Sec                 {{ bigdec }} compress (null, 0)
+        ,RunTime_Parse_Sec             {{ bigdec }} compress (null, 0)
+        ,Runtime_AMP_Sec               {{ bigdec }} compress (null, 0)
+        ,RunTime_Total_Sec             {{ bigdec }} compress (null, 0)
+        ,TransferTime_Sec              {{ bigdec }} compress (null, 0)
 
         /* ====== Metrics: CPU & IO ====== */
-        ,CPU_Total_Sec                 DECIMAL(38,4) compress (null, 0)
-        ,CPU_AMP_Sec                   DECIMAL(38,4) compress (null, 0)
-        ,IO_Total_CntM                 DECIMAL(38,4) compress (null, 0)
-        ,IO_Physical_CntM              DECIMAL(38,4) compress (null, 0)
-        ,IO_Total_GB                   DECIMAL(38,4) compress (null, 0)
-        ,IO_Physical_GB                DECIMAL(38,4) compress (null, 0)
-        ,IOTA_Used_CntB                DECIMAL(38,4) compress (null, 0)
+        ,CPU_Total_Sec                 {{ bigdec }} compress (null, 0)
+        ,CPU_AMP_Sec                   {{ bigdec }} compress (null, 0)
+        ,IO_Total_CntM                 {{ bigdec }} compress (null, 0)
+        ,IO_Physical_CntM              {{ bigdec }} compress (null, 0)
+        ,IO_Total_GB                   {{ bigdec }} compress (null, 0)
+        ,IO_Physical_GB                {{ bigdec }} compress (null, 0)
+        ,IOTA_Used_CntB                {{ bigdec }} compress (null, 0)
 
         /* ====== Metrics: Other ====== */
-        ,Spool_GB                      DECIMAL(38,4) compress (null, 0)
-        ,Returned_Row_Cnt              BIGINT        compress (null, 0)
-        ,NumOfActiveAMPs_Avg           DECIMAL(38,4) compress (null, 0)
-        ,QueryGrid_Bytes               DECIMAL(38,4) compress (null, 0)
-        ,CacheMiss_IOCnt_Pct           DECIMAL(38,4) compress (null, 0)
-        ,CacheMiss_IOGB_Pct            DECIMAL(38,4) compress (null, 0)
-        ,CacheMiss_IOCnt_Score         DECIMAL(38,4) compress (null, 0)
-        ,CacheMiss_IOGB_Score          DECIMAL(38,4) compress (null, 0)
-        ,Total_AMPs                    INTEGER
-        ,AMP_Use01_Flag                BIGINT  compress (null, 0)
-        ,AMP_Use02_Flag                BIGINT  compress (null, 0)
-        ,AMP_LT10pct_Flag              BIGINT  compress (null, 0)
-        ,AMP_LT50pct_Flag              BIGINT  compress (null, 0)
-        ,AMP_All_Flag                  BIGINT  compress (null, 0)
+        ,Spool_GB                      {{ bigdec }} compress (null, 0)
+        ,Returned_Row_Cnt              {{ bigint }}        compress (null, 0)
+        ,NumOfActiveAMPs_Avg           {{ bigdec }} compress (null, 0)
+        ,QueryGrid_Bytes               {{ bigdec }} compress (null, 0)
+        ,CacheMiss_IOCnt_Pct           {{ bigdec }} compress (null, 0)
+        ,CacheMiss_IOGB_Pct            {{ bigdec }} compress (null, 0)
+        ,CacheMiss_IOCnt_Score         {{ bigdec }} compress (null, 0)
+        ,CacheMiss_IOGB_Score          {{ bigdec }} compress (null, 0)
+        ,Total_AMPs                    {{ bigint }}
+        ,AMP_Use01_Flag                {{ bigint }}  compress (null, 0)
+        ,AMP_Use02_Flag                {{ bigint }}  compress (null, 0)
+        ,AMP_LT10pct_Flag              {{ bigint }}  compress (null, 0)
+        ,AMP_LT50pct_Flag              {{ bigint }}  compress (null, 0)
+        ,AMP_All_Flag                  {{ bigint }}  compress (null, 0)
 
         /* ====== Audit Fields ====== */
         ,Insert_TS                     TIMESTAMP(0)
@@ -191,7 +195,7 @@
             ,((FirstRespTime - FirstStepTime) HOUR(3) TO SECOND(6)) AS AMP_Time
             ,((FirstRespTime - StartTime    ) HOUR(3) TO SECOND(6)) AS TotalExec_Time
             ,((COALESCE(LastRespTime,FirstRespTime) - FirstRespTime) HOUR(3) TO SECOND(6)) AS Transfer_Time
-            ,cast(DelayTime as decimal(38,4)) as Delaytime_Sec
+            ,cast(DelayTime as {{ bigdec }}) as Delaytime_Sec
             ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM Parse_Time)     * 3600 + EXTRACT(MINUTE FROM Parse_Time)     * 60 + EXTRACT(SECOND FROM Parse_Time)     AS FLOAT)) AS ParseTime_Sec
             ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM AMP_Time)       * 3600 + EXTRACT(MINUTE FROM AMP_Time)       * 60 + EXTRACT(SECOND FROM AMP_Time)       AS FLOAT)) AS AMPTime_Sec
             ,ZEROIFNULL(CAST(EXTRACT(HOUR FROM TotalExec_Time) * 3600 + EXTRACT(MINUTE FROM TotalExec_Time) * 60 + EXTRACT(SECOND FROM TotalExec_Time) AS FLOAT)) AS TotalExec_Sec
@@ -221,19 +225,23 @@
             {% endif %}
 
             /* ====== Metrics: CPU & IO ====== */
-            ,zeroifnull((cast(ParserCPUTime as decimal(18,3)))) as CPU_Parse_Sec
-            ,zeroifnull((cast(AMPCPUTime    as decimal(18,3)))) as CPU_AMP_Sec
+            ,zeroifnull((cast(ParserCPUTime as {{ bigdec }}))) as CPU_Parse_Sec
+            ,zeroifnull((cast(AMPCPUTime    as {{ bigdec }}))) as CPU_AMP_Sec
             ,CPU_Parse_Sec + CPU_AMP_Sec as CPU_Total_Sec
-            ,case when TotalIOCount >(10**38) then 0 else TotalIOCount end as TotalIOCount_
-            ,case when ReqIOKB      >(10**38) then 0 else ReqIOKB      end as ReqIOKB_
-            ,case when ReqPhysIO    >(10**38) then 0 else ReqPhysIO    end as ReqPhysIO_
-            ,case when ReqPhysIOKB  >(10**38) then 0 else ReqPhysIOKB  end as ReqPhysIOKB_
+            ,case when TotalIOCount >(10**34) then 0 else TotalIOCount end as TotalIOCount_
+            ,case when ReqIOKB      >(10**34) then 0 else ReqIOKB      end as ReqIOKB_
+            ,case when ReqPhysIO    >(10**34) then 0 else ReqPhysIO    end as ReqPhysIO_
+            ,case when ReqPhysIOKB  >(10**34) then 0 else ReqPhysIOKB  end as ReqPhysIOKB_
             ,0 as UsedIota_
 
             /* ====== Metrics: Other ====== */
             ,SpoolUsage, NumResultRows, NumOfActiveAMPs, NumSteps, TotalServerByteCount
             from {{ dbc.log }} as d
+            {% if debug %}
+            where {{ dbc.logdt }} between {{ startdate }} and {{ enddate }}
+            {% else %}
             where {{ dbc.logdt }} in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            {% endif %}
             and TotalIOCount_ < (10**34)
             and ReqIOKB_      < (10**34)
             and ReqPhysIO_    < (10**34)
@@ -241,18 +249,59 @@
 
         ),
 
-        app as (Select AppID, AppID_Export, Pattern_Type, AppID_Pattern
+        app as (
+        {% if debug %}
+                Select dbql.appID
+                ,case when character_length(regexp_substr(trim(dbql.appID), '^[ -~]+$', 1,1, 'i')) > 0
+                      then dbql.appID else 'Invalid Character' end as AppID_Export
+                ,'None'      as Pattern_Type
+                ,'UnMatched' as AppID_Pattern
+                ,'Unknown'   as Application
+                ,'Unknown'   as Application_Company
+                ,'Unknown'   as Application_Use
+                ,1 as Priority
+                ,'Customer'  as Data_Source
+                from (  select AppID
+                        ,count(*)(bigInt) as Requests
+                        ,sum(Statements)(bigint) as Statements
+                        ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
+                        from {{ dbc.log }}
+                        where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+                        group by 1
+                    ) as dbql
+        {% else %}
+                Select AppID, AppID_Export, Pattern_Type, AppID_Pattern
                 ,Application, Usage as Application_Use, Company as Application_Company
                 from vt_decode_appid
+        {% endif %}
         ),
 
-        stm as (Select s.*
+        stm as (
+        {% if debug %}
+                Select '' as Statement_Type, '' as Statement_Class, '' as Statement_Bucket, '' as Statement_Outcome
+                from (Select 1 as One) a where One=2
+        {% else %}
+                Select s.*
                 from vt_decode_statement as s
+        {% endif %}
         ),
 
-        usr as (Select UserName as UserName2, FullName, UserType, Organization, Department
+        usr as (
+        {% if debug %}
+                Select DatabaseName as UserName2
+                ,'Unknown' as FullName
+                ,'Unknown' as UserType
+                ,'Unknown' as Organization
+                ,'Unknown' as Department
+                ,0 as Exclude_VantageUnit_Flag
+                ,0 as Exclude_Performance_Flag
+                from dbc.DatabasesV
+                where DBKind = 'U'
+        {% else %}
+                Select UserName as UserName2, FullName, UserType, Organization, Department
                 ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag
                 from vt_decode_user as u
+        {% endif %}
         )
         ------------------------------------
         ------------------------------------
@@ -294,73 +343,73 @@
         {% endif %}
 
         /* ====== Request and Statement Counts ======= */
-        ,zeroifnull(cast(count(*) as BigInt)) as Request_Total_Cnt
-        ,zeroifnull(sum(cast(dbql.Statements as BigInt))) as Statement_Total_Cnt
-        ,zeroifnull(sum(cast(case when dbql.StatementGroup like '%=%'       then 1 else 0 end as SmallInt))) as Request_MultiStatement_Cnt
-        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then 1               else 0 end as bigint))) as   Request_SubSecond_Cnt
-        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then dbql.Statements else 0 end as bigint))) as Statement_SubSecond_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then 1               else 0 end as bigint))) as   Request_Tactical_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then dbql.Statements else 0 end as bigint))) as Statement_Tactical_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then 1               else 0 end as bigint))) as   Request_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then dbql.Statements else 0 end as bigint))) as Statement_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then 1               else 0 end as bigint))) as   Request_Spool_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then dbql.Statements else 0 end as bigint))) as Statement_Spool_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then 1               else 0 end as bigint))) as   Request_TASM_Abort_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then dbql.Statements else 0 end as bigint))) as Statement_TASM_Abort_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then 1               else 0 end as bigint))) as   Request_Abort_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then dbql.Statements else 0 end as bigint))) as Statement_Abort_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then 1               else 0 end as bigint))) as   Request_NoIO_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then dbql.Statements else 0 end as bigint))) as Statement_NoIO_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then 1               else 0 end as bigint))) as   Request_InMem_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then dbql.Statements else 0 end as bigint))) as Statement_InMem_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then 1               else 0 end as bigint))) as   Request_PhysIO_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then dbql.Statements else 0 end as bigint))) as Statement_PhysIO_Cnt
-        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then 1               else 0 end as bigint))) as   Request_AllAMP_Cnt
-        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then dbql.Statements else 0 end as bigint))) as Statement_AllAMP_Cnt
-        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then 1               else 0 end as bigint))) as   Request_Utility_Cnt
-        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then dbql.Statements else 0 end as bigint))) as Statement_Utility_Cnt
-        ,zeroifnull(sum(cast( QueryGrid_Flag                                                                as bigint))) as    Request_QueryGrid_Cnt
-        ,zeroifnull(sum(cast( case when QueryGrid_Flag = 1                  then Statements      else 0 end as bigint))) as  Statement_QueryGrid_Cnt
+        ,zeroifnull(cast(count(*) as {{ bigint }})) as Request_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Statements as {{ bigint }}))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(case when dbql.StatementGroup like '%=%'       then 1               else 0 end as {{ bigint }}))) as Request_MultiStatement_Cnt
+        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then 1               else 0 end as {{ bigint }}))) as   Request_SubSecond_Cnt
+        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then dbql.Statements else 0 end as {{ bigint }}))) as Statement_SubSecond_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then 1               else 0 end as {{ bigint }}))) as   Request_Tactical_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Tactical_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then 1               else 0 end as {{ bigint }}))) as   Request_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then 1               else 0 end as {{ bigint }}))) as   Request_Spool_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Spool_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then 1               else 0 end as {{ bigint }}))) as   Request_TASM_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then dbql.Statements else 0 end as {{ bigint }}))) as Statement_TASM_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then 1               else 0 end as {{ bigint }}))) as   Request_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Abort_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then 1               else 0 end as {{ bigint }}))) as   Request_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then dbql.Statements else 0 end as {{ bigint }}))) as Statement_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then 1               else 0 end as {{ bigint }}))) as   Request_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then dbql.Statements else 0 end as {{ bigint }}))) as Statement_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then 1               else 0 end as {{ bigint }}))) as   Request_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then dbql.Statements else 0 end as {{ bigint }}))) as Statement_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then 1               else 0 end as {{ bigint }}))) as   Request_AllAMP_Cnt
+        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then dbql.Statements else 0 end as {{ bigint }}))) as Statement_AllAMP_Cnt
+        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then 1               else 0 end as {{ bigint }}))) as   Request_Utility_Cnt
+        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Utility_Cnt
+        ,zeroifnull(sum(cast( QueryGrid_Flag                                                                as {{ bigint }}))) as    Request_QueryGrid_Cnt
+        ,zeroifnull(sum(cast( case when QueryGrid_Flag = 1                  then Statements      else 0 end as {{ bigint }}))) as  Statement_QueryGrid_Cnt
 
         /* ====== Metrics: RunTimes ====== */
-        ,sum(cast(DelayTime_Sec           as decimal(36,4))) as DelayTime_Sec
-        ,sum(cast(ParseTime_Sec           as decimal(36,4))) as RunTime_Parse_Sec
-        ,sum(cast(AMPTime_Sec             as decimal(36,4))) as Runtime_AMP_Sec
-        ,sum(cast(TotalExec_Sec           as decimal(36,4))) as RunTime_Total_Sec
-        ,sum(cast(TransferTime_Sec        as decimal(36,4))) as TransferTime_Sec
+        ,sum(cast(DelayTime_Sec           as {{ bigdec }})) as DelayTime_Sec
+        ,sum(cast(ParseTime_Sec           as {{ bigdec }})) as RunTime_Parse_Sec
+        ,sum(cast(AMPTime_Sec             as {{ bigdec }})) as Runtime_AMP_Sec
+        ,sum(cast(TotalExec_Sec           as {{ bigdec }})) as RunTime_Total_Sec
+        ,sum(cast(TransferTime_Sec        as {{ bigdec }})) as TransferTime_Sec
 
         /* ====== Metrics: CPU & IO ====== */
-        ,sum(cast(CPU_Total_Sec           as decimal(18,4))) as CPU_Total_Sec
-        ,sum(cast(CPU_AMP_Sec             as decimal(18,4))) as CPU_AMP_Sec
-        ,sum(cast(TotalIOCount_ / 1e6     as decimal(38,4))) as IO_Total_CntM
-        ,sum(cast(ReqPhysIO_    / 1e6     as decimal(38,4))) as IO_Physical_CntM
-        ,sum(cast(ReqIOKB_      / 1e6     as decimal(38,4))) as IO_Total_GB
-        ,sum(cast(ReqPhysIOKB_  / 1e6     as decimal(38,4))) as IO_Physical_GB
-        ,sum(cast(UsedIota_     / 1e9     as decimal(38,4))) as IOTA_Used_CntB
+        ,sum(cast(CPU_Total_Sec           as {{ bigdec }})) as CPU_Total_Sec
+        ,sum(cast(CPU_AMP_Sec             as {{ bigdec }})) as CPU_AMP_Sec
+        ,sum(cast(TotalIOCount_ / 1e6     as {{ bigdec }})) as IO_Total_CntM
+        ,sum(cast(ReqPhysIO_    / 1e6     as {{ bigdec }})) as IO_Physical_CntM
+        ,sum(cast(ReqIOKB_      / 1e6     as {{ bigdec }})) as IO_Total_GB
+        ,sum(cast(ReqPhysIOKB_  / 1e6     as {{ bigdec }})) as IO_Physical_GB
+        ,sum(cast(UsedIota_     / 1e9     as {{ bigdec }})) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
-        ,sum(cast(SpoolUsage /1e9                as decimal(38,4)))     as Spool_GB
-        ,sum(cast(NumResultRows                  as bigint))            as Returned_Row_Cnt
-        ,cast(avg(NumOfActiveAMPs (float)      ) as decimal(38,4)) as NumOfActiveAMPs_Avg
-        ,cast(sum(TotalServerByteCount (float) ) as decimal(38,4)) as QueryGrid_Bytes
-        ,cast(zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as decimal(18,4)) as CacheMiss_CntPct
-        ,cast(zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as decimal(18,4)) as CacheMiss_SizePct
+        ,sum(cast(SpoolUsage /1e9                as {{ bigdec }}))     as Spool_GB
+        ,sum(cast(NumResultRows                  as {{ bigint }}))            as Returned_Row_Cnt
+        ,cast(avg(NumOfActiveAMPs (float)      ) as {{ bigdec }}) as NumOfActiveAMPs_Avg
+        ,cast(sum(TotalServerByteCount (float) ) as {{ bigdec }}) as QueryGrid_Bytes
+        ,cast(zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as {{ bigdec }}) as CacheMiss_CntPct
+        ,cast(zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as {{ bigdec }}) as CacheMiss_SizePct
         ,cast(case
          when CacheMiss_CntPct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_CntPct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
          else cast((CacheMiss_CntPct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
-          end as Decimal(18,4)) as CacheMiss_CntScore
+          end as {{ bigdec }}) as CacheMiss_CntScore
         ,cast(case
          when CacheMiss_SizePct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_SizePct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
          else cast((CacheMiss_SizePct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
-          end as Decimal(18,4)) as CacheMiss_SizeScore
+          end as {{ bigdec }}) as CacheMiss_SizeScore
         ,Total_AMPs
-        ,zeroifnull(sum(cast(AMP_Use01_Flag   as BigInt)))  as AMP_Use01_Flag
-        ,zeroifnull(sum(cast(AMP_Use02_Flag   as BigInt))) as AMP_Use02_Flag
-        ,zeroifnull(sum(cast(AMP_LT10pct_Flag as BigInt))) as AMP_LT10pct_Flag
-        ,zeroifnull(sum(cast(AMP_LT50pct_Flag as BigInt))) as AMP_LT50pct_Flag
-        ,zeroifnull(sum(cast(AMP_All_Flag     as BigInt))) as AMP_All_Flag
+        ,zeroifnull(sum(cast(AMP_Use01_Flag   as {{ bigint }})))  as AMP_Use01_Flag
+        ,zeroifnull(sum(cast(AMP_Use02_Flag   as {{ bigint }}))) as AMP_Use02_Flag
+        ,zeroifnull(sum(cast(AMP_LT10pct_Flag as {{ bigint }}))) as AMP_LT10pct_Flag
+        ,zeroifnull(sum(cast(AMP_LT50pct_Flag as {{ bigint }}))) as AMP_LT50pct_Flag
+        ,zeroifnull(sum(cast(AMP_All_Flag     as {{ bigint }}))) as AMP_All_Flag
 
         /* ====== Audit Fields ====== */
         ,current_Timestamp(0) as Insert_TS
@@ -424,32 +473,36 @@
             ,0 as Delaytime_Sec
             ,0 as ParseTime_Sec
             ,0 as AMPTime_Sec
-            ,zeroifnull(cast(smry.QuerySeconds as decimal(38,2))) as TotalExec_Sec
+            ,zeroifnull(cast(smry.QuerySeconds as {{ bigdec }})) as TotalExec_Sec
             ,0 as TransferTime_Sec
             ,0 as QueryGrid_Flag
             ,zeroifnull(case when (cast(TotalExec_Sec as float) / nullifzero(cast(QueryCount as float))) <= 1.00000 then 1 else 0 end) as SubSecond_Flag
             ,SubSecond_Flag as Tactical_Flag
 
             /* ====== Metrics: CPU & IO ====== */
-            ,zeroifnull((cast(ParserCPUTime as decimal(38,3)))) as CPU_Parse_Sec
-            ,zeroifnull((cast(AMPCPUTime    as decimal(38,3)))) as CPU_AMP_Sec
+            ,zeroifnull((cast(ParserCPUTime as {{ bigdec }}))) as CPU_Parse_Sec
+            ,zeroifnull((cast(AMPCPUTime    as {{ bigdec }}))) as CPU_AMP_Sec
             ,CPU_Parse_Sec + CPU_AMP_Sec as CPU_Total_Sec
-            ,case when TotalIOCount     >(10**38) then 0 else TotalIOCount end as TotalIOCount_
+            ,case when TotalIOCount     >(10**34) then 0 else TotalIOCount end as TotalIOCount_
             {% if td15 %}
             ,0 as ReqPhysIO_
             ,0 as ReqIOKB_
             ,0 as ReqPhysIOKB_
             {% else %}
-            ,cast(case when ReqPhysIO   >(10**38) then 0 else ReqPhysIO   end as bigint       ) as ReqPhysIO_
-            ,cast(0                                                           as bigint       ) as ReqIOKB_
-            ,cast(case when ReqPhysIOKB >(10**38) then 0 else ReqPhysIOKB end as decimal(38,2)) as ReqPhysIOKB_
+            ,cast(case when ReqPhysIO   >(10**34) then 0 else ReqPhysIO   end as {{ bigint }}) as ReqPhysIO_
+            ,cast(0                                                           as {{ bigint }}) as ReqIOKB_
+            ,cast(case when ReqPhysIOKB >(10**34) then 0 else ReqPhysIOKB end as {{ bigdec }}) as ReqPhysIOKB_
             {% endif %}
             ,0 as UsedIota_
 
             /* ====== Metrics: Other ====== */
             ,0 SpoolUsage, 0 NumResultRows, 0 NumOfActiveAMPs, 0 NumSteps, 0 TotalServerByteCount
             From {{ dbc.summary }} smry
-            where LogDate in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            {% if debug %}
+            where {{ dbc.logdt }} between {{ startdate }} and {{ enddate }}
+            {% else %}
+            where {{ dbc.logdt }} in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            {% endif %}
             and TotalIOCount_ < (10**34)
             and ReqIOKB_      < (10**34)
             and ReqPhysIO_    < (10**34)
@@ -457,14 +510,52 @@
 
         ),
 
-        app as (Select AppID, AppID_Export, Pattern_Type, AppID_Pattern
+        app as (
+        {% if debug %}
+                Select dbql.appID
+                ,case when character_length(regexp_substr(trim(dbql.appID), '^[ -~]+$', 1,1, 'i')) > 0
+                      then dbql.appID else 'Invalid Character' end as AppID_Export
+                ,'None'      as Pattern_Type
+                ,'UnMatched' as AppID_Pattern
+                ,'Unknown'   as Application
+                ,'Unknown'   as Company
+                ,'Unknown'   as Usage
+                ,zeroifnull(dbql.Requests)   as Requests
+                ,zeroifnull(dbql.Statements) as Statements
+                ,zeroifnull(dbql.CPU_Sec)    as CPU_Sec
+                ,cast(((select trunc(date, 'MONTH')-1))-((select trunc(date-28, 'MONTH'))) +1 as INT)  as DayCount
+                ,1 as Priority
+                ,'Customer'  as Data_Source
+                from (  select AppID
+                        ,count(*)(bigInt) as Requests
+                        ,sum(Statements)(bigint) as Statements
+                        ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
+                        from {{ dbc.log }}
+                        where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+                        group by 1
+                    ) as dbql
+        {% else %}
+                Select AppID, AppID_Export, Pattern_Type, AppID_Pattern
                 ,Application, Usage as Application_Use, Company as Application_Company
                 from vt_decode_appid
+        {% endif %}
         ),
 
-        usr as (Select UserName as UserName2, FullName, UserType, Organization, Department
+        usr as (
+        {% if debug %}
+                Select DatabaseName as UserName
+                ,'Unknown' as FullName
+                ,'Unknown' as UserType
+                ,'Unknown' as Organization
+                ,'Unknown' as Department
+                ,0,0 --EXCLUDE flags
+                from dbc.DatabasesV
+                where DBKind = 'U'
+        {% else %}
+                Select UserName as UserName2, FullName, UserType, Organization, Department
                 ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag
                 from vt_decode_user as u
+        {% endif %}
         )
         ------------------------------------
         ------------------------------------
@@ -504,67 +595,67 @@
         {% endif %}
 
         /* ====== Request and Statement Counts ======= */
-        ,zeroifnull(cast(count(*) as BigInt)) as Request_Total_Cnt
-        ,zeroifnull(sum(cast(dbql.Statements as BigInt))) as Statement_Total_Cnt
+        ,zeroifnull(cast(count(*) as {{ bigint }})) as Request_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Statements as {{ bigint }}))) as Statement_Total_Cnt
         ,0 as Request_MultiStatement_Cnt
-        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then 1               else 0 end as bigint))) as   Request_SubSecond_Cnt
-        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then dbql.Statements else 0 end as bigint))) as Statement_SubSecond_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then 1               else 0 end as bigint))) as   Request_Tactical_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then dbql.Statements else 0 end as bigint))) as Statement_Tactical_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then 1               else 0 end as bigint))) as   Request_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then dbql.Statements else 0 end as bigint))) as Statement_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then 1               else 0 end as bigint))) as   Request_Spool_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then dbql.Statements else 0 end as bigint))) as Statement_Spool_Error_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then 1               else 0 end as bigint))) as   Request_TASM_Abort_Cnt
-        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then dbql.Statements else 0 end as bigint))) as Statement_TASM_Abort_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then 1               else 0 end as bigint))) as   Request_Abort_Cnt
-        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then dbql.Statements else 0 end as bigint))) as Statement_Abort_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then 1               else 0 end as bigint))) as   Request_NoIO_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then dbql.Statements else 0 end as bigint))) as Statement_NoIO_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then 1               else 0 end as bigint))) as   Request_InMem_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then dbql.Statements else 0 end as bigint))) as Statement_InMem_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then 1               else 0 end as bigint))) as   Request_PhysIO_Cnt
-        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then dbql.Statements else 0 end as bigint))) as Statement_PhysIO_Cnt
-        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then 1               else 0 end as bigint))) as   Request_AllAMP_Cnt
-        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then dbql.Statements else 0 end as bigint))) as Statement_AllAMP_Cnt
-        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then 1               else 0 end as bigint))) as   Request_Utility_Cnt
-        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then dbql.Statements else 0 end as bigint))) as Statement_Utility_Cnt
-        ,zeroifnull(sum(cast( QueryGrid_Flag                                                                as bigint))) as    Request_QueryGrid_Cnt
-        ,zeroifnull(sum(cast( case when QueryGrid_Flag = 1                  then Statements      else 0 end as bigint))) as  Statement_QueryGrid_Cnt
+        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then 1               else 0 end as {{ bigint }}))) as   Request_SubSecond_Cnt
+        ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then dbql.Statements else 0 end as {{ bigint }}))) as Statement_SubSecond_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then 1               else 0 end as {{ bigint }}))) as   Request_Tactical_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Tactical_Flag = 1               then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Tactical_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then 1               else 0 end as {{ bigint }}))) as   Request_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode not     in(0,3158)    then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then 1               else 0 end as {{ bigint }}))) as   Request_Spool_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(2646)      then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Spool_Error_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then 1               else 0 end as {{ bigint }}))) as   Request_TASM_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.ErrorCode         in(3158)      then dbql.Statements else 0 end as {{ bigint }}))) as Statement_TASM_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then 1               else 0 end as {{ bigint }}))) as   Request_Abort_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Abortflag = 'T'                 then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Abort_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then 1               else 0 end as {{ bigint }}))) as   Request_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ = 0                    then dbql.Statements else 0 end as {{ bigint }}))) as Statement_NoIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then 1               else 0 end as {{ bigint }}))) as   Request_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ = 0 then dbql.Statements else 0 end as {{ bigint }}))) as Statement_InMem_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then 1               else 0 end as {{ bigint }}))) as   Request_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when TotalIOCount_ > 0 AND ReqPhysIO_ > 0 then dbql.Statements else 0 end as {{ bigint }}))) as Statement_PhysIO_Cnt
+        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then 1               else 0 end as {{ bigint }}))) as   Request_AllAMP_Cnt
+        ,zeroifnull(sum(cast(case when numofactiveamps = hashamp()+1        then dbql.Statements else 0 end as {{ bigint }}))) as Statement_AllAMP_Cnt
+        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then 1               else 0 end as {{ bigint }}))) as   Request_Utility_Cnt
+        ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Utility_Cnt
+        ,zeroifnull(sum(cast( QueryGrid_Flag                                                                as {{ bigint }}))) as    Request_QueryGrid_Cnt
+        ,zeroifnull(sum(cast( case when QueryGrid_Flag = 1                  then Statements      else 0 end as {{ bigint }}))) as  Statement_QueryGrid_Cnt
 
         /* ====== Metrics: RunTimes ====== */
-        ,sum(cast(DelayTime_Sec             as decimal(36,4))) as DelayTime_Sec
-        ,sum(cast(ParseTime_Sec             as decimal(36,4))) as RunTime_Parse_Sec
-        ,sum(cast(AMPTime_Sec               as decimal(36,4))) as Runtime_AMP_Sec
-        ,sum(cast(TotalExec_Sec             as decimal(36,4))) as RunTime_Total_Sec
-        ,sum(cast(TransferTime_Sec          as decimal(36,4))) as TransferTime_Sec
+        ,sum(cast(DelayTime_Sec             as {{ bigdec }})) as DelayTime_Sec
+        ,sum(cast(ParseTime_Sec             as {{ bigdec }})) as RunTime_Parse_Sec
+        ,sum(cast(AMPTime_Sec               as {{ bigdec }})) as Runtime_AMP_Sec
+        ,sum(cast(TotalExec_Sec             as {{ bigdec }})) as RunTime_Total_Sec
+        ,sum(cast(TransferTime_Sec          as {{ bigdec }})) as TransferTime_Sec
 
         /* ====== Metrics: CPU & IO ====== */
-        ,sum(cast(CPU_Total_Sec             as decimal(18,4))) as CPU_Total_Sec
-        ,sum(cast(CPU_AMP_Sec               as decimal(18,4))) as CPU_AMP_Sec
-        ,sum(cast(TotalIOCount_ / 1e6       as decimal(38,4))) as IO_Total_CntM
-        ,sum(cast(ReqPhysIO_    / 1e6       as decimal(38,4))) as IO_Physical_CntM
-        ,sum(cast(ReqIOKB_      / 1e6       as decimal(38,4))) as IO_Total_GB
-        ,sum(cast(ReqPhysIOKB_  / 1e6       as decimal(38,4))) as IO_Physical_GB
-        ,sum(cast(UsedIota_     / 1e9       as decimal(38,4))) as IOTA_Used_CntB
+        ,sum(cast(CPU_Total_Sec             as {{ bigdec }})) as CPU_Total_Sec
+        ,sum(cast(CPU_AMP_Sec               as {{ bigdec }})) as CPU_AMP_Sec
+        ,sum(cast(TotalIOCount_ / 1e6       as {{ bigdec }})) as IO_Total_CntM
+        ,sum(cast(ReqPhysIO_    / 1e6       as {{ bigdec }})) as IO_Physical_CntM
+        ,sum(cast(ReqIOKB_      / 1e6       as {{ bigdec }})) as IO_Total_GB
+        ,sum(cast(ReqPhysIOKB_  / 1e6       as {{ bigdec }})) as IO_Physical_GB
+        ,sum(cast(UsedIota_     / 1e9       as {{ bigdec }})) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
-        ,sum(cast(SpoolUsage /1e9                as decimal(32,4)))     as Spool_GB
-        ,sum(cast(NumResultRows                  as bigint))            as Returned_Row_Cnt
-        ,cast(avg(NumOfActiveAMPs (float)      ) as decimal(32,4)) as NumOfActiveAMPs_Avg
-        ,cast(sum(TotalServerByteCount (float) ) as decimal(38,4)) as QueryGrid_Bytes
-        ,zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as CacheMiss_CntPct
-        ,zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as CacheMiss_SizePct
-        ,case
+        ,sum(cast(SpoolUsage /1e9                as {{ bigdec }}))     as Spool_GB
+        ,sum(cast(NumResultRows                  as {{ bigint }}))            as Returned_Row_Cnt
+        ,cast(avg(NumOfActiveAMPs (float)      ) as {{ bigdec }}) as NumOfActiveAMPs_Avg
+        ,cast(sum(TotalServerByteCount (float) ) as {{ bigdec }}) as QueryGrid_Bytes
+        ,cast(zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as {{ bigdec }}) as CacheMiss_CntPct
+        ,cast(zeroifnull(cast(sum(ReqPhysIOKB_) as float) / nullifzero(cast(nullifzero(sum(ReqIOKB_))      as float))) as {{ bigdec }}) as CacheMiss_SizePct
+        ,cast(case
          when CacheMiss_CntPct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_CntPct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
          else cast((CacheMiss_CntPct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
-          end as CacheMiss_CntScore
-        ,case
+          end as {{ bigdec }}) as CacheMiss_CntScore
+        ,cast(case
          when CacheMiss_SizePct <= 0.20 then 0                   /* set score = 0 when less than industry average 20% */
          when CacheMiss_SizePct >= 1.00 then 10                  /* sometimes get Physical > Logical, set to ceiling */
          else cast((CacheMiss_SizePct - 0.20) * 12.5 as integer) /* scale spread of .80 (0.20 to 1.00) to a spread of 10 (1 to 10) */
-          end as CacheMiss_SizeScore
+          end as {{ bigdec }}) as CacheMiss_SizeScore
         ,Total_AMPs
         ,0 as AMP_Use01_Flag
         ,0 as AMP_Use02_Flag
