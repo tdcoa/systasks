@@ -78,7 +78,7 @@
               )
       Select dbql.appID
       ,case when character_length(regexp_substr(trim(dbql.appID), '^[ -~]+$', 1,1, 'i')) > 0
-            then dbql.appID else 'Invalid Character' end as AppID_Export
+            then dbql.appID else 'Invalid Character' end as AppID_Export  -- strip all invalid characters
       ,coalesce(Pattern_Type  ,'None')     as Pattern_Type
       ,coalesce(AppID_Pattern ,'UnMatched')as AppID_Pattern
       ,coalesce(Application   ,'Unknown')  as Application
