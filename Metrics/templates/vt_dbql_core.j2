@@ -262,9 +262,6 @@
                 ,1 as Priority
                 ,'Customer'  as Data_Source
                 from (  select AppID
-                        ,count(*)(bigInt) as Requests
-                        ,sum(Statements)(bigint) as Statements
-                        ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
                         from {{ dbc.log }}
                         where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
                         group by 1
@@ -518,18 +515,12 @@
                 ,'None'      as Pattern_Type
                 ,'UnMatched' as AppID_Pattern
                 ,'Unknown'   as Application
-                ,'Unknown'   as Company
-                ,'Unknown'   as Usage
-                ,zeroifnull(dbql.Requests)   as Requests
-                ,zeroifnull(dbql.Statements) as Statements
-                ,zeroifnull(dbql.CPU_Sec)    as CPU_Sec
+                ,'Unknown'   as Application_Company
+                ,'Unknown'   as Application_Use
                 ,cast(((select trunc(date, 'MONTH')-1))-((select trunc(date-28, 'MONTH'))) +1 as INT)  as DayCount
                 ,1 as Priority
                 ,'Customer'  as Data_Source
                 from (  select AppID
-                        ,count(*)(bigInt) as Requests
-                        ,sum(Statements)(bigint) as Statements
-                        ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
                         from {{ dbc.log }}
                         where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
                         group by 1
@@ -543,12 +534,13 @@
 
         usr as (
         {% if debug %}
-                Select DatabaseName as UserName
+                Select DatabaseName as UserName2
                 ,'Unknown' as FullName
                 ,'Unknown' as UserType
                 ,'Unknown' as Organization
                 ,'Unknown' as Department
-                ,0,0 --EXCLUDE flags
+                ,0 as Exclude_VantageUnit_Flag
+                ,0 as Exclude_Performance_Flag
                 from dbc.DatabasesV
                 where DBKind = 'U'
         {% else %}
