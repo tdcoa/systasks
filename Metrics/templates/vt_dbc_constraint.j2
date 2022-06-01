@@ -15,7 +15,7 @@
       primary index (TableName)
       ON COMMIT PRESERVE ROWS;
 
-- name: Create vt_dbc_constraint, showing all constraints by table
+- name: Populate vt_dbc_constraint with contstraint - Indicies
   connect: source
   execute:
     sql: |
@@ -28,7 +28,7 @@
                 END (VARCHAR(30)) AS ConstraintType,
                 {% if constraint_columns %}
                 TRIM(TRAILING ','
-                     FROM XMLAGG(ColumnName || ','
+                     FROM XMLAGG(cast(ColumnName as varchar(128) character set unicode)  || ','
                      ORDER BY ColumnPosition)(VARCHAR(20000))) AS Details
                 {% else %}
                   cast(null as varchar(20000)) as Details_blank
@@ -37,36 +37,52 @@
           WHERE IndexType IN ('K','U','P','Q')
             AND UniqueFlag = 'Y'
           GROUP BY  DatabaseName, TableName, IndexType, IndexNumber
-        UNION ALL
-          SELECT  ChildDB,
-                  ChildTable,
-                  'Foreign Key',
-                  '>- ' || ParentDB || '.' || ParentTable
-          FROM    DBC.RI_Distinct_ChildrenV
-        UNION ALL
-          SELECT  DatabaseName,
-                  TableName,
-                  'Column Constraint',
-                  REGEXP_SUBSTR(ColumnConstraint,'\(.*',1,1)
-          FROM    DBC.ColumnsV
-          WHERE   ColumnConstraint IS NOT NULL
-        UNION ALL
-          SELECT  DatabaseName,
-                  TableName,
-                  'Table Constraint',
-                  REGEXP_SUBSTR(ConstraintText,'\(.*',1,1)
-          FROM    DBC.Table_LevelConstraintsV
-        UNION ALL
-          SELECT  COL.DatabaseName,
-                  COL.TableName,
-                  'Default',
-                  COL.ColumnName || ' = ' || COL.DefaultValue
-          FROM    DBC.ColumnsV COL
-          JOIN    DBC.Tablesv TAB
-          ON      TAB.DatabaseName = COL.DatabaseName
-          AND     TAB.TableName = COL.TableName
-          AND     TAB.TableKind = 'T'
-          WHERE   COL.DefaultValue IS NOT NULL
+
+- name: Populate vt_dbc_constraint with contstraint - RI Children
+  connect: source
+  execute:
+    sql: |
+      SELECT  ChildDB,
+              ChildTable,
+              'Foreign Key',
+              cast('>- ' || ParentDB || '.' || ParentTable as varchar(20000) character set unicode)
+      FROM    DBC.RI_Distinct_ChildrenV
+
+- name: Populate vt_dbc_constraint with contstraint - Column Constraints
+  connect: source
+  execute:
+    sql: |
+      SELECT  DatabaseName,
+              TableName,
+              'Column Constraint',
+              cast(REGEXP_SUBSTR(ColumnConstraint,'\(.*',1,1) as varchar(20000) character set unicode)
+      FROM    DBC.ColumnsV
+      WHERE   ColumnConstraint IS NOT NULL
+
+- name: Populate vt_dbc_constraint with contstraint - Table Constraints
+  connect: source
+  execute:
+    sql: |
+      SELECT  DatabaseName,
+              TableName,
+              'Table Constraint',
+              cast(REGEXP_SUBSTR(ConstraintText,'\(.*',1,1) as varchar(20000) character set unicode)
+      FROM    DBC.Table_LevelConstraintsV
+
+- name: Populate vt_dbc_constraint with contstraint - Column Defaults
+  connect: source
+  execute:
+    sql: |
+      SELECT  COL.DatabaseName,
+              COL.TableName,
+              'Default',
+              cast(COL.ColumnName || ' = ' || COL.DefaultValue as varchar(20000) character set unicode)
+      FROM    DBC.ColumnsV COL
+      JOIN    DBC.Tablesv TAB
+      ON      TAB.DatabaseName = COL.DatabaseName
+      AND     TAB.TableName = COL.TableName
+      AND     TAB.TableKind = 'T'
+      WHERE   COL.DefaultValue IS NOT NULL
 
 
 - name: Collect Stats on vt_dbc_constraint
