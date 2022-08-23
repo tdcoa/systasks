@@ -486,7 +486,7 @@
             ,0 as ReqIOKB_
             ,0 as ReqPhysIOKB_
             {% else %}
-            ,cast(case when ReqPhysIO   >(10**34) then 0 else ReqPhysIO   end as {{ bigint }}) as ReqPhysIO_
+            ,cast(case when ReqPhysIO   >(10**34) then 0 else ReqPhysIO   end as {{ bigdec }}) as ReqPhysIO_
             ,cast(0                                                           as {{ bigint }}) as ReqIOKB_
             ,cast(case when ReqPhysIOKB >(10**34) then 0 else ReqPhysIOKB end as {{ bigdec }}) as ReqPhysIOKB_
             {% endif %}

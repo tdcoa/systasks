@@ -42,7 +42,8 @@
   connect: source
   execute:
     sql: |
-      SELECT  ChildDB,
+      insert into vt_dbc_constraint
+        SELECT  ChildDB,
               ChildTable,
               'Foreign Key',
               cast('>- ' || ParentDB || '.' || ParentTable as varchar(20000) character set unicode)
@@ -52,7 +53,8 @@
   connect: source
   execute:
     sql: |
-      SELECT  DatabaseName,
+      insert into vt_dbc_constraint
+        SELECT  DatabaseName,
               TableName,
               'Column Constraint',
               cast(REGEXP_SUBSTR(ColumnConstraint,'\(.*',1,1) as varchar(20000) character set unicode)
@@ -63,7 +65,8 @@
   connect: source
   execute:
     sql: |
-      SELECT  DatabaseName,
+      insert into vt_dbc_constraint
+        SELECT  DatabaseName,
               TableName,
               'Table Constraint',
               cast(REGEXP_SUBSTR(ConstraintText,'\(.*',1,1) as varchar(20000) character set unicode)
@@ -73,7 +76,8 @@
   connect: source
   execute:
     sql: |
-      SELECT  COL.DatabaseName,
+      insert into vt_dbc_constraint
+        SELECT  COL.DatabaseName,
               COL.TableName,
               'Default',
               cast(COL.ColumnName || ' = ' || COL.DefaultValue as varchar(20000) character set unicode)
