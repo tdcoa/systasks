@@ -187,7 +187,7 @@
                   ,sum(cast(case when maxampcputime = 0 then ampcputime else maxampcputime * numofactiveamps end as decimal(38,2))) as sum_impactcpu
                   ,sum(cast(case when maxampio = 0 then totaliocount else maxampio * numofactiveamps end         as decimal(38,2))) as sum_impactio
                   --duration metrics
-                  ,sum(cast(LockDelay*100      as decimal(38,2))) as sum_lockdelay
+                  ,sum(cast(case when LockDelay   >(10**38) then 0 else LockDelay*100 end as decimal(38,2))) as sum_lockdelay
                   ,sum(cast(DelayTime          as decimal(38,2))) as sum_delaytime
                   ,sum(cast(MinRespHoldTime    as decimal(38,2))) as sum_minrespholdtime
                   ,sum(cast(TotalFirstRespTime as decimal(38,2))) as sum_totalfirstresptime --delay+exec+minresp
