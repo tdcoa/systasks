@@ -446,7 +446,7 @@ tasks:
          union all
          SELECT '# Nodes', count(distinct nodeid) FROM dbc.resusagespma where TheDate = current_date
          union all
-         sel '# AMPs',count(distinct vprid) FROM dbc.ResUsageSvpr WHERE Thedate = current_date AND VprType LIKE 'AMP%'
+         SELECT * from (SELECT '# AMPs' as label, HASHAMP() + 1 as total_amps) x
          order by 1;
 
 - name: "Get system information"
@@ -474,7 +474,7 @@ tasks:
          union all
          SELECT '# Nodes', cast(count(distinct nodeid) as varchar(16)) FROM dbc.resusagespma where TheDate = current_date
          union all
-         sel '# AMPs',    cast(count(distinct vprid) as varchar(16)) FROM dbc.ResUsageSvpr WHERE Thedate = current_date AND VprType LIKE 'AMP%'
+         SELECT * from (SELECT '# AMPs' as label, cast(HASHAMP() + 1 as varchar(16)) as total_amps) x
          order by 1
 
 - name: "Get system information"
