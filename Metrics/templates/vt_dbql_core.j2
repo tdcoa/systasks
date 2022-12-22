@@ -386,7 +386,7 @@
 
         /* ====== Metrics: Other ====== */
         ,sum(cast(SpoolUsage /1e9                as {{ bigdec }}))     as Spool_GB
-        ,sum(cast(NumResultRows                  as {{ bigint }}))            as Returned_Row_Cnt
+        ,sum(cast(NumResultRows                  as {{ bigdec }}))     as Returned_Row_Cnt
         ,cast(avg(NumOfActiveAMPs (float)      ) as {{ bigdec }}) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as {{ bigdec }}) as QueryGrid_Bytes
         ,cast(zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as {{ bigdec }}) as CacheMiss_CntPct
@@ -633,7 +633,7 @@
 
         /* ====== Metrics: Other ====== */
         ,sum(cast(SpoolUsage /1e9                as {{ bigdec }}))     as Spool_GB
-        ,sum(cast(NumResultRows                  as {{ bigint }}))            as Returned_Row_Cnt
+        ,sum(cast(NumResultRows                  as {{ bigdec }}))     as Returned_Row_Cnt
         ,cast(avg(NumOfActiveAMPs (float)      ) as {{ bigdec }}) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as {{ bigdec }}) as QueryGrid_Bytes
         ,cast(zeroifnull(cast(sum(ReqPhysIO_)   as float) / nullifzero(cast(nullifzero(sum(TotalIOCount_)) as float))) as {{ bigdec }}) as CacheMiss_CntPct
