@@ -159,7 +159,7 @@ tasks:
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,LogHr as "Hour"
-      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS + CPU_Full_IOWait as decimal(38,4)))
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS as decimal(38,4)))
       / sum(cast(CPU_COD_Active_Total as decimal(38,2)))) * 100 as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
@@ -188,7 +188,7 @@ tasks:
       Select
        cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
       ,LogHr as "Hour"
-      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS + CPU_Full_IOWait as decimal(38,4)))
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS as decimal(38,4)))
       / sum(cast(CPU_COD_Active_Total as decimal(38,4)))) * 100.00 as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
