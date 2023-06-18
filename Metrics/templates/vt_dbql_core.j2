@@ -181,7 +181,7 @@
       INSERT INTO vt_dbql_core -- detail
         with dbql as(
             select
-             {{ dbc.logdt }} as LogDate
+             {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
             {% if 'LogTS' in run.included %}
             ,cast(cast(cast(starttime as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
             {% endif %}

@@ -56,12 +56,13 @@
       from pdcrinfo.UserInfo
       where
         (
-         RecordStartDate between cast( {{ startdate }} as DATE)  and cast({{ enddate }} as DATE)  OR
-         RecordEndDate   between cast( {{ startdate }} as DATE)  and cast({{ enddate }} as DATE)  OR
-         coalesce(RecordEndDate, cast( {{ enddate }}   as DATE)) >=  cast({{ enddate }} as DATE)
+         RecordStartDate between cast( {{ startdate }} as DATE format 'YYYY-MM-DD')  and cast({{ enddate }} as DATE format 'YYYY-MM-DD')  OR
+         RecordEndDate   between cast( {{ startdate }} as DATE format 'YYYY-MM-DD')  and cast({{ enddate }} as DATE format 'YYYY-MM-DD')  OR
+         coalesce(RecordEndDate, cast( {{ enddate }}   as DATE format 'YYYY-MM-DD')) >=  cast({{ enddate }} as DATE format 'YYYY-MM-DD')
          )
       and trim(UserName) not in (Select UserName from vt_decode_user)
-      qualify coalesce(RecordEndDate,DATE+1) = max(coalesce(RecordEndDate,DATE+1)) over(partition by UserName)
+      qualify coalesce(RecordEndDate,(DATE+1 (format 'YYYY-MM-DD'))) = max(coalesce(RecordEndDate,(DATE+1 (format 'YYYY-MM-DD'))))
+      over(partition by UserName)
         and row_number()over(partition by trim(UserName) order by RecordEndDate desc) = 1
 {% endif %}
 

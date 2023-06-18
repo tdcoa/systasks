@@ -13,14 +13,15 @@
     sql: |
       create volatile table vt_DateDriver as
       (
-          select Calendar_Date,  {{ process_chunks }} as Process_Chunks
+          select cast(Calendar_Date as date format 'YYYY-MM-DD') as Calendar_Date,  {{ process_chunks }} as Process_Chunks
           ,CEILING(
                 ROW_NUMBER() OVER (ORDER BY Calendar_Date)
               * cast(Process_Chunks as decimal(9,2))
               / COUNT(*) OVER ()
             )(INT) AS Process_Chunk
           from sys_calendar.calendar
-          where calendar_Date between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+          where calendar_Date between {{ startdate | default('DATE-91') }} (date, format 'YYYY-MM-DD')
+          and {{ enddate | default('DATE-1') }} (date, format 'YYYY-MM-DD')
       ) with data
         primary index (Process_Chunks)
         on commit preserve rows

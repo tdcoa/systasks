@@ -22,7 +22,7 @@
       insert into vt_statement_count_by_table_prework
       {% endif %}
         Select
-           {{ dbc.logdt }} (DATE) as LogDate
+           {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
           ,cast(o.ObjectDatabaseName as VARCHAR(256)) as DatabaseName
           ,cast(o.ObjectTableName    as VARCHAR(256)) as TableName
           ,cast(l.StatementType      as VARCHAR(256)) as StatementType
@@ -32,7 +32,7 @@
               {% if pdcr %}
               LogDate as LogDate1
               {% else %}
-              cast(CollectTimeStamp as DATE) as LogDate1
+              cast(CollectTimeStamp as DATE format 'YYYY-MM-DD') as LogDate1
               {% endif %}
               ,QueryID, ObjectDatabaseName, ObjectTableName
               from   {{ dbc.obj }}
