@@ -165,7 +165,7 @@
           from (
                   select
                    UserName
-                  ,{{ dbc.logdt }} as LogDate
+                  ,{{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
                   ,featureusage
                   /* ====== Request and Statement Counts ======= */
                   ,zeroifnull(cast(count(*) as BigInt)) as Request_Total_Cnt  --<<--- cnt_query in TCA Pull

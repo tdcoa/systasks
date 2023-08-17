@@ -40,8 +40,8 @@
           FROM (
                 SELECT
                   {% if alt %}
-                  cast(o.CollectTimeStamp as date) as LogDate1
-                 ,cast(l.CollectTimeStamp as date) as LogDate2
+                  cast(o.CollectTimeStamp as date format 'YYYY-MM-DD') as LogDate1
+                 ,cast(l.CollectTimeStamp as date format 'YYYY-MM-DD') as LogDate2
                   {% else %}
                   l.LogDate as LogDate1
                   {% endif %}
@@ -56,7 +56,7 @@
                 FROM {{ dbc.obj }}  o
                 JOIN {{ dbc.log }}  l
                 {% if alt %}
-                  on cast(o.CollectTimeStamp as date) = cast(l.CollectTimeStamp as date)
+                  on cast(o.CollectTimeStamp as date format 'YYYY-MM-DD') = cast(l.CollectTimeStamp as date format 'YYYY-MM-DD')
                 {% else %}
                   on o.LogDate = l.LogDate
                 {% endif %}

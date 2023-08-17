@@ -31,7 +31,7 @@
               , CAST(1 AS SMALLINT) QryCount
               , PERIOD(firststeptime, firstresptime+ interval '0.001' second) QryDurationPeriod
               FROM {{ dbc.log }} as dbql
-              WHERE {{ dbc.logdt }}   BETWEEN  {{ startdate | default('DATE-91')}}  AND {{ enddate | default('DATE-1')}}
+              WHERE {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD')  BETWEEN  {{ startdate | default('DATE-91')}}  AND {{ enddate | default('DATE-1')}}
                 AND NumOfActiveAmps >  0
                 AND firststeptime <= firstresptime
                EXPAND ON QryDurationPeriod AS Qper BY ANCHOR ANCHOR_SECOND

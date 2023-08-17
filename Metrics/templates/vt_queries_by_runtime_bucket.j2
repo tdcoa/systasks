@@ -34,7 +34,7 @@
         ,cast(avg(CASE WHEN RT_Sec >  3600                   THEN RT_Sec END) as decimal(38,6)) AS "Avg RT > 1 hour"
 
         FROM(
-            Select {{ dbc.logdt }} as LogDate, UserName
+            Select {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate, UserName
             ,((FirstRespTime - StartTime) HOUR(3) TO SECOND(6)) AS Execution_Time
             ,ZEROIFNULL(CAST( EXTRACT(HOUR   FROM Execution_Time) * 3600 +
                               EXTRACT(MINUTE FROM Execution_Time) * 60 +
@@ -76,7 +76,7 @@
       ,count(distinct UserName) as Distinct_UserNames
       ,count(*)
       FROM {{ dbc.log }}
-      WHERE {{ dbc.logdt }} BETWEEN {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
+      WHERE {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') BETWEEN {{ startdate | default('date -31') }} and {{ enddate | default('date-1') }}
 
 {% endif %}
 

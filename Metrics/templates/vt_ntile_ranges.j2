@@ -26,7 +26,7 @@
       (
         select LogDate, AMPCPUTime, TotalIOCount, NumSteps
         from {{ dbc.log }} as d
-        where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+        where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
       ) with data
         no primary index
         on commit preserve rows

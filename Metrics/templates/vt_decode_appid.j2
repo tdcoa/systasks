@@ -60,7 +60,7 @@
               ,sum(Statements)(bigint) as Statements
               ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
               from {{ dbc.log }}
-              where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+              where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
               group by 1
               ),
       app  as (
@@ -145,7 +145,7 @@
       ,Requests as Row_Count
       ,sum(AmpCPUTime+ParserCPUTime)(bigint) as CPU_Sec
       from {{ dbc.log }}
-      where {{ dbc.logdt }} between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
+      where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-92') }} and {{ enddate | default('DATE-1') }}
 
 - name: "RECONCILE: vt_decode_appid"
   connect: source

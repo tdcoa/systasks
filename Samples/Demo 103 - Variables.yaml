@@ -60,7 +60,7 @@ tasks:
     sql: |
       select top 10 *
       from {{ dbc.log }} as qrylog
-      where {{ dbc.logdt }} = DATE-1
+      where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') = DATE-1
 # there are 20 translated tables (DBQL, ResUsage), and we can continue to extend
 # as it makes sense.  A full list can be found in the "Collaboration" section of
 # the sharepoint documentation: https://teradata.sharepoint.com/teams/SalesTech/COA

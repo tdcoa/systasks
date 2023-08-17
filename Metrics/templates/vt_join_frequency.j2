@@ -24,7 +24,7 @@
           {% if pdcr %}
           ,LogDate as LogDate1
           {% else %}
-          ,cast(CollectTimeStamp as date) as LogDate1
+          ,cast(CollectTimeStamp as date) (DATE, format 'YYYY-MM-DD') as LogDate1
           {% endif %}
           ,Count(distinct ObjectTableName) as JoinCount
           from {{ dbc.obj }} -- DBQLObjTbl
@@ -60,7 +60,7 @@
         ,count(distinct {{ dbc.logdt }} ) as DateCount
         from {{ dbc.log }} as dbql
         join vt_queryid_by_joincount as j
-          on {{ dbc.logdt }} = j.LogDate1
+          on {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') = j.LogDate1
          and dbql.QueryID = j.QueryID
         group by 1
       ) with data no primary index

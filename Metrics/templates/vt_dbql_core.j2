@@ -238,9 +238,9 @@
             ,SpoolUsage, NumResultRows, NumOfActiveAMPs, NumSteps, TotalServerByteCount
             from {{ dbc.log }} as d
             {% if debug %}
-            where {{ dbc.logdt }} between {{ startdate }} and {{ enddate }}
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate }} and {{ enddate }}
             {% else %}
-            where {{ dbc.logdt }} in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') in (Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
             {% endif %}
             and TotalIOCount_ < (10**34)
             and ReqIOKB_      < (10**34)
@@ -263,7 +263,7 @@
                 ,'Customer'  as Data_Source
                 from (  select AppID
                         from {{ dbc.log }}
-                        where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+                        where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
                         group by 1
                     ) as dbql
         {% else %}
@@ -455,7 +455,7 @@
       INSERT INTO vt_dbql_core -- summary
         with dbql as(
             Select
-             cast(CollectTimeStamp as date) as LogDate
+             cast(CollectTimeStamp as date) (DATE, format 'YYYY-MM-DD') as LogDate
              {% if 'LogTS' in run.included %}
              ,cast(cast(cast(CollectTimeStamp as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
              {% endif %}
@@ -496,9 +496,9 @@
             ,0 SpoolUsage, 0 NumResultRows, 0 NumOfActiveAMPs, 0 NumSteps, 0 TotalServerByteCount
             From {{ dbc.summary }} smry
             {% if debug %}
-            where {{ dbc.logdt }} between {{ startdate }} and {{ enddate }}
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate }} and {{ enddate }}
             {% else %}
-            where {{ dbc.logdt }} in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') in(Select Calendar_Date from vt_DateDriver where Process_Chunk = {{ ichunk }})
             {% endif %}
             and TotalIOCount_ < (10**34)
             and ReqIOKB_      < (10**34)
@@ -522,7 +522,7 @@
                 ,'Customer'  as Data_Source
                 from (  select AppID
                         from {{ dbc.log }}
-                        where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+                        where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
                         group by 1
                     ) as dbql
         {% else %}
@@ -728,7 +728,7 @@
       ,zeroifnull(sum(AMPCPUtime+ParserCPUTime)(decimal(36,3))) as CPU_AMP_Sec
       ,count(*) as row_count
       from {{ dbc.log }}
-      where {{ dbc.logdt }} between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
+      where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}
 
 - name: "RECONCILE: RAW {{ dbc.summary }}"
   connect: source
