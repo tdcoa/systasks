@@ -12,7 +12,7 @@
 
 ### ============= BUILD Included Flag List =============
 # this macro will combine "include" and all include_* variables
-# into a single "included" variable list for easy testing in SQL
+# into a single "included" variable list for easy testing in SQL.
 {% import "coa_util.j2" as macro with context %}
 {{ macro.build_include_flags(run, ['Default']) }}
 
