@@ -14,9 +14,14 @@
           ,TableName
           ,cast(sum(CurrentPerm)/1e9 as decimal(32,6)) as Table_CurrentPerm_GB
           ,cast(sum(PeakPerm)/1e9    as decimal(32,6)) as Table_PeakPerm_GB
+          {% if pdcr %}
           ,count(Logdate)over(partition by DatabaseName, TableName) as Days_Table_Exists
           ,({{ enddate | default('DATE-1') }}(DATE, format 'YYYY-MM-DD')) -
           ({{ startdate | default('DATE-15') }}(DATE, format 'YYYY-MM-DD')) + 1 as Total_Days_in_Range
+          {% else %}
+          ,1 as Days_Table_Exists
+          ,1 as Total_Days_in_Range
+          {% endif %}
           ,Days_Table_Exists / (Total_Days_in_Range * 1.0000) as Table_Scale_Pct
           {% if pdcr %}
           from pdcrinfo.TableSpace_Hst
