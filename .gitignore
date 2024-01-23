@@ -9,3 +9,6 @@ Metrics/scripts/temp
 Metrics/scripts/logs
 Metrics/test
 Metrics/temp
+
+# PyCharm
+.idea/
