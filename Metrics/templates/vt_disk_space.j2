@@ -12,8 +12,8 @@
            {{ 'DATE-1 as' if not pdcr }} LogDate
           ,DatabaseName
           ,TableName
-          ,cast(sum(CurrentPerm)/1e9 as decimal(32,6)) as Table_CurrentPerm_GB
-          ,cast(sum(PeakPerm)/1e9    as decimal(32,6)) as Table_PeakPerm_GB
+          ,cast(sum(CurrentPerm)/(1024*1024*1024) as decimal(32,6)) as Table_CurrentPerm_GB
+          ,cast(sum(PeakPerm)/(1024*1024*1024)    as decimal(32,6)) as Table_PeakPerm_GB
           {% if pdcr %}
           ,count(Logdate)over(partition by DatabaseName, TableName) as Days_Table_Exists
           ,({{ enddate | default('DATE-1') }}(DATE, format 'YYYY-MM-DD')) -
@@ -53,9 +53,9 @@
           Select
            {{ 'DATE-1 as' if not pdcr }} LogDate
           ,DatabaseName
-          ,cast(sum(CURRENTPERM) /1E9 as decimal(18,2)) as Database_CurrentPerm_GB
-          ,cast(sum(PEAKPERM)    /1E9 as decimal(18,2)) as Database_PeakPerm_GB
-          ,cast(sum(MAXPERM)     /1E9 as decimal(18,2)) as Database_MaxPerm_GB
+          ,cast(sum(CURRENTPERM) /(1024*1024*1024) as decimal(18,2)) as Database_CurrentPerm_GB
+          ,cast(sum(PEAKPERM)    /(1024*1024*1024) as decimal(18,2)) as Database_PeakPerm_GB
+          ,cast(sum(MAXPERM)     /(1024*1024*1024) as decimal(18,2)) as Database_MaxPerm_GB
           {% if override_maxperm_tb == 0 %}
           ,cast(sum(Database_MaxPerm_GB)over(partition by LogDate) as decimal(32,6)) as System_MaxPerm_GB
           {% else %}

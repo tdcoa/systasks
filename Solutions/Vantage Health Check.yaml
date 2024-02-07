@@ -560,9 +560,9 @@ tasks:
       select
        '{{ siteid }}' as Site_ID
       ,cast(cast(avg(System_MaxPerm_GB)         as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (GB)"
-      ,cast(cast(avg(System_MaxPerm_GB)/1e3     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
       ,cast(cast(sum(CurrentPerm_GB)     as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
-      ,cast(cast(sum(CurrentPerm_GB)/1e3 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
+      ,cast(cast(sum(CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
       ,cast(cast(
        (cast(sum(CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
        as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
@@ -800,9 +800,9 @@ tasks:
       select
        '{{ siteid }}' as Site_ID
       ,cast(cast(avg(System_MaxPerm_GB)         as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (GB)"
-      ,cast(cast(avg(System_MaxPerm_GB)/1e3     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
       ,cast(cast(sum(CurrentPerm_GB)     as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
-      ,cast(cast(sum(CurrentPerm_GB)/1e3 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
+      ,cast(cast(sum(CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
       ,cast(cast(
        (cast(sum(CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
        as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
