@@ -101,6 +101,7 @@
         /* ====== Request and Statement Counts ======= */
         ,  Request_Total_Cnt           {{ bigint }} compress (null, 0)
         ,Statement_Total_Cnt           {{ bigint }} compress (null, 0)
+        ,Query_Total_Cnt           {{ bigint }} compress (null, 0)
         ,  Request_MultiStatement_Cnt  {{ bigint }} compress (null, 0)
         ,  Request_SubSecond_Cnt       {{ bigint }} compress (null, 0)
         ,Statement_SubSecond_Cnt       {{ bigint }} compress (null, 0)
@@ -185,7 +186,7 @@
             {% if 'LogTS' in run.included %}
             ,cast(cast(cast(starttime as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
             {% endif %}
-            ,AppID ,StatementType, Statements, StatementGroup
+            ,AppID ,StatementType, Statements, 1 as Query_Flag, StatementGroup
             {{ ',WDName AS Workload_Definition' if 'Workload_Definition' in run.included }}
             ,UserName, ErrorCode, Abortflag, LSN
             ,cast(HashAmp()+1 as Integer) as Total_AMPs
@@ -342,6 +343,7 @@
         /* ====== Request and Statement Counts ======= */
         ,zeroifnull(cast(count(*) as {{ bigint }})) as Request_Total_Cnt
         ,zeroifnull(sum(cast(dbql.Statements as {{ bigint }}))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Query_Flag as {{ bigint }}))) as Query_Total_Cnt
         ,zeroifnull(sum(cast(case when dbql.StatementGroup like '%=%'       then 1               else 0 end as {{ bigint }}))) as Request_MultiStatement_Cnt
         ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then 1               else 0 end as {{ bigint }}))) as   Request_SubSecond_Cnt
         ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then dbql.Statements else 0 end as {{ bigint }}))) as Statement_SubSecond_Cnt
@@ -380,12 +382,12 @@
         ,sum(cast(CPU_AMP_Sec             as {{ bigdec }})) as CPU_AMP_Sec
         ,sum(cast(TotalIOCount_ / 1e6     as {{ bigdec }})) as IO_Total_CntM
         ,sum(cast(ReqPhysIO_    / 1e6     as {{ bigdec }})) as IO_Physical_CntM
-        ,sum(cast(ReqIOKB_      / 1e6     as {{ bigdec }})) as IO_Total_GB
-        ,sum(cast(ReqPhysIOKB_  / 1e6     as {{ bigdec }})) as IO_Physical_GB
+        ,sum(cast(ReqIOKB_      / (1024*1024)     as {{ bigdec }})) as IO_Total_GB
+        ,sum(cast(ReqPhysIOKB_  / (1024*1024)     as {{ bigdec }})) as IO_Physical_GB
         ,sum(cast(UsedIota_     / 1e9     as {{ bigdec }})) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
-        ,sum(cast(SpoolUsage /1e9                as {{ bigdec }}))     as Spool_GB
+        ,sum(cast(SpoolUsage /(1024*1024*1024)                as {{ bigdec }}))     as Spool_GB
         ,sum(cast(NumResultRows                  as {{ bigdec }}))     as Returned_Row_Cnt
         ,cast(avg(NumOfActiveAMPs (float)      ) as {{ bigdec }}) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as {{ bigdec }}) as QueryGrid_Bytes
@@ -459,7 +461,7 @@
              {% if 'LogTS' in run.included %}
              ,cast(cast(cast(CollectTimeStamp as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
              {% endif %}
-            ,AppID, QueryCount as Statements, {{ "'Summary Queries'" if td15 else "UserName" }} as UserName, 0 as ErrorCode, '' as Abortflag, 0 as LSN
+            ,AppID, QueryCount as Statements, 1 as Query_Flag, {{ "'Summary Queries'" if td15 else "UserName" }} as UserName, 0 as ErrorCode, '' as Abortflag, 0 as LSN
 
             /* ====== ENHANCED FIELDS ======= */
             ,cast(HashAmp()+1 as Integer) as Total_AMPs
@@ -589,6 +591,7 @@
         /* ====== Request and Statement Counts ======= */
         ,zeroifnull(cast(count(*) as {{ bigint }})) as Request_Total_Cnt
         ,zeroifnull(sum(cast(dbql.Statements as {{ bigint }}))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Query_Flag as {{ bigint }}))) as Query_Total_Cnt
         ,0 as Request_MultiStatement_Cnt
         ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then 1               else 0 end as {{ bigint }}))) as   Request_SubSecond_Cnt
         ,zeroifnull(sum(cast(case when dbql.SubSecond_Flag = 1              then dbql.Statements else 0 end as {{ bigint }}))) as Statement_SubSecond_Cnt
@@ -627,12 +630,12 @@
         ,sum(cast(CPU_AMP_Sec               as {{ bigdec }})) as CPU_AMP_Sec
         ,sum(cast(TotalIOCount_ / 1e6       as {{ bigdec }})) as IO_Total_CntM
         ,sum(cast(ReqPhysIO_    / 1e6       as {{ bigdec }})) as IO_Physical_CntM
-        ,sum(cast(ReqIOKB_      / 1e6       as {{ bigdec }})) as IO_Total_GB
-        ,sum(cast(ReqPhysIOKB_  / 1e6       as {{ bigdec }})) as IO_Physical_GB
+        ,sum(cast(ReqIOKB_      / (1024*1024)       as {{ bigdec }})) as IO_Total_GB
+        ,sum(cast(ReqPhysIOKB_  / (1024*1024)      as {{ bigdec }})) as IO_Physical_GB
         ,sum(cast(UsedIota_     / 1e9       as {{ bigdec }})) as IOTA_Used_CntB
 
         /* ====== Metrics: Other ====== */
-        ,sum(cast(SpoolUsage /1e9                as {{ bigdec }}))     as Spool_GB
+        ,sum(cast(SpoolUsage /(1024*1024*1024)               as {{ bigdec }}))     as Spool_GB
         ,sum(cast(NumResultRows                  as {{ bigdec }}))     as Returned_Row_Cnt
         ,cast(avg(NumOfActiveAMPs (float)      ) as {{ bigdec }}) as NumOfActiveAMPs_Avg
         ,cast(sum(TotalServerByteCount (float) ) as {{ bigdec }}) as QueryGrid_Bytes
