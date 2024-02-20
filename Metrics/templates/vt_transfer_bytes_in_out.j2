@@ -8,8 +8,8 @@
       create multiset volatile table  vt_transfer_bytes_in_out
       as (
         SELECT TheDate AS LogDate
-        ,cast(SUM(HostReadKB)*1e3 as bigint)  as Inbound_Bytes
-        ,cast(SUM(HostWriteKB)*1e3 as bigint) as Outbound_Bytes
+        ,cast(SUM(HostReadKB)*1024 as bigint)  as Inbound_Bytes
+        ,cast(SUM(HostWriteKB)*1024 as bigint) as Outbound_Bytes
         FROM  {{ dbc.spma }} -- ResUsageSPMA
         WHERE TheDate BETWEEN {{ startdate | default('current_date - 91')}} and {{ enddate | default('current_date-1')}}
         GROUP BY LogDate
