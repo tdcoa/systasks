@@ -19,7 +19,7 @@
         ,{{ startdate }} as StartDate
         ,{{ enddate }} as EndDate
       from dbc.dbcinfo
-      cross join (select trim(cast(SpoolSpace/1e9 as INT)(varchar(64))) as Spool_GB from dbc.users where username = USER) sp
+      cross join (select trim(cast(SpoolSpace/(1024*1024*1024) as INT)(varchar(64))) as Spool_GB from dbc.users where username = USER) sp
       where Database_Version is not null
       ) with data
         No primary index
