@@ -166,7 +166,7 @@
       ,'{{ your_title }}' as YourTitle
       ,'{{ customer_name }}' as CustomerName
       ,USER as Executing_User
-      ,(select trim(cast(SpoolSpace/1e9 as INT)(varchar(64))) x from dbc.users where username = USER) as Executing_User_SpoolGB
+      ,(select trim(cast(SpoolSpace/(1024*1024*1024) as INT)(varchar(64))) x from dbc.users where username = USER) as Executing_User_SpoolGB
       ,current_timestamp(0) as Run_Timestamp
       ,cast(cast(Run_Timestamp as DATE format 'mmmmbddbyyyy')as varchar(20)) as Run_Date
       ,{{process_chunks | default(1) }} as Process_Chunks
