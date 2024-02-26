@@ -42,7 +42,7 @@
         {% else %}
         ,sum(cast(UsedIOTA/1e9 as BIGINT)) as UsedIOTA_cntB
         ,sum(cast(FullPotentialIOTA/1e9 as BIGINT)) as MaxIOTA_cntB
-        ,cast(UsedIOTA_cntB as decimal(38,4)) / zeroifnull(MaxIOTA_cntB) as IOTA_Pct
+        ,cast(UsedIOTA_cntB as decimal(38,4)) / nullifzero(MaxIOTA_cntB) as IOTA_Pct
         {% endif %}
 
         /* Max Observed Ranges */
