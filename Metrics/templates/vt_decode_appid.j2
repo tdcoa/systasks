@@ -81,7 +81,7 @@
             then dbql.appID else 'Invalid Character' end as AppID_Export  -- strip all invalid characters
       ,coalesce(Pattern_Type  ,'None')     as Pattern_Type
       ,coalesce(AppID_Pattern ,'UnMatched')as AppID_Pattern
-      ,coalesce(Application   ,'Unknown')  as Application
+      ,CASE when application is not null then application when application is null  and trim(dbql.appID) like '%.EXE' then 'EXECUTABLES' when application is null  and trim(dbql.appID) like '%Analytics_tool%' then 'ANALYTICS TOOL' when application is null and REGEXP_SIMILAR(trim(dbql.appID), '^(?![a-zA-Z]+[\W\s]*$)[\d\W]+$') = 1 then 'Unknown' ELSE dbql.appID END AS Application
       ,coalesce(Company       ,'Unknown')  as Company
       ,coalesce(Usage         ,'Unknown')  as Usage
       ,zeroifnull(dbql.Requests)           as Requests
