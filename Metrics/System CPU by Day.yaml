@@ -223,10 +223,18 @@ tasks:
     file: system_cpu_by_day_heatmap_MAX.csv
     sql: |
       select
-       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,LogHr as "Hour"
-      ,avg(CPU_Busy_AvgMaxPct) * 100.00 as "Peak CPU Use%"
-      from vt_System_CPU_by_Day
+        "LogDate"
+        ,"Hour"
+        ,Max("CPU Use%")
+      From
+          (select
+           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+          ,LogHr as "Hour"
+          ,LogMin as "Minute"
+          ,(sum(cast(CPU_Full_DBS + CPU_Full_OS as decimal(38,4)))
+          / sum(cast(CPU_COD_Active_Total as decimal(38,2)))) * 100 as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1,2,3)vt_System_CPU_by_Day
       group by 1,2
       order by 1,2
 
@@ -252,11 +260,19 @@ tasks:
   export:
     file: system_cpu_by_dayofweek_heatmap_MAX.csv
     sql: |
-      Select
+      select
+        "Day of the Week"
+        ,"Hour"
+        ,Max("CPU Use%")
+      From      
+      (Select
        cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
       ,LogHr as "Hour"
-      ,avg(CPU_Busy_AvgMaxPct) * 100.00 as "Peak CPU Use%"
+      ,LogMin as "Minute"
+      ,(sum(cast(CPU_Full_DBS + CPU_Full_OS as decimal(38,4)))
+      / sum(cast(CPU_COD_Active_Total as decimal(38,4)))) * 100.00 as "CPU Use%"
       from vt_System_CPU_by_Day
+      group by 1,2,3)vt_System_CPU_by_Day
       group by 1,2
       order by 1,2
 

@@ -1,0 +1,88 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_dbql_core' in run.completed %}
+
+- name: "Create table: vt_dbql_core (td15 = {{td15}})"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_dbql_core (
+         Site_ID                       varchar(64)
+        ,LogDate                       DATE format 'yyyy-mm-dd'
+        ,Statement_Total_Cnt           bigint compress (null, 0)
+        ,Query_Total_Cnt               bigint compress (null, 0)
+      )
+       primary index(LogDate)
+       on commit preserve rows
+
+
+
+# -----------------------------------------------
+# ----- Loop Logic for filling vt_dbql_core -----
+# -----------------------------------------------
+
+- name: "INSERT into vt_DBQL_Core"
+  connect: source
+  execute:
+    sql: |
+      INSERT INTO vt_dbql_core -- detail
+        with dbql as(
+            select
+             {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
+            ,Statements, 1 as Query_Flag
+            from {{ dbc.log }} as d
+            where LogDate between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
+
+        )
+        ------------------------------------
+        ------------------------------------
+        Select
+        '{{ siteid }}' as Site_ID
+        ,LogDate
+        ,zeroifnull(sum(cast(dbql.Statements as bigint))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Query_Flag as bigint))) as Query_Total_Cnt
+        from dbql
+        group by
+         LogDate
+
+
+
+- name: "INSERT into vt_DBQL_Core"
+  connect: source
+  execute:
+    sql: |
+      INSERT INTO vt_dbql_core -- summary
+        with dbql as(
+            Select
+             cast(CollectTimeStamp as date) (DATE, format 'YYYY-MM-DD') as LogDate
+             ,QueryCount as Statements, 1 as Query_Flag
+            From {{ dbc.summary }} smry
+            where LogDate between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
+
+        )
+
+        ------------------------------------
+        ------------------------------------
+        Select
+        '{{ siteid }}' as Site_ID
+        ,LogDate
+        ,zeroifnull(sum(cast(dbql.Statements as bigint))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Query_Flag as bigint))) as Query_Total_Cnt
+        from dbql
+        group by
+         LogDate
+
+
+
+
+- name: "Collect Stats on vt_dbql_core"
+  connect: source
+  execute:
+    sql: |
+      collect stats
+         column (LogDate)
+      on vt_dbql_core
+
+
+
+{% endif %}
+{{ run.completed.append('vt_dbql_core') or '' }}

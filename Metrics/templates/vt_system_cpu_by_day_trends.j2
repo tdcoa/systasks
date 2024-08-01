@@ -1,0 +1,176 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_System_CPU_by_Day' in run.completed %}
+
+{% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+
+
+# The initial pull of this logic now originates from the GSSResUsage data (GSSResUsage Core):
+{% include "vt_gssresusage_core.j2" %}
+
+
+- name:  "Create vt_System_CPU_by_Day"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_System_CPU_by_Day as
+      (
+        select
+         Site_ID
+        ,cast(LogDate as DATE format 'Y4-MM-DD') as LogDate
+        {{ ",Minute10 as LogMin, LogHr, LogTS" if logts else "" }}
+        ,SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
+        ,Node_Type, Node_Cnt, vCPU_per_Node
+
+        -- COD Numbers from COA Variables: pm_cod_cpu, wlm_cod_cpu, epod_cod_cpu
+        ,{{ pm_cod_cpu }}   as CPU_COD_PM_Active_Pct
+        ,{{ wlm_cod_cpu }}  as CPU_COD_WLM_Active_Pct
+        ,{{ epod_cod_cpu }} as CPU_COD_EPOD_Active_Pct
+        ,cast(CPU_COD_WLM_Active_Pct
+            * CPU_COD_EPOD_Active_Pct
+            * CPU_COD_PM_Active_Pct as decimal(38,4)) as CPU_COD_Total_Active_Pct
+
+        -- Raw CPU, aka reported right out of ResUsage
+        ,CPU_Avg_Idle   as CPU_Idle
+        ,CPU_Avg_IOWait as CPU_IOWait
+        ,CPU_Avg_OS     as CPU_OS
+        ,CPU_Avg_DBS    as CPU_DBS
+        ,CPU_Total
+
+        -- CPU after scaled-up for PM-COD
+           /* Unlike WLM/EPOD, PM-COD is already part of the Raw ResUsage Numbers
+              The below section scales-up the system CPU to 'full' amount, absent PM-COD */
+        ,CPU_Idle + (CPU_Full_Total - CPU_Total)      as CPU_Full_Idle
+        ,CPU_IOWait /* don't scale up consumption */  as CPU_Full_IOWait
+        ,CPU_OS     /* don't scale up consumption */  as CPU_Full_OS
+        ,CPU_DBS    /* don't scale up consumption */  as CPU_Full_DBS
+        ,cast(CPU_Total / CPU_COD_PM_Active_Pct as decimal(38,4)) as CPU_Full_Total
+
+        -- COD-Active
+        ,cast(CPU_Full_Total * CPU_COD_Total_Active_Pct  as decimal(38,4)) as CPU_COD_Active_Total
+        ,cast(CPU_Full_Total * CPU_COD_PM_Active_Pct     as decimal(38,4)) as CPU_COD_Active_After_PM
+        ,cast(CPU_Full_Total * CPU_COD_WLM_Active_Pct    as decimal(38,4)) as CPU_COD_Active_After_WLM
+        ,cast(CPU_Full_Total * CPU_COD_EPOD_Active_Pct   as decimal(38,4)) as CPU_COD_Active_After_EPOD
+
+        -- COD-Inactive
+        ,cast(CPU_Full_Total - CPU_COD_Active_Total      as decimal(38,4)) as CPU_COD_Inactive_Total
+        ,cast(CPU_Full_Total - CPU_COD_Active_After_PM   as decimal(38,4)) as CPU_COD_Inactive_PM
+        ,cast(CPU_Full_Total - CPU_COD_Active_After_WLM  as decimal(38,4)) as CPU_COD_Inactive_WLM
+        ,cast(CPU_Full_Total - CPU_COD_Active_After_EPOD as decimal(38,4)) as CPU_COD_Inactive_EPOD
+
+        -- CPU Consumed % of Full Platform Available (No COD)
+        ,cast(CPU_Full_Idle    as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_Idle_Pct_of_Full
+        ,cast(CPU_Full_IOWait  as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_IOWait_Pct_of_Full
+        ,cast(CPU_Full_OS      as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_OS_Pct_of_Full
+        ,cast(CPU_Full_DBS     as decimal(38,6)) / cast(CPU_Full_Total as decimal(38,6))        as CPU_DBS_Pct_of_Full
+
+        -- CPU Consumed % of Active Available post-COD
+        ,cast(CPU_COD_Active_Total - (CPU_Full_OS+CPU_Full_DBS+CPU_Full_IOWait) as decimal(38,6))
+        /cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_Idle_Pct_of_Active
+        ,cast(CPU_Full_IOWait  as decimal(38,6))/ cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_IOWait_Pct_of_Active
+        ,cast(CPU_Full_OS      as decimal(38,6))/ cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_OS_Pct_of_Active
+        ,cast(CPU_Full_DBS     as decimal(38,6))/ cast(CPU_COD_Active_Total as decimal(38,6))  as CPU_DBS_Pct_of_Active
+
+        -- Non-Additive Percents: MaxAvg, AvgMax, and MaxMax
+        ,CPU_IOWait_AvgMaxPct
+        ,CPU_Busy_AvgMaxPct
+        ,CPU_AvgMax_IOWait
+        ,CPU_AvgMax_Busy
+
+        ,CPU_IOWait_MaxAvgPct
+        ,CPU_Busy_MaxAvgPct
+        ,CPU_MaxAvg_IOWait
+        ,CPU_MaxAvg_Busy
+
+        ,CPU_IOWait_MaxMaxPct
+        ,CPU_Busy_MaxMaxPct
+        ,CPU_MaxMax_IOWait
+        ,CPU_MaxMax_Busy
+
+        ,HostRead_KB
+        ,HostWrite_KB
+        ,Null as MaxIOTA_cntB  -- this is effectively defunct
+
+        from (  select
+                 '{{ siteid }}' as Site_ID
+                ,LogDate
+                {{ ",Minute10 as LogMin, LogHr, LogTS" if logts else "" }}
+                ,NodeGen                                 as Node_Type
+                ,NumNodes                                as Node_Cnt
+                ,CPUs                                    as vCPU_per_Node
+
+                -- Match the correct number of CPU seconds based on aggregation level
+                ,(count(*)*600) * Node_Cnt * vCPU_per_Node as CPU_Total
+
+                -- Reverse-engineer GSSResUsage Query results into component pieces
+                -- Average CPU (additive // can include Idle)
+                ,cast(1.000000 - (CPU_IOWait_RawAvgPct +
+                                  CPU_OS_RawAvgPct +
+                                  CPU_DBS_RawAvgPct ) as decimal(38,6))  as CPU_Idle_RawAvgPct
+                ,cast(  Avg(AvgPctIOWait /100.0000)   as decimal(38,6))  as CPU_IOWait_RawAvgPct
+                ,cast(  Avg(AvgCPUBusy   /100.0000)
+                      * Avg(AvgPctOSCPU  /100.0000)   as decimal(38,6))  as CPU_OS_RawAvgPct
+                ,cast(  Avg(AvgCPUBusy   /100.0000)
+                                   - CPU_OS_RawAvgPct as decimal(38,6))  as CPU_DBS_RawAvgPct
+
+                ,CPU_Idle_RawAvgPct +
+                 CPU_IOWait_RawAvgPct +
+                 CPU_OS_RawAvgPct +
+                 CPU_DBS_RawAvgPct       as CPU_Total_RawAvgPct
+
+                -- Translate into Average CPU Seconds
+                ,cast(CPU_Idle_RawAvgPct    * CPU_Total as decimal(38,4)) as CPU_Avg_Idle
+                ,cast(CPU_IOWait_RawAvgPct  * CPU_Total as decimal(38,4)) as CPU_Avg_IOWait
+                ,cast(CPU_OS_RawAvgPct      * CPU_Total as decimal(38,4)) as CPU_Avg_OS
+                ,cast(CPU_DBS_RawAvgPct     * CPU_Total as decimal(38,4)) as CPU_Avg_DBS
+
+                -- AvgMax CPU (not additive // cannot be broken out)
+                ,cast(  Avg(MaxPctIOWait /100.0000) as decimal(38,6))       as CPU_IOWait_AvgMaxPct
+                ,cast(  Avg(MaxCPUBusy   /100.0000) as decimal(38,6))       as   CPU_Busy_AvgMaxPct
+
+                -- Translate into AvgMax CPU Seconds
+                ,cast(CPU_IOWait_AvgMaxPct * CPU_Total as decimal(38,4)) as CPU_AvgMax_IOWait
+                ,cast(  CPU_Busy_AvgMaxPct * CPU_Total as decimal(38,4)) as CPU_AvgMax_Busy
+
+                -- MaxAvg CPU (not additive // cannot be broken out)
+                ,cast(  Max(AvgPctIOWait /100.0000) as decimal(38,6))       as CPU_IOWait_MaxAvgPct
+                ,cast(  Max(AvgCPUBusy   /100.0000) as decimal(38,6))       as   CPU_Busy_MaxAvgPct
+
+                -- Translate into MaxAvg CPU Seconds
+                ,cast(CPU_IOWait_MaxAvgPct * CPU_Total as decimal(38,4)) as CPU_MaxAvg_IOWait
+                ,cast(  CPU_Busy_MaxAvgPct * CPU_Total as decimal(38,4)) as CPU_MaxAvg_Busy
+
+                -- MaxMax CPU (not additive // cannot be broken out)
+                ,cast(  Max(MaxPctIOWait /100.0000) as decimal(38,6))       as CPU_IOWait_MaxMaxPct
+                ,cast(  Max(MaxCPUBusy   /100.0000) as decimal(38,6))       as   CPU_Busy_MaxMaxPct
+
+                -- Translate into MaxMax CPU Seconds
+                ,cast(CPU_IOWait_MaxMaxPct * CPU_Total as decimal(38,4)) as CPU_MaxMax_IOWait
+                ,cast(  CPU_Busy_MaxMaxPct * CPU_Total as decimal(38,4)) as CPU_MaxMax_Busy
+
+                ,SUM(AvgNtwReadMBSecNode) *1024 as HostRead_KB   -- this is 1024 (MiB) instead of 1000 (MB) because the
+                ,SUM(AvgNtwWriteMBSecNode)*1024 as HostWrite_KB  --   GSSResUSage SQL is /1024 to (errantly) get to MB
+
+                from vt_gssresusage_core
+                where LogDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+                group by
+                 LogDate {{ ",LogMin, LogHr, LogTS" if logts else "" }}
+                ,NodeGen, NumNodes, CPUs
+            ) as cpu
+      ) with data
+        primary index (LogDate {{ ", LogTS" if logts else "" }} )
+        on commit preserve rows
+
+
+- name:  "Collect Stats"
+  connect: source
+  execute:
+    sql: |
+      collect stats
+        column (LogDate  {{ ", LogTS" if logts else "" }} )
+      on vt_System_CPU_by_Day
+
+
+{% endif %}
+{{ run.completed.append('vt_System_CPU_by_Day') or '' }}

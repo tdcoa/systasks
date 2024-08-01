@@ -1,0 +1,200 @@
+
+
+###### build a run.includes list of flags for included fields.
+######   these flags can be set via include_flagname or the includes csv list
+{% macro build_include_flags(context, defaults=[]) -%}
+  {% set context.included = [] %}
+
+  {% set include = '' if include is not defined else include %}
+  {% set tests = [{"return":"LogTS",               "validwords":["logts","hour"]}
+                 ,{"return":"UserName",            "validwords":["user","username"]}
+                 ,{"return":"Workload_Definition", "validwords":["wdname","workload","workload_definition","workload_def"]}
+                 ,{"return":"QueryGrid_Flag",      "validwords":["querygrid","querygrid_flag"]}
+                 ,{"return":"SubSecond_Flag",      "validwords":["subsecond","sub_second", "subsecond_flag"]}
+                 ,{"return":"Tactical_Flag",       "validwords":["tactical","tactical_flag"]}
+                 ,{"return":"Exclude_Flag",        "validwords":["exclude_flag","dbexclude_flag","exclusion"]}
+                 ,{"return":"Complexity",          "validwords":["complexity","complexity_score"]}
+                 ,{"return":"QueryID",             "validwords":["queryid"]}
+                 ,{"return":"Buckets",             "validwords":["bucket","metric_bucket","metric_class","metric_classes"]}
+                 ] %}
+
+  {% for include_raw in include.split(',') %}
+    {% set word = include_raw.lower().strip().replace(' ','_') %}
+    {% for test in tests %}
+      {% set t1 = word in test.validwords %}
+      {% set t2 = word[:-1] in test.validwords %}
+      {% set t3 = word.replace("flag","flg") in test.validwords %}
+      {% set t4 = word.replace("_","") in test.validwords %}
+      {% if t1 or t2 or t3 or t4 %}
+        {{ context.included.append(test.return) or '' }}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+  ### Manual include_*s
+  {% if include_user            is defined and include_user            %} {{ context.included.append('UserName')            or '' }} {% endif %}
+  {% if include_hour            is defined and include_hour            %} {{ context.included.append('LogTS')               or '' }} {% endif %}
+  {% if include_wdname          is defined and include_wdname          %} {{ context.included.append('Workload_Definition') or '' }} {% endif %}
+  {% if include_querygrid_flag  is defined and include_querygrid_group %} {{ context.included.append('QueryGrid_Flag')      or '' }} {% endif %}
+  {% if include_subsecond_flag  is defined and include_subsecond_group %} {{ context.included.append('SubSecond_Flag')      or '' }} {% endif %}
+  {% if include_dbexclude_flag  is defined and include_dbexclude_flag  %} {{ context.included.append('Exclude_Flag')        or '' }} {% endif %}
+  {% if include_exclude_flag    is defined and include_exclude_flag    %} {{ context.included.append('Exclude_Flag')        or '' }} {% endif %}
+  {% if include_tactical_flag   is defined and include_tactical_group  %} {{ context.included.append('Tactical_Flag')       or '' }} {% endif %}
+  {% if include_complexity      is defined and include_complexity      %} {{ context.included.append('Complexity')          or '' }} {% endif %}
+  {% if include_queryid         is defined and include_queryid         %} {{ context.included.append('QueryID')             or '' }} {% endif %}
+  {% if include_metric_buckets  is defined and include_metric_buckets  %} {{ context.included.append('Buckets')             or '' }} {% endif %}
+  {% if include_metric_classes  is defined and include_metric_classes  %} {{ context.included.append('Buckets')             or '' }} {% endif %}
+
+
+  ### Finally, add defaults if specified
+  {% for default in defaults %}
+    {{ context.included.append(default) or '' }}
+  {% endfor %}
+
+{%- endmacro %}
+
+
+
+
+
+###### make the StartDate//EndDate a little more hardy...
+{% macro validate_variables(context) -%}
+
+  # set defaults explicitly, or else the orig dict load will fail...
+  {% set your_name     = 'your_name'     if your_name      is not defined else your_name     %}
+  {% set your_title    = 'your_title'    if your_title     is not defined else your_title    %}
+  {% set customer_name = 'customer_name' if customer_name  is not defined else customer_name %}
+  {% set startdate = 'DATE-31' if startdate is not defined else startdate %}
+  {% set enddate   = 'DATE-01' if enddate   is not defined else enddate   %}
+  {% set tdver     = '17.05'   if tdver     is not defined else tdver     %}
+  {% set pdcr      = true      if pdcr      is not defined else pdcr      %}
+  {% set tca       = false     if tca       is not defined else tca       %}
+  {% set siteid    = 'siteid'  if siteid    is not defined else siteid    %}
+  {% set reconcile = true      if reconcile is not defined else reconcile %}
+  {% set reconcile_dbqlogrules = false if reconcile_dbqlogrules is not defined else reconcile_dbqlogrules %}
+
+  # track original values for those modified above, for reconciliation
+  {% set orig = {} %}
+  {{ orig.__setitem__('startdate',     startdate    )  or '' }}
+  {{ orig.__setitem__('enddate',       enddate      )  or '' }}
+  {{ orig.__setitem__('tdver',         tdver        )  or '' }}
+  {{ orig.__setitem__('your_name',     your_name    )  or '' }}
+  {{ orig.__setitem__('your_title',    your_title   )  or '' }}
+  {{ orig.__setitem__('customer_name', customer_name )  or '' }}
+
+  # if TCA, then set tdver to match transcend (not whatever was set)
+  {% set tdver = '17.05' if tca else tdver %}
+
+  # make dates more flexible: StartDate
+  {% set startdate = 'date-31' if startdate is not defined else startdate|string %}
+  {% if "date" in startdate.lower() %}
+  {% elif "select" in startdate.lower() %}
+  {% elif "/" in startdate %}
+    {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
+    {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
+    {% set startyear  = startdate.split("/")[2] %}
+    {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+  {% elif "-" in startdate %}
+    {% set startyear  = startdate.replace("'","").split("-")[0] %}
+    {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
+    {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
+    {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
+  {% endif %}
+
+  # make dates more flexible: EndDate
+  {% set enddate = 'date-1' if enddate is not defined else enddate|string %}
+  {% if "date" in enddate.lower() %}
+  {% elif "select" in enddate.lower() %}
+  {% elif "/" in enddate %}
+    {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
+    {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
+    {% set endyear  = enddate.split("/")[2] %}
+    {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+  {% elif "-" in startdate %}
+    {% set endyear  = enddate.replace("'","").split("-")[0] %}
+    {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
+    {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
+    {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
+  {% endif %}
+
+  {% set your_name     = your_name.replace("'","''")     %}
+  {% set your_title    = your_title.replace("'","''")    %}
+  {% set customer_name = customer_name.replace("'","''") %}
+  {% set tdver         = '{:0<5}'.format(tdver[:5]) %}
+  {% set td15 = true if tdver[:2]=='15' else false %}
+  {% set td16 = true if tdver[:2]=='16' else false %}
+  {% set td17 = true if tdver[:2]=='17' else false %}
+
+{% if reconcile %}
+# report out all variables:
+- name: RECONCILE variables (coa_util.validate_variables())
+  connect: source
+  export:
+    file: reconcile_variables.csv
+    sql: |
+      Select
+      /* Variables, for easy reading in Explain
+        Originals:
+        -- {{ orig['startdate']     }} as startdate
+        -- {{ orig['enddate']       }} as enddate
+        -- {{ orig['your_name']     }} as your_name
+        -- {{ orig['your_title']    }} as your_title
+        -- {{ orig['customer_name'] }} as customer_name
+        -- {{ orig['tdver']         }} as tdver
+        Modified:
+        -- {{ startdate }} as startdate_final
+        -- {{ enddate }} as enddate_final
+        -- {{ your_name }} as your_name
+        -- {{ your_title }} as your_title
+        -- {{ customer_name }} as customer_name
+        -- {{ tdver }} as tdver
+        Non-Modified found in SQL below
+      */
+       '{{ siteid }}' as SiteID
+      ,'{{ site_type }}' as Site_Type
+      ,'{{pdcr}}' as PDCR
+      ,(select case when count(*)=0 then 'False' else 'True' End
+        from dbc.tablesv where databasename='pdcrinfo' and tablename='dbqlogtbl_hst') as PDCR_DBFound
+      ,'{{ tdver }}' as TDVer
+      ,(select InfoData from dbc.dbcinfo where infokey='VERSION') as TDVer_DBReported
+      ,'{{ td15 }}' as TD15
+      ,'{{ td16 }}' as TD16
+      ,'{{ td17 }}' as TD17
+      ,{{ startdate }} as StartDate
+      ,{{ enddate }} as EndDate
+      ,'{{ your_name }}' as YourName
+      ,'{{ your_title }}' as YourTitle
+      ,'{{ customer_name }}' as CustomerName
+      ,USER as Executing_User
+      ,(select trim(cast(SpoolSpace/(1024*1024*1024) as INT)(varchar(64))) x from dbc.users where username = USER) as Executing_User_SpoolGB
+      ,current_timestamp(0) as Run_Timestamp
+      ,cast(cast(Run_Timestamp as DATE format 'mmmmbddbyyyy')as varchar(20)) as Run_Date
+      ,{{process_chunks | default(1) }} as Process_Chunks
+      ,'{{ pm_cod_cpu   | default(1.00)  }}' as PM_COD_CPU
+      ,'{{ wlm_cod_cpu  | default(1.00)  }}' as WLM_COD_CPU
+      ,'{{ epod_cod_cpu | default(1.00)  }}' as EPOD_COD_CPU
+      ,'{{ wlm_cod_io   | default(1.00)  }}' as WLM_COD_IO
+      ,'{{ epod_cod_io  | default(1.00)  }}' as EPOD_COD_IO
+      ,'{{ reconcile    | default(false) }}' as Reconcile
+      ,'{{ custom_decode_folder }}' as Custom_Decode_Folder
+
+{% if reconcile_dbqlogrules %}
+# report out logging rules:
+- name: RECONCILE DBQLogRules
+  connect: source
+  export:
+    file: reconcile_logging_rules.csv
+    sql: select * from dbc.dbqlrulesv  order by 1
+{% endif %}
+{% endif %}
+
+  {% set context.variables = {"startdate":startdate, "enddate":enddate
+                            ,"your_name":your_name
+                            ,"your_title":your_title
+                            ,"customer_name":customer_name
+                            ,"tdver":tdver
+                            ,"td15":td15
+                            ,"td16":td16
+                            ,"td17":td17
+                            } %}
+{%- endmacro %}

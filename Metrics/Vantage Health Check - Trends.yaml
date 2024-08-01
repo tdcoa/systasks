@@ -1,0 +1,467 @@
+description: Vantage Health Check Trends for the main metrics to report Current Month to previous month, Quarter to quarter, current month to 6 months before differences.
+version: 1.0
+
+### VHC changes should be made to the full version first,
+### then copy/pasted to the OAP version and below toggled:
+{% set vhc_on_a_page = false %}
+### Thus, this should be the only difference between the two docs
+### soas to keep the logic identical / from drifting apart
+
+
+# DEFINE STARTING STATE OF VARIABLES
+{% set startdate = 'DATE-42'   if startdate is not defined else startdate %}
+{% set enddate   = 'DATE-1'    if enddate   is not defined else enddate %}
+{% set export_detail = False   if export_detail is not defined else export_detail %}
+{% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
+
+
+tasks:
+
+
+
+
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], variables={}) if run is not defined else run %}
+### Macro imported below will validate /correct a subset of variables,
+### then export ALL variables to a reconcile_variables.csv
+### Hence, this process must run AFTER the "tasks:" node
+{% import "CoaTrends_util.j2" as macro with context %}
+{{ macro.validate_variables(run) }}
+### return corrected variables to the main namespace:
+{% set startdate     = run.variables['startdate']     %}
+{% set enddate       = run.variables['enddate']       %}
+{% set your_name     = run.variables['your_name']     %}
+{% set your_title    = run.variables['your_title']    %}
+{% set customer_name = run.variables['customer_name'] %}
+{% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
+{% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
+### ============= STANDARD PRE-PROCESSING =============
+
+
+
+
+- name: "Export Variables to a reconcile file"
+  connect: source
+  export:
+    file: vhc--reconcile_variables.csv
+    sql: |
+      select
+        {{ startdate }} as StartDate
+       ,{{ enddate }} as EndDate
+       ,'{{ export_detail }}' as Export_Details
+       ,'{{ process_chunks }}' as Process_Chunks
+       ,'{{ full_cod_cpu }}'     as Full_COD_CPU
+       ,'{{ pm_cod_cpu }}'       as   pm_cod_cpu
+       ,'{{ wlm_cod_cpu }}'      as   wlm_cod_cpu
+       ,'{{ epod_cod_cpu }}'     as   epod_cod_cpu
+       ,'{{ full_cod_io }}'      as Full_COD_IO
+       ,'{{ wlm_cod_io }}'       as   wlm_cod_io
+       ,'{{ epod_cod_io }}'      as   epod_cod_io
+       ,'{{ tca }}'              as TCA
+       from (sel 1 one ) a
+
+
+
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+{% include "vt_site_info.j2" %}
+- name: "Export Site and CSM information (if available) for pptx title slide"
+  connect: source
+  export:
+    file: vhc--intro.csv
+    sql: Select * from vt_site_info
+    
+{% include "vt_disk_space.j2" %}
+
+- name: Export disk space Monthly summary - VHC
+  connect: source
+  export:
+    file: vhc--diskspace_monthly_Summary.csv
+    sql: |
+      select
+       TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(avg(System_CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)"
+      ,cast(cast(
+       (cast(avg(System_CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
+       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+      from(
+          Select LogDate
+          ,Avg(System_CurrentPerm_GB) as System_CurrentPerm_GB
+          ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
+          from vt_disk_space
+          group by LogDate) a
+          group by 1
+          order by 1
+
+- name: "Chart for charting: disk space Monthly summary - VHC"
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--diskspace_monthly_Summary.csv"
+      - "x_column:Month_Year"
+      - "title:Disk Space Monthly Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Max Available Space (TB),Used Space (TB)" 
+      - "bar_colors:#4E95D9,#E97132"
+
+- name: Export disk space Quarterly summary - VHC
+  connect: source
+  export:
+    file: vhc--diskspace_quarterly_Summary.csv
+    sql: |
+      select
+       cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(avg(System_CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)"
+      ,cast(cast(
+       (cast(avg(System_CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
+       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+      from(
+          Select LogDate
+          ,Avg(System_CurrentPerm_GB) as System_CurrentPerm_GB
+          ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
+          from vt_disk_space
+          group by LogDate) a
+          group by 1
+          order by 1          
+
+- name: "Chart for charting: disk space Quarterly summary - VHC"
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--diskspace_quarterly_Summary.csv"
+      - "x_column:Quarter"      
+      - "title:Disk Space Quarterly Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Max Available Space (TB),Used Space (TB)" 
+      - "bar_colors:#4E95D9,#E97132"
+
+
+### Release Spool:
+# ------------------
+- name: DROP volatile table to save spool - vt_disk_space
+  connect: source
+  execute:
+    sql: drop table vt_disk_space
+    
+    
+{% set logts = false %} # turn on option to have system_cpu generate per 10min increment
+{% include "vt_system_cpu_by_day_trends.j2" %}
+
+
+- name: Export System Monthly CPU for Heatmap
+  connect: source
+  export:
+    file: vhc--system_monthly_cpu_heatmap.csv
+    sql: |
+      select
+        TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
+        ,extract(day from logdate) as "day"
+        ,cast(avg("CPU Use%") as decimal (18,2)) as "Avg_CPU_Use%"
+      From
+          (select
+           LogDate
+          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1)vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Monthly CPU for Heatmap
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_monthly_cpu_heatmap.csv
+      - pngfilepath:vhc--system_monthly_cpu_heatmap.png
+      - title:Monthly CPU Heatmap - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+      
+- name: Export System Quarterly CPU Summary
+  connect: source
+  export:
+    file: vhc--system_quarterly_cpu_summary.csv
+    sql: |
+      select
+        cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
+        ,cast(avg("CPU Use%") as decimal (18,2)) as "Avg_CPU_Use%"
+      From
+          (select
+           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1)vt_System_CPU_by_Day
+      group by 1
+      order by 1
+
+- name: Chart System Quarterly CPU Summary
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--system_quarterly_cpu_summary.csv"
+      - "x_column:Quarter"
+      - "title:Quarterly CPU Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Avg_CPU_Use%" 
+      - "bar_colors:#4E95D9"
+
+- name: Export System Monthly CPU Summary
+  connect: source
+  export:
+    file: vhc--system_monthly_cpu_summary.csv
+    sql: |
+      select
+        TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
+        ,cast(avg("CPU Use%") as decimal (18,2)) as "Avg_CPU_Use%"
+      From
+          (select
+           LogDate
+          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1)vt_System_CPU_by_Day
+      group by 1
+      order by 1
+
+- name: Chart System Monthly CPU Summary
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--system_monthly_cpu_summary.csv"
+      - "x_column:Month_Year"
+      - "title:Monthly CPU Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Avg_CPU_Use%" 
+      - "bar_colors:#4E95D9"
+
+- name: Export System Daily CPU Comparison
+  connect: source
+  export:
+    file: vhc--system_daily_cpu_comparison.csv
+    sql: |
+      select
+        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+        ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "Avg_CPU_Use%"
+      From vt_System_CPU_by_Day
+      group by 1
+      order by 1
+
+
+### Release Spool:
+# ------------------
+- name: DROP volatile table to save spool - vt_System_CPU_by_Day
+  connect: source
+  execute:
+    sql: drop table vt_System_CPU_by_Day
+
+
+{% include "vt_system_io_by_day.j2" %}
+
+- name: Export System Monthly IO for Heatmap
+  connect: source
+  export:
+    file: vhc--system_monthly_io_heatmap.csv
+    sql: |
+      select
+        TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
+        ,extract(day from logdate) as "day"
+        ,cast(avg("IO Busy%") as decimal (18,2)) as "Avg_IO_Busy%"
+      From
+          (select
+           LogDate
+          ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+          from vt_system_io_by_day
+          group by 1)vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Monthly IO for Heatmap
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_monthly_io_heatmap.csv
+      - pngfilepath:vhc--system_monthly_io_heatmap.png
+      - title:Monthly IO Heatmap - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Export System Quarterly IO Summary
+  connect: source
+  export:
+    file: vhc--system_quarterly_io_summary.csv
+    sql: |
+      select
+        cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
+        ,cast(avg("IO Busy%") as decimal (18,2)) as "Avg_IO_Busy%"
+      From
+          (select
+           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+          ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+          from vt_system_io_by_day
+          group by 1)vt_system_io_by_day
+      group by 1
+      order by 1
+
+- name: Chart System Quarterly IO Summary
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--system_quarterly_io_summary.csv"
+      - "x_column:Quarter"
+      - "title:Quarterly IO Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Avg_IO_Busy%" 
+      - "bar_colors:#4E95D9"
+      
+
+- name: Export System Monthly IO Summary
+  connect: source
+  export:
+    file: vhc--system_monthly_io_summary.csv
+    sql: |
+      select
+        TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
+        ,cast(avg("IO Busy%") as decimal (18,2)) as "Avg_IO_Busy%"
+      From
+          (select
+           LogDate
+          ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+          from vt_system_io_by_day
+          group by 1)vt_system_io_by_day
+      group by 1
+      order by 1
+
+- name: Chart System Monthly IO Summary
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--system_monthly_io_summary.csv"
+      - "x_column:Month_Year"
+      - "title:Monthly IO Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Avg_IO_Busy%" 
+      - "bar_colors:#4E95D9"
+      
+
+- name: Export System Daily IO Comparison
+  connect: source
+  export:
+    file: vhc--system_daily_io_comparison.csv
+    sql: |
+      select
+        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+        ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+      From vt_system_io_by_day
+      group by 1
+      order by 1
+
+
+### Release Spool:
+# ------------------
+- name: DROP volatile table to save spool - vt_system_io_by_day
+  connect: source
+  execute:
+    sql: drop table vt_system_io_by_day
+
+    
+{% include "vt_dbql_core_trends.j2" %}
+
+- name: Export Activity Count Monthly Summary
+  connect: source
+  export:
+    file: vhc--activity_counts_monthly_summary.csv
+    sql: |
+      select TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year      
+      ,count(distinct LogDate) as LogDayCnt
+      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Statements (M)"
+      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Queries (M)"
+      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Stmts Per Day (M)"
+      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Qry Per Day (M)"
+      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Stmts Per Month (M)"
+      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Qry Per Month (M)"
+      from vt_dbql_core
+      group by 1
+      order by 1 
+
+- name: "Chart for charting: Activity Count Monthly Summary - VHC"
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--activity_counts_monthly_summary.csv"
+      - "x_column:Month_Year"
+      - "title:Activity Count Monthly Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Total Statements (M),Total Queries (M)" 
+      - "bar_colors:#4E95D9,#E97132"
+      - "line_columns:Avg Stmts Per Month (M),Avg Qry Per Month (M)" 
+      - "line_colors:#4DA32F,#F2B800"
+      
+- name: Export Activity count Quarterly Summary
+  connect: source
+  export:
+    file: vhc--activity_counts_quarterly_summary.csv
+    sql: |
+      select cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
+      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Statements (M)"
+      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Queries (M)"
+      from vt_dbql_core
+      group by 1
+      order by 1 
+
+- name: "Chart for charting: Activity Count Quarterly summary - VHC"
+  chart:
+    command: chart/ClusteredBar_And_Line.py
+    params:
+      - "csvfile:vhc--activity_counts_quarterly_summary.csv"
+      - "x_column:Quarter"
+      - "title:Activity Count Quarterly Summary - {{ siteid }}"
+      - "height:6"
+      - "width:12"
+      - "save:True" 
+      - "bar_columns:Total Statements (M),Total Queries (M)" 
+      - "bar_colors:#4E95D9,#E97132"
+      
+### Release Spool:
+# ------------------
+- name: DROP volatile table to save spool - vt_dbql_core
+  connect: source
+  execute:
+    sql: drop table vt_dbql_core          
+
+- name: PPTx final build for Vantage Health Check Trends(v1.0)
+  ppt:
+    file: ppt/Vantage Health Check Trends v1.0.pptx
+    
+## End TCA
+{% endif %}

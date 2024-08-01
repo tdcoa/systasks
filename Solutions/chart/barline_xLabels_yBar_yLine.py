@@ -9,7 +9,7 @@ def human_format(num, pos):
     while abs(num) >= 1000:
         magnitude += 1
         num /= 1000.00
-    return '%.1f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+    return '%.1f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])
 
 def args2dict(args):
     # args = ['file:bq--join_frequency.csv','title:Join Frequency', 'height:6', 'width:12', 'dateadjust:0.5', 'pancake', 'foo:bar:bam']

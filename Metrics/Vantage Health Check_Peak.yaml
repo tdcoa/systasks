@@ -1,0 +1,2510 @@
+description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
+version: 4.0
+
+### VHC changes should be made to the full version first,
+### then copy/pasted to the OAP version and below toggled:
+{% set vhc_on_a_page = false %}
+### Thus, this should be the only difference between the two docs
+### soas to keep the logic identical / from drifting apart
+
+
+# DEFINE STARTING STATE OF VARIABLES
+{% set startdate = 'DATE-42'   if startdate is not defined else startdate %}
+{% set enddate   = 'DATE-1'    if enddate   is not defined else enddate %}
+{% set export_detail = False   if export_detail is not defined else export_detail %}
+{% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
+
+{% set   wlm_cod_cpu = 1.0000    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.0000    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.0000    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+{% set full_cod_cpu = (wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu) | round(6) %}
+{% set workload_cod_cpu = (wlm_cod_cpu * epod_cod_cpu) | round(6) %}
+
+{% set    wlm_cod_io = 1.0000    if    wlm_cod_io is not defined else  wlm_cod_io   %}
+{% set   epod_cod_io = 1.0000    if   epod_cod_io is not defined else epod_cod_io   %}
+{% set workload_cod_io = wlm_cod_io * epod_cod_io | round(6) %}
+{% set full_cod_io = workload_cod_io %}
+
+{% set td15 = True if tdver[:2]=='15' else False %}
+
+
+# iteration lists:
+{% set feature_columns = ['Feature_Category','Feature_SubCategory','Product_Name','Product_Category','Solution_Type','User_Experience_Level_Name','Initiator_Role_Category','Objective_Name','Department','UserType','Organization'] %}
+{% set alloc_columns = ['Allocated_CPU','Allocated_IOCnt','Allocated_IOGB','Allocated_CDS_GB'] %}
+{% set template_files = ['reconcile_variables.csv','reconcile_logging_rules.csv','reconcile_datedriver.csv','reconcile_decode_appid.csv','reconcile_DBQL_Core.csv','reconcile_feature_usage.csv','queries_by_runtime_bucket_RECONCILE.csv'] %}   # ['vhc--intro.csv','vhc--intro.tsv','oap--dbcinfo.csv','oap--dbcinfo.tsv','oap--COD.csv','oap--COD.tsv']
+
+{% set prebuild_files = [] %}
+{% if not vhc_on_a_page %}
+{% for col in feature_columns %}
+{% set filename = 'vhc--feature_usage_x_' ~ col ~ '.csv' %}
+{{ prebuild_files.append(filename) or "" }}
+{% endfor %}
+{% endif %}
+
+{% if not vhc_on_a_page %}
+{% for col in alloc_columns %}
+{% set filename = 'vhc--allocated_utilization_top50_databases_' ~ col ~ '.csv' %}
+{{ prebuild_files.append(filename) or "" }}
+{% endfor %}
+{% endif %}
+
+{% for col in template_files %}
+{% set filename = col  %}
+{{ prebuild_files.append(filename) or "" }}
+{% endfor %}
+
+{{ prebuild_files.append('reconcile_dbql_core_settings.csv') or "" }}
+{{ prebuild_files.append('reconcile_system_io_observed_max_levels.csv') or "" }}
+
+tasks:
+
+{% if not tca %}  # wrapping the section below was confusing the parser, so we'll wrap twice --
+- name: "Copy mockup of non-standard required .csv files"  # make sure these are listed above in template_files
+  copy:
+    files:
+      - mockup/vhc--intro_template.csv
+      - mockup/vhc--intro_template.tsv
+      - mockup/oap--dbcinfo_template.csv
+      - mockup/oap--dbcinfo_template.tsv
+      - mockup/oap--COD_template.csv
+      - mockup/oap--COD_template.tsv
+
+
+
+- name: "Validate all .csv and .tsv files, to catch missing files and/or bad file encoding"
+  script:
+    command: scripts/fix_allreturnfile_placeholders.py
+    params:
+      - "Vantage Health Check.yaml"
+      - "{{ prebuild_files|join(',') }}"
+{% endif %}
+
+
+
+### ============= STANDARD PRE-PROCESSING =============
+# SETUP run context, and skip duplicate CREATE vt_* statements :
+{% set run = namespace(completed=[], variables={}) if run is not defined else run %}
+### Macro imported below will validate /correct a subset of variables,
+### then export ALL variables to a reconcile_variables.csv
+### Hence, this process must run AFTER the "tasks:" node
+{% import "coa_util.j2" as macro with context %}
+{{ macro.validate_variables(run) }}
+### return corrected variables to the main namespace:
+{% set startdate     = run.variables['startdate']     %}
+{% set enddate       = run.variables['enddate']       %}
+{% set your_name     = run.variables['your_name']     %}
+{% set your_title    = run.variables['your_title']    %}
+{% set customer_name = run.variables['customer_name'] %}
+{% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
+{% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
+### ============= STANDARD PRE-PROCESSING =============
+
+
+
+
+- name: "Export Variables to a reconcile file"
+  connect: source
+  export:
+    file: vhc--reconcile_variables.csv
+    sql: |
+      select
+        {{ startdate }} as StartDate
+       ,{{ enddate }} as EndDate
+       ,'{{ export_detail }}' as Export_Details
+       ,'{{ process_chunks }}' as Process_Chunks
+       ,'{{ full_cod_cpu }}'     as Full_COD_CPU
+       ,'{{ pm_cod_cpu }}'       as   pm_cod_cpu
+       ,'{{ wlm_cod_cpu }}'      as   wlm_cod_cpu
+       ,'{{ epod_cod_cpu }}'     as   epod_cod_cpu
+       ,'{{ full_cod_io }}'      as Full_COD_IO
+       ,'{{ wlm_cod_io }}'       as   wlm_cod_io
+       ,'{{ epod_cod_io }}'      as   epod_cod_io
+       ,'{{ tca }}'              as TCA
+       from (sel 1 one ) a
+
+
+
+### -- TCA Not implemented yet:
+{% if tca %}
+- name: "*** TCA is not yet implemented for this process"
+  connect: source
+  copy:
+    files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
+{% else %}
+
+
+{% include "vt_site_info.j2" %}
+
+
+- name: "Export Site and CSM information (if available) for pptx title slide"
+  connect: source
+  export:
+    file: vhc--intro.csv
+    sql: Select * from vt_site_info
+
+
+{% set save_prework   = False %}
+{% set include_hour   = False %}
+{% set include_wdname = False %}
+{% set include_user   = True %}
+{% include "vt_dbql_core.j2" %}
+
+
+
+######################################
+####### Vantage-on-a-Page:  ##########
+######################################
+
+- name: Export User Counts for pptx
+  connect: source
+  export:
+    file: oap--user_counts.csv
+    sql: |
+      Select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(count(u.UserName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users"
+      ,cast(cast(count(d.UserName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users"
+      ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users, less Internal DBs"
+      ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then d.UserName end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users, less Internal DBs"
+      From vt_decode_user u
+      left outer join (Select distinct UserName from vt_dbql_core) d
+        on d.UserName = u.UserName
+
+- name: Export query count analysis for pptx
+  connect: source
+  export:
+    file: oap--query_counts.csv
+    sql: |
+      select Site_ID      
+      ,cast(cast(LogDayCnt as format 'ZZZ,ZZ9') as varchar(32)) as "Day Count"
+      ,cast(cast(TotalQryCnt as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Query Count"
+      ,cast(cast(AvgQryPerSecond as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queries per Second"
+      ,cast(cast(AvgQryPerDay as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queries per Day" --5
+      ,cast(cast(AvgMilQryPerDay as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Day (M)" --6
+      ,cast(cast(AvgQryPerMonth as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Month"
+      ,cast(cast(AvgMilQryPerMonth as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Month (M)" --8
+      ,cast(cast(QryCntPerYear as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Query Count per Year"
+      ,cast(cast(MilQryCntPerYear as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Query Count per Year (M)" --10
+      ,cast(cast(BilQryCntPerYear as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Query Count per Year (B)"
+      ,cast(cast(TotalSubSecondCntPerDay as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SubSecond Query Count per Day"
+      ,cast(cast(TotalSubSecondCntPerDayMil as Decimal(18,1) format 'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "SubSecond Query Count Per Day (M)"
+      ,cast(cast(SubSecondPct as Decimal(9,2) format 'ZZ9.9') as varchar(32)) as "SubSecond % of Total Queries" --14
+      ,cast(cast(AvgRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Average Runtime Seconds" --15
+      ,cast(cast(MedianRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Median Runtime Seconds"
+      ,cast(cast(TotalQryCnt_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Primary Query Count"--17 (Query Counts)
+      ,cast(cast(AvgQryPerSecond_Q as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Queries per Second"
+      ,cast(cast(AvgQryPerDay_Q as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Queries per Day" --19
+      ,cast(cast(AvgMilQryPerDay_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Day (M)" --20
+      ,cast(cast(AvgQryPerMonth_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Month"
+      ,cast(cast(AvgMilQryPerMonth_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Month (M)" --22
+      ,cast(cast(QryCntPerYear_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Query Count per Year"
+      ,cast(cast(MilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (M)" --24
+      ,cast(cast(BilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (B)"
+      from
+      (
+      select max(Site_ID) as Site_ID
+      ,count(distinct LogDate) as LogDayCnt
+      ,sum(Statement_Total_Cnt) AS TotalQryCnt
+      ,TotalQryCnt / LogDayCnt AS AvgQryPerDay
+      ,AvgQryPerDay  / 1e6 AS AvgMilQryPerDay
+      ,AvgQryPerDay * 30 AS AvgQryPerMonth
+      ,AvgMilQryPerDay * 30 AS AvgMilQryPerMonth
+      ,AvgQryPerDay / (24*60*60) AS AvgQryPerSecond
+      ,TotalQryCnt * 365 / LogDayCnt AS QryCntPerYear
+      ,QryCntPerYear / 1e6 AS MilQryCntPerYear
+      ,QryCntPerYear / 1e9 AS BilQryCntPerYear
+      ,sum(Statement_Tactical_Cnt) AS TotalTacticalCnt
+      ,sum(Statement_Tactical_Cnt)/ LogDayCnt  AS TotalTacticalCntPerDay
+      ,cast(TotalTacticalCntPerDay as decimal(18,2)) / 1e6  AS TotalTacticalCntPerDayMil
+      ,(cast(TotalTacticalCnt as decimal(18,4)) / TotalQryCnt) * 100 AS TacticalPct
+      ,sum(Statement_SubSecond_Cnt) as TotalSubSecondCnt
+      ,sum(Statement_SubSecond_Cnt)/ LogDayCnt as TotalSubSecondCntPerDay
+      ,cast(TotalSubSecondCntPerDay as decimal(18,2)) / 1e6  AS TotalSubSecondCntPerDayMil
+      ,(cast(TotalSubSecondCnt as decimal(18,4)) / TotalQryCnt) * 100 AS SubSecondPct
+      ,sum(Runtime_Total_Sec) / TotalQryCnt AS AvgRunTimeSec
+      ,median(Runtime_Total_Sec) as MedianRuntimeSec
+      ,sum(Query_Total_Cnt) AS TotalQryCnt_Q
+      ,TotalQryCnt_Q / LogDayCnt AS AvgQryPerDay_Q
+      ,AvgQryPerDay_Q  / 1e6 AS AvgMilQryPerDay_Q
+      ,AvgQryPerDay_Q * 30 AS AvgQryPerMonth_Q
+      ,AvgMilQryPerDay_Q * 30 AS AvgMilQryPerMonth_Q
+      ,AvgQryPerDay_Q / (24*60*60) AS AvgQryPerSecond_Q
+      ,TotalQryCnt_Q * 365 / LogDayCnt AS QryCntPerYear_Q
+      ,QryCntPerYear_Q / 1e6 AS MilQryCntPerYear_Q
+      ,QryCntPerYear_Q / 1e9 AS BilQryCntPerYear_Q
+      from vt_dbql_core
+      ) d1
+
+{% if td15 %}
+
+- name: "* EXPORT Q1 (TD15): DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+  connect: source
+  export:
+    file: oap--OutcomeCPUConsumption.csv
+    sql: |
+      select
+        LogDate
+        ,MAX(CASE WHEN StatementOutcome =  'Answers' THEN ConsumptionPercentage ELSE NULL END) AS  "Answers"
+        ,MAX(CASE WHEN StatementOutcome =  'Data Maintenance' THEN ConsumptionPercentage ELSE NULL END) AS  "Data Maintenance"
+        ,MAX(CASE WHEN StatementOutcome =  'Ingest & Prep' THEN ConsumptionPercentage ELSE NULL END) AS  "Ingest & Prep"
+        ,MAX(CASE WHEN StatementOutcome =  'System & Procedural' THEN ConsumptionPercentage ELSE NULL END) AS  "System & Procedural"
+        from (
+        SELECT
+         LogDate
+         ,Statement_Outcome as StatementOutcome
+         ,SUM(CPU_Total_Sec) as SUMCPUTime
+         ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsumptionPercentage
+        FROM vt_dbql_core
+        GROUP BY 1,2) as tmp
+        group by 1
+
+- name: "* EXPORT Q1 (TD15) w/COD: DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+  connect: source
+  export:
+    file: oap--OutcomeCPUConsumption_COD.csv
+    sql: |
+      select
+        LogDate
+        ,MAX(CASE WHEN StatementOutcome =  'Answers' THEN ConsumptionPercentage ELSE NULL END) AS  "Answers"
+        ,MAX(CASE WHEN StatementOutcome =  'Data Maintenance' THEN ConsumptionPercentage ELSE NULL END) AS  "Data Maintenance"
+        ,MAX(CASE WHEN StatementOutcome =  'Ingest & Prep' THEN ConsumptionPercentage ELSE NULL END) AS  "Ingest & Prep"
+        ,MAX(CASE WHEN StatementOutcome =  'System & Procedural' THEN ConsumptionPercentage ELSE NULL END) AS  "System & Procedural"
+        from (
+        SELECT
+         LogDate
+         ,Statement_Outcome as StatementOutcome
+         ,SUM(CPU_Total_Sec) as SUMCPUTime
+         ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsumptionPercentage
+        FROM vt_dbql_core
+        GROUP BY 1,2) as tmp
+        group by 1
+{% else %}
+
+- name: "* EXPORT Q1: DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+  connect: source
+  export:
+    file: oap--OutcomeCPUConsumption.csv
+    sql: |
+      select
+       *
+      from
+      (
+       select
+        LogDate
+        ,StatementOutcome
+        ,ConsumptionPercentage
+        from (
+        SELECT
+         LogDate
+         ,Statement_Outcome as StatementOutcome
+         ,SUM(CPU_Total_Sec) as SUMCPUTime
+         ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsumptionPercentage
+        FROM vt_dbql_core
+        GROUP BY 1,2) as tmp
+      ) as src
+      PIVOT
+      (
+        avg(ConsumptionPercentage)
+        FOR StatementOutcome in ('Answers', 'Data Maintenance', 'Ingest & Prep','System & Procedural')
+      ) as PT
+      order by 1
+
+- name: "* EXPORT Q1 w/COD: DepartmentCPUConsumption --Tableau Dashboard Name: Dashboard1, Dashboard2, Dashboard3"
+  connect: source
+  export:
+    file: oap--OutcomeCPUConsumption_COD.csv
+    sql: |
+      select
+       *
+      from
+      (
+       select
+        LogDate
+        ,StatementOutcome
+        ,ConsumptionPercentage
+        from (
+        SELECT
+         LogDate
+         ,Statement_Outcome as StatementOutcome
+         ,SUM(CPU_Total_Sec) as SUMCPUTime
+         ,sum(SUMCPUTime) over(partition by LogDate) as TotalSUMCPUTimeDay
+         ,zeroifnull(SUMCPUTime / nullifzero(TotalSUMCPUTimeDay) * 100) as ConsumptionPercentage
+        FROM vt_dbql_core
+        GROUP BY 1,2) as tmp
+      ) as src
+      PIVOT
+      (
+        avg(ConsumptionPercentage)
+        FOR StatementOutcome in ('Answers', 'Data Maintenance', 'Ingest & Prep','System & Procedural')
+      ) as PT
+      order by 1;
+
+{% endif %}
+
+
+- name: CPU Consumption by Outcome
+  chart:
+    command: chart/bar_xLabel_yElseStack.py
+    params:
+      - csvfilepath:oap--OutcomeCPUConsumption.csv
+      - pngfilepath:oap--OutcomeCPUConsumption.png
+      - title:CPU Consumption by Outcome
+      - ycolumns:[1,3,2,4]
+      - height:6
+      - width:12
+      - ylabel:CPU Consumption Break down
+      - legendxy:(0.5, -0.2)
+      - colors:(#EFEFEF,#142CF6,#43A9BD,#F01D1D)
+
+
+{% include "vt_concurrency.j2" %}
+
+- name: Export concurrency, for PPTx
+  connect: source
+  export:
+    file: oap--concurrency.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(Concurrency_Avg) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Average" --2
+      ,cast(cast(avg(Concurrency_80Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 80th Percentile"
+      ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
+      ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
+      from vt_concurrency ;
+
+
+{% include "vt_dbc_object_count.j2" %}
+{% include "vt_decode_tdbinternal.j2" %}
+
+- name: Export Object Counts (tables/views/etc.)
+  connect: source
+  export:
+    file: oap--object_counts.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(case when Object_Group04 = 'Table'           then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Count"
+      ,cast(cast(sum(case when Object_Group04 = 'View'            then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "View Count"
+      ,cast(cast(sum(case when Object_Group04 = 'User Procedural' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Program Count"
+      ,cast(cast(sum(case when Object_Group04 = 'Other'           then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Other Count"
+      from vt_dbc_object_count
+      WHERE DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
+
+- name: Export systen availability over the period
+  connect: source
+  export:
+    file: oap--sys_availability.csv
+    sql: |
+        SELECT
+          ((MAX(TM) - MIN(TM))  day(4) to SECOND) t1
+          ,(EXTRACT(DAY from t1)*(24*60*60) + EXTRACT(HOUR from t1)*(60*60) + EXTRACT(MINUTE from t1)*60 + EXTRACT(SECOND from t1)) AS Clock_time
+          ,SUM(capturetime) available_time
+          ,CASE
+           WHEN available_time/Clock_time *100 > 100 THEN 100
+           ELSE available_time/Clock_time *100
+          END AS SLA
+        FROM
+        (
+          SELECT
+          CAST((to_char(theDate, 'YYYY-MM-DD')  || ' ' || cast(theTime as char(8))) as timestamp(0)) as TM
+         ,max(secs) as capturetime
+         FROM {{ dbc.spma }}
+          where TheDate between {{ startdate | default('DATE-29') }} and {{ enddate | default('DATE-1') }}
+         group by 1
+        ) TMP
+
+- name: Export top user analysis for pptx
+  connect: source
+  export:
+    file: oap--top_users.csv
+    sql: |
+        SELECT TOP 5
+          trim(UserName) as UserName
+          ,sum(Request_Total_Cnt) as "Qry_Cnt--#27C1BD"
+          ,Sum(CPU_Total_Sec) as "CPU_Usage--#636363"
+        FROM vt_dbql_core
+        GROUP BY 1
+        ORDER BY 2 DESC
+
+- name: Chart User query volume, with CPU line overlay
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:oap--top_users.csv"
+      - "title:User Query Count & CPU Usage"
+      - "height:4"
+      - "width:9"
+      - "barlogscale:False"
+
+- name: Export App_ID categorized counts for  pptx
+  connect: source
+  export:
+    file: oap--appid_counts.csv
+    sql: |
+      select
+      '{{ siteid }}' as Site_ID
+      ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Applications"
+      ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total App Buckets"
+      ,cast(cast(count(case when Application <> 'Unknown' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Recognized Applications"
+      ,cast(cast(average(Request_Total_Cnt)/count(distinct LogDate) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Average Requests per Application per Day"
+      from vt_dbql_core
+
+{% if syslib_access %}
+# Retrieve COD limit, for reference
+- name: "Retrieve COD limit"
+  connect: source
+  export:
+    file: oap--COD_fromSystem.csv
+    sql: |
+         SELECT 'CPULimit', CPULimit FROM TABLE (TD_SYSFNLIB.TD_get_COD_Limits( ) ) As d
+         union all
+         SELECT 'IOLimit',  IOLimit FROM TABLE (TD_SYSFNLIB.TD_get_COD_Limits( ) ) As d
+         union all
+         SELECT '# Nodes', count(distinct nodeid) FROM dbc.resusagespma where TheDate = current_date
+         union all
+         SELECT * from (SELECT '# AMPs' as label, HASHAMP() + 1 as total_amps) x
+         order by 1;
+
+- name: "Get system information"
+  connect: source
+  export:
+    file: oap--dbcinfo_fromSystem.csv
+    sql: |
+       Select InfoKey, InfoData from dbc.dbcinfo
+       union all
+       Select 'SystemType', SystemType FROM TABLE (SYSLIB.MonitorSystemPhysicalConfig()) as CFG
+       union all
+       Select 'SystemName', SystemName FROM TABLE (SYSLIB.MonitorSystemPhysicalConfig()) as CFG
+       order by 1;
+{% endif %}
+
+# full process simply take associated variables:
+- name: "Retrieve COD limit"
+  connect: source
+  export:
+    file: oap--COD.csv
+    sql: |
+         SELECT 'CPULimit',  trim(cast(CPULimit as decimal(9,2))) as CPULimit  FROM (Select {{ full_cod_cpu | default(1.0) }} * 100 as CPULimit) As d
+         union all
+         SELECT 'IOLimit',  trim(cast(IOLimit as decimal(9,2))) as IOLimit FROM (Select {{ full_cod_io | default(1.0) }} * 100 as IOLimit) As d
+         union all
+         SELECT '# Nodes', cast(count(distinct nodeid) as varchar(16)) FROM dbc.resusagespma where TheDate = current_date
+         union all
+         SELECT * from (SELECT '# AMPs' as label, cast(HASHAMP() + 1 as varchar(16)) as total_amps) x
+         order by 1
+
+- name: "Get system information"
+  connect: source
+  export:
+    file: oap--dbcinfo.csv
+    sql: |
+       Select InfoKey, InfoData from dbc.dbcinfo
+       union all
+       Select 'SystemType', SystemType FROM (Select '{{ site_type | default('*** add site_type to variable list for autopopulation ***') }}' as SystemType) as CFG
+       union all
+       Select 'SystemName', SystemName FROM (Select '{{ siteid }}' as SystemName) as CFG
+       order by 1
+
+
+
+# to generate the CPU Heatmap
+{% set logts = true %}
+{% include "vt_system_cpu_by_day.j2" %}
+
+- name: "Generate Heatmap data"
+  connect: source
+  export:
+    file: oap--SPMADetailData.csv
+    sql: |
+         select
+          '{{ siteid }}' as SiteID
+          ,cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+          ,LogHr as Log_Hour
+          ,AVG((    (CPU_Full_OS + CPU_Full_DBS )*1.000000) / CPU_COD_Active_Total) *100.0 (FORMAT 'ZZ9.99') as Avg_CPU
+          ,MEDIAN(( (CPU_Full_OS + CPU_Full_DBS )*1.000000) / CPU_COD_Active_Total) *100.0 (FORMAT 'ZZ9.99') as Med_CPU
+         from vt_System_CPU_by_Day
+         Group by 1,2,3
+         order by 1,2,3;
+
+# generate chart from CPU data:
+- name: "Chart Heatmap for Median CPU by weekday/hour"
+  chart:
+    command: {{ dirs.systasks }}/Metrics/chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - "csvfilepath:oap--SPMADetailData.csv"
+      - "pngfilepath:oap--CPUHeapmapMed.png"
+      - "title:CPU Use% by Weekday/Hour"
+      - "xcolumns:[1]"
+      - "ycolumns:[2,4]"
+      - "height:6"
+      - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
+      - "heatmapcolorcount:4"
+      - "colors:[white,green,yellow,red]"
+      - "heatmapmin:0"
+      - "heatmapmax:100"
+      - "xslice:[1,4]"
+
+
+# generate chart from CPU data:
+- name: "Chart Heatmap for Average CPU by weekday/hour"
+  chart:
+    command: {{ dirs.systasks }}/Metrics/chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - "csvfilepath:oap--SPMADetailData.csv"
+      - "pngfilepath:oap--CPUHeapmapAvg.png"
+      - "title:CPU Use% by Weekday/Hour (COD {{ full_cod_cpu *100.0 }}%)"
+      - "xcolumns:[1]"
+      - "ycolumns:[2,3]"
+      - "height:6"
+      - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
+      - "heatmapcolorcount:4"
+      - "colors:[white,green,yellow,red]"
+      - "heatmapmin:0"
+      - "heatmapmax:100"
+      - "xslice:[1,4]"
+
+
+
+
+{% include "vt_disk_space.j2" %}
+
+- name: Export disk space summary
+  connect: source
+  export:
+    file: oap--diskspace.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(System_MaxPerm_GB)         as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (GB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(sum(CurrentPerm_GB)     as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
+      ,cast(cast(sum(CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
+      ,cast(cast(
+       (cast(sum(CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
+       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+      from(
+          Select DatabaseName, TableName -- Avg away LogDate
+          ,Avg(Table_CurrentPerm_GB) * Max(Table_Scale_Pct) as CurrentPerm_GB
+          ,Avg(Database_MaxPerm_GB) as Database_MaxPerm_GB
+          ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
+          from vt_disk_space
+          group by DatabaseName, TableName ) a
+
+
+######################################
+######################################
+######################################
+
+
+
+
+{% if not vhc_on_a_page %}
+
+
+- name: Export queries per day for graphing in  pptx
+  connect: source
+  export:
+    file: vhc--daily_query_throughput.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as "Log Date"
+      ,sum(Statement_Total_Cnt) (BigInt) as "Total Statements--#27C1BD"
+      ,sum(Query_Total_Cnt) (BigInt) as "Total Queries--#FF5F02"
+      ,sum(Statement_SubSecond_Cnt)(BigInt) as "Subsecond Statements--#636363"
+      from vt_dbql_core
+      group by LogDate
+      order by 1
+
+- name: Chart query per day over time
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:vhc--daily_query_throughput.csv"
+      - "title:Activity Throughtput per Day - {{ siteid }}"
+      - "height:4"
+      - "width:8"
+
+- name: Export User Counts for  pptx
+  connect: source
+  export:
+    file: vhc--user_counts.csv
+    sql: |
+      Select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(count(u.UserName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users"
+      ,cast(cast(count(d.UserName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users"
+      ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Users, less Internal DBs"
+      ,cast(cast(count(case when u.UserType <> 'Teradata Internal' then d.UserName end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Active Users, less Internal DBs"
+      From vt_decode_user u
+      left outer join (Select distinct UserName from vt_dbql_core) d
+        on d.UserName = u.UserName
+
+
+- name: Export App_ID categorized counts for  pptx
+  connect: source
+  export:
+    file: vhc--appid_counts.csv
+    sql: |
+      select
+      '{{ siteid }}' as Site_ID
+      ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Applications"
+      ,cast(cast(count(distinct Application) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total App Buckets"
+      ,cast(cast(count(case when Application <> 'Unknown' then 1 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Recognized Applications"
+      ,cast(cast(average(Request_Total_Cnt)/count(distinct LogDate) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Average Requests per Application per Day"
+      from vt_dbql_core
+
+
+- name: Export query count analysis for  pptx
+  connect: source
+  export:
+    file: vhc--query_counts.csv
+    sql: |
+      select Site_ID      
+      ,cast(cast(LogDayCnt as format 'ZZZ,ZZ9') as varchar(32)) as "Day Count"
+      ,cast(cast(TotalQryCnt as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Query Count"
+      ,cast(cast(AvgQryPerSecond as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queries per Second"
+      ,cast(cast(AvgQryPerDay as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queries per Day" --5
+      ,cast(cast(AvgMilQryPerDay as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Day (M)" --6
+      ,cast(cast(AvgQryPerMonth as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Month"
+      ,cast(cast(AvgMilQryPerMonth as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Queries per Month (M)" --8
+      ,cast(cast(QryCntPerYear as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Query Count per Year"
+      ,cast(cast(MilQryCntPerYear as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Query Count per Year (M)" --10
+      ,cast(cast(BilQryCntPerYear as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Query Count per Year (B)"
+      ,cast(cast(TotalSubSecondCntPerDay as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SubSecond Query Count per Day"
+      ,cast(cast(TotalSubSecondCntPerDayMil as Decimal(18,1) format 'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "SubSecond Query Count Per Day (M)"
+      ,cast(cast(SubSecondPct as Decimal(9,2) format 'ZZ9.9') as varchar(32)) as "SubSecond % of Total Queries" --14
+      ,cast(cast(AvgRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Average Runtime Seconds" --15
+      ,cast(cast(MedianRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Median Runtime Seconds"    
+      ,cast(cast(TotalQryCnt_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Primary Query Count"--17
+      ,cast(cast(AvgQryPerSecond_Q as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Queries per Second"
+      ,cast(cast(AvgQryPerDay_Q as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Queries per Day" --19
+      ,cast(cast(AvgMilQryPerDay_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Day (M)" --20
+      ,cast(cast(AvgQryPerMonth_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Month"
+      ,cast(cast(AvgMilQryPerMonth_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Month (M)" --22
+      ,cast(cast(QryCntPerYear_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Query Count per Year"
+      ,cast(cast(MilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (M)" --24
+      ,cast(cast(BilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (B)"
+      from
+      (
+      select max(Site_ID) as Site_ID
+      ,count(distinct LogDate) as LogDayCnt
+      ,sum(Statement_Total_Cnt) AS TotalQryCnt
+      ,TotalQryCnt / LogDayCnt AS AvgQryPerDay
+      ,AvgQryPerDay  / 1e6 AS AvgMilQryPerDay
+      ,AvgQryPerDay * 30 AS AvgQryPerMonth
+      ,AvgMilQryPerDay * 30 AS AvgMilQryPerMonth
+      ,AvgQryPerDay / (24*60*60) AS AvgQryPerSecond
+      ,TotalQryCnt * 365 / LogDayCnt AS QryCntPerYear
+      ,QryCntPerYear / 1e6 AS MilQryCntPerYear
+      ,QryCntPerYear / 1e9 AS BilQryCntPerYear
+      ,sum(Statement_Tactical_Cnt) AS TotalTacticalCnt
+      ,sum(Statement_Tactical_Cnt)/ LogDayCnt  AS TotalTacticalCntPerDay
+      ,cast(TotalTacticalCntPerDay as decimal(18,2)) / 1e6  AS TotalTacticalCntPerDayMil
+      ,(cast(TotalTacticalCnt as decimal(18,4)) / TotalQryCnt) * 100 AS TacticalPct
+      ,sum(Statement_SubSecond_Cnt) as TotalSubSecondCnt
+      ,sum(Statement_SubSecond_Cnt)/ LogDayCnt as TotalSubSecondCntPerDay
+      ,cast(TotalSubSecondCntPerDay as decimal(18,2)) / 1e6  AS TotalSubSecondCntPerDayMil
+      ,(cast(TotalSubSecondCnt as decimal(18,4)) / TotalQryCnt) * 100 AS SubSecondPct
+      ,sum(Runtime_Total_Sec) / TotalQryCnt AS AvgRunTimeSec
+      ,median(Runtime_Total_Sec) as MedianRuntimeSec
+      ,sum(Query_Total_Cnt) AS TotalQryCnt_Q
+      ,TotalQryCnt_Q / LogDayCnt AS AvgQryPerDay_Q
+      ,AvgQryPerDay_Q  / 1e6 AS AvgMilQryPerDay_Q
+      ,AvgQryPerDay_Q * 30 AS AvgQryPerMonth_Q
+      ,AvgMilQryPerDay_Q * 30 AS AvgMilQryPerMonth_Q
+      ,AvgQryPerDay_Q / (24*60*60) AS AvgQryPerSecond_Q
+      ,TotalQryCnt_Q * 365 / LogDayCnt AS QryCntPerYear_Q
+      ,QryCntPerYear_Q / 1e6 AS MilQryCntPerYear_Q
+      ,QryCntPerYear_Q / 1e9 AS BilQryCntPerYear_Q
+      from vt_dbql_core
+      ) d1
+
+
+- name: Export App_Bucket row/record counts for  pptx
+  connect: source
+  export:
+    file: vhc--appid_detail.csv
+    sql: |
+      select dbql.Application
+      ,count(distinct dbql.LogDate) as DayCount
+      ,cast(cast(sum(dbql.Statement_Total_Cnt)/nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Queries"
+      ,cast(cast(sum(dbql.Returned_Row_Cnt)/ nullifzero(DayCount) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Fetched Rows"
+      ,cast(cast(zeroifnull("Total Fetched Rows" / nullifzero("Total Queries")) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Rows Per Query"
+      from vt_dbql_core dbql
+      group by 1
+      Order by cast("Rows per Query" as INT) desc
+
+
+
+### Release Spool:
+# ------------------
+- name: DROP volatile table to save spool - vt_dbql_core
+  connect: source
+  execute:
+    sql: drop table vt_dbql_core
+
+
+
+
+
+- name: Export concurrency, for PPTx
+  connect: source
+  export:
+    file: vhc--concurrency.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(Concurrency_Avg) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Average" --2
+      ,cast(cast(avg(Concurrency_80Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 80th Percentile"
+      ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
+      ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
+      from vt_concurrency ;
+
+
+- name: Export concurrency for graphing (all)
+  connect: source
+  export:
+    file: vhc--concurrency2.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+      ,Avg(Concurrency_Avg) as "Average--#10890A"
+      ,Avg(Concurrency_80Pctl) as "80th Percentile--#9C9700"
+      ,Avg(Concurrency_95Pctl) as "95th Percentile--#7E0606"
+      ,MAX(Concurrency_Peak) as "Absolute Peak--#FF0000"
+      from vt_concurrency
+      group by 1
+      order by 1
+
+- name: Chart Concurrency
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--concurrency2.csv"
+      - "title:Concurrency - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+- name: Export concurrency for graphing (2 lines only)
+  connect: source
+  export:
+    file: vhc--concurrency1.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+      ,Avg(Concurrency_95Pctl) as "95th Percentile--#636363"
+      ,MAX(Concurrency_Peak) as "Absolute Peak--#27C1BD"
+      from vt_concurrency
+      group by 1
+      order by 1
+
+- name: Chart Concurrency
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--concurrency1.csv"
+      - "title:Concurrency - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+{% include "vt_dbc_indices_by_database.j2" %}
+
+- name: Export indicies by database for PPTx
+  connect: source
+  export:
+    file: vhc--Index_summary.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,CAST(CAST(SUM(CASE WHEN IndexType_Bucket = 'Primary Index'   THEN Index_Count ELSE 0 END) AS FORMAT 'ZZZ,ZZZ,ZZ9') AS VARCHAR(20)) AS UPINUPI
+      ,CAST(CAST(SUM(CASE WHEN IndexType_Bucket = 'Partition'       THEN Index_Count ELSE 0 END) AS FORMAT 'ZZZ,ZZZ,ZZ9') AS VARCHAR(20)) AS PPI
+      ,CAST(CAST(SUM(CASE WHEN IndexType_Bucket = 'Secondary Index' THEN Index_Count ELSE 0 END) AS FORMAT 'ZZZ,ZZZ,ZZ9') AS VARCHAR(20)) AS SI
+      from vt_dbc_indices_by_database
+      Where DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
+
+
+{% include "vt_disk_space.j2" %}
+
+- name: Export disk space summary - VHC
+  connect: source
+  export:
+    file: vhc--diskspace.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(System_MaxPerm_GB)         as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (GB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(sum(CurrentPerm_GB)     as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
+      ,cast(cast(sum(CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)" --5
+      ,cast(cast(
+       (cast(sum(CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
+       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+      from(
+          Select DatabaseName, TableName -- Avg away LogDate
+          ,Avg(Table_CurrentPerm_GB) * Max(Table_Scale_Pct) as CurrentPerm_GB
+          ,Avg(Database_MaxPerm_GB) as Database_MaxPerm_GB
+          ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
+          from vt_disk_space
+          group by DatabaseName, TableName ) a
+
+
+- name: Export disk space by Database
+  connect: source
+  export:
+    file: vhc--diskspace_x_database.csv
+    sql: |
+      Select
+       case when DBCurrPermRank >25 then 'All Other Databases' else DatabaseName end as "Database"
+      ,cast(cast(sum(DBCurrPermGB) as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (GB)"
+      ,cast(cast(sum(DBMaxPermGB)  as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Space (GB)"
+      ,cast(cast(zeroifnull(sum(DBCurrPermGB) / nullifzero(cast(sum(DBMaxPermGB) as decimal(38,4)))) *100.0000 as decimal(9,2) format 'ZZ9.99%') as varchar(32)) as "Fill%"
+      ,case when "Database" =  'All Other Databases' then 99 else DBCurrPermRank end as DBOrder
+      from(
+          Select DatabaseName, avg(Database_CurrentPerm_GB) as DBCurrPermGB, avg(Database_MaxPerm_GB) as DBMaxPermGB
+          ,row_number()over(order by DBCurrPermGB desc) as DBCurrPermRank
+          from vt_disk_space group by 1
+          )a
+      group by 1,DBOrder
+      order by DBOrder
+
+
+- name: Export disk space summary - for space charting
+  connect: source
+  export:
+    file: vhc--diskspace_x_database_space.csv
+    sql: |
+      Select
+       case when DBCurrPermRank >25 then 'All Other Databases' else DatabaseName end as "Database"
+      ,cast(sum(DBCurrPermGB) as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Used Space (GB)"
+      ,cast(sum(DBMaxPermGB)  as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Max Space (GB)"
+      ,cast(cast(zeroifnull(sum(DBCurrPermGB) / nullifzero(cast(sum(DBMaxPermGB) as decimal(38,4)))) *100.0000 as decimal(9,2) format 'ZZ9.99%') as varchar(32)) as "Fill%"
+      ,case when "Database" =  'All Other Databases' then 99 else DBCurrPermRank end as DBOrder
+      from(
+          Select DatabaseName, avg(Database_CurrentPerm_GB) as DBCurrPermGB, avg(Database_MaxPerm_GB) as DBMaxPermGB
+          ,row_number()over(order by DBCurrPermGB desc) as DBCurrPermRank
+          from vt_disk_space
+          group by 1
+          )a
+      group by 1,DBOrder
+      order by DBOrder desc
+
+- name: "Chart Diskspace by Database: Used Space"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--diskspace_x_database_space.csv"
+      - "pngfilepath:vhc--diskspace_x_database_space.png"
+      - "title:Top 25 Databases by Used Space - {{ siteid }}"
+      - "height:18"
+      - "width:6"
+      - "labelsize:6"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"
+      - "xlabel:"
+      - "ylabel:"
+      - "color:[#0742EE]"
+
+- name: Export disk space summary - for fill charting
+  connect: source
+  export:
+    file: vhc--diskspace_x_database_fill.csv
+    sql: |
+      Select
+       case when DBCurrPermRank >25 then 'All Other Databases' else DatabaseName end as "Database"
+      ,cast(sum(DBCurrPermGB) as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Used Space (GB)"
+      ,cast(sum(DBMaxPermGB)  as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99')  as "Max Space (GB)"
+      ,cast(cast(zeroifnull(sum(DBCurrPermGB) / nullifzero(cast(sum(DBMaxPermGB) as decimal(38,4)))) *100.0000 as decimal(9,2) format 'ZZ9.99%') as varchar(32)) as "Fill%"
+      ,case when "Database" =  'All Other Databases' then 99 else DBCurrPermRank end as DBOrder
+      from(
+          Select DatabaseName, avg(Database_CurrentPerm_GB) as DBCurrPermGB, avg(Database_MaxPerm_GB) as DBMaxPermGB
+          ,row_number()over(order by DBCurrPermGB desc) as DBCurrPermRank
+          from vt_disk_space
+          group by 1
+          )a
+      group by 1,DBOrder
+      order by DBOrder desc
+
+- name: "Chart Diskspace by Database: Fill%"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--diskspace_x_database_fill.csv"
+      - "pngfilepath:vhc--diskspace_x_database_fill.png"
+      - "title:Top 25 Databases by Used Space: Fill% - {{ siteid }}"
+      - "height:18"
+      - "width:6"
+      - "labelsize:6"
+      - "xcolumns:[3]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"
+      - "xlabel:"
+      - "ylabel:"
+      - "color:[#350A7C]"
+
+{% include "vt_concurrency.j2" %}
+
+- name: Export concurrency for  pptx
+  connect: source
+  export:
+    file: vhc--concurrency.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(Concurrency_Avg) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Average" --2
+      ,cast(cast(avg(Concurrency_80Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 80th Percentile"
+      ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
+      ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
+      from vt_concurrency ;
+
+
+
+{% include "vt_dbc_column_summary.j2" %}
+
+- name: Export Column format from Column Summary
+  connect: source
+  export:
+    file: vhc--column_format_state.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(CASE WHEN Column_Formatted = 'Y' THEN Column_Count ELSE 0 END) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "FORMATTED"
+      ,cast(cast(sum(CASE WHEN Column_Formatted = 'N' THEN Column_Count ELSE 0 END) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "UNFORMATTED"
+      from vt_dbc_column_summary
+
+- name: Export Column TYPE information from Column Summary
+  connect: source
+  export:
+    file: vhc--column_formats.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(CASE WHEN Column_Formatted = 'Y' THEN Column_Count ELSE 0 END) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "FORMATTED"
+      ,cast(cast(sum(case when Column_Category = 'Interval' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type Interval"
+      ,cast(cast(sum(case when Column_Category = 'Period' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type Period"
+      ,cast(cast(sum(case when Column_Category = 'Number' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type Number"
+      ,cast(cast(sum(case when Column_Category = 'BLOB' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type BLOB"
+      ,cast(cast(sum(case when Column_Category = 'CLOB' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type CLOB"
+      ,cast(cast(sum(case when Column_Category like any('XML%','_SON%','Avro') then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type XML/JSON"
+      ,cast(cast(sum(case when Column_Category like 'Geosp%' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Type GeoSpatial"
+      from vt_dbc_column_summary
+
+
+{% include "vt_dbc_object_count.j2" %}
+{% include "vt_decode_tdbinternal.j2" %}
+
+- name: Export Object Counts (tables/views/etc.)
+  connect: source
+  export:
+    file: vhc--object_counts.csv
+    sql: |
+      Select '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(case when Object_Group04 = 'Table'           then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Count"
+      ,cast(cast(sum(case when Object_Group04 = 'View'            then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "View Count"
+      ,cast(cast(sum(case when Object_Group04 = 'User Procedural' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Program Count"
+      ,cast(cast(sum(case when Object_Group04 = 'Other'           then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Other Count"
+      from vt_dbc_object_count
+      WHERE DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
+
+- name: Export Object Counts (tables/views/etc.) with tablekind breakouts
+  connect: source
+  export:
+    file: vhc--tablekind_by_database.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+       ,cast(cast(sum(case when Object_Group12 = 'Table' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Count"
+       ,cast(cast(sum(case when Object_Name like all ('%Index%','%Join%') then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Join Index Count"
+       ,cast(cast(sum(case when Object_Name like '%Queue%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Queue Table Count"
+       ,cast(cast(sum(Set_Table_Count) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "SET Table Count"
+       ,cast(cast(cast(sum(Set_Table_Count) as decimal(18,4)) / "Table Count" * 100 as decimal(9,2) format 'ZZ9.99') as varchar(8))||'%' as "Set Table Pct"
+       ,cast(cast(sum(case when Object_Name like '%Global Temp%' then Object_Count else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Global Temp Table Count"
+      FROM vt_dbc_object_count
+      WHERE DatabaseName NOT IN  (select DatabaseName from vt_decode_tdbinternal)
+
+
+
+{% include "vt_dbc_constraint.j2" %}
+
+- name: Export constraint summary
+  connect: source
+  export:
+    file:  vhc--constraints.csv
+    sql: |
+      select top 10
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(case when ConstraintType in('Primary Key','Unique') then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Unique PI Constraint"
+      ,cast(cast(sum(case when ConstraintType = 'Primary Key' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Key Constraint"
+      ,cast(cast(sum(case when ConstraintType = 'Default' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Column Default"
+      ,cast(cast(sum(case when ConstraintType = 'Foreign Key' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Foreign Key Constraint" --5
+      ,cast(cast(sum(case when ConstraintType = 'Column Constraint' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Column Constraint"
+      ,cast(cast(sum(case when ConstraintType = 'Table Constraint' then 1 else 0 end) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Table Constraint"
+      from vt_dbc_constraint
+
+
+{% include "vt_statement_count_by_table.j2" %}
+
+- name: "Export number of tables that exceed 1500 DML (ins/del/upd/merge) per day, for charting"
+  connect: source
+  export:
+    file: vhc--tablecount_over_1500_dml.csv
+    sql: |
+      Select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+       ,Count(TableName) as "Table Count--#27C1BD"
+      from vt_statement_count_by_table
+      where Request_Count > 1500
+        and Statement_Class = 'DML'
+      group by 1
+      order by 1
+
+- name: Chart of tables with over 1500 DML per day, on average
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--tablecount_over_1500_dml.csv"
+      - "title:Table Count over 1500 daily Inserts/Updates/Deletes - {{ siteid }}"
+      - "height:4"
+      - "width:10"
+
+
+- name: "Export overall count of tables that exceed 1500 DML (ins/del/upd/merge) per day"
+  connect: source
+  export:
+    file: vhc--tablecount_over_1500_dml_average.csv
+    sql: |
+      Select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(avg(TableCount) as INT format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as TableCount
+      from (
+          Select
+           LogDate
+           ,Count(TableName) as TableCount
+          from vt_statement_count_by_table
+          where Request_Count > 1500
+            and Statement_Class = 'DML'
+          group by 1
+      ) as a
+
+- name: Export databases with highest average DML request per table per day
+  connect: source
+  export:
+    file: vhc--databases_most_dml_tables.csv
+    sql: |
+      Select DatabaseName
+      ,cast(cast(dml_request_per_table_avg as BigInt format'ZZZ,ZZZ,ZZZ,ZZZ,ZZ9') as varchar(128)) as "Avg DML Request Count per Table"
+      ,avg(cast(Request_Count as BigInt)) dml_request_per_table_avg
+      from vt_statement_count_by_table
+      group by 1
+      order by dml_request_per_table_avg desc
+
+- name: DROP volatile table to save spool - vt_statement_count_by_table
+  connect: source
+  execute:
+    sql: drop table vt_statement_count_by_table
+
+
+
+{% include "vt_transfer_bytes_in_out.j2" %}
+
+- name: "Export transfer bytes in/out of platform, by day, for charting"
+  connect: source
+  export:
+    file: vhc--data_transfer.csv
+    sql: |
+      SELECT
+      cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+      ,SUM(Inbound_Bytes)  as "Inbound Bytes--#27C1BD"
+      ,SUM(Outbound_Bytes) as "Outbound Bytes--#636363"
+      FROM vt_transfer_bytes_in_out
+      GROUP BY LogDate
+      ORDER BY LogDate
+
+- name: "Chart transfer bytes in/out of of the platform, by day"
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "csvfile:vhc--data_transfer.csv"
+      - "title:Data Transfer - {{ siteid }}"
+      - "height:4"
+      - "width:10"
+
+
+
+{% include "vt_join_frequency.j2" %}
+
+- name: Export request count and cpu by join frequency
+  connect: source
+  export:
+    file: vhc--join_frequency.csv
+    sql: |
+      Select
+       join_label || case when join_label=1 then ' Table' else ' Tables' end  as "Number of Tables" -- xaxis
+      ,Request_Count as "Number of Queries--#27C1BD" -- bars
+      ,cast(cast(CPU_Sec / sum(CPU_Sec)over()*100 as decimal(9,2)) as varchar(16))  as "CPU Consumed %--#636363" -- line
+      from vt_join_frequency
+      order by 1 asc
+
+- name: "Chart join frequency volume, with CPU line overlay"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--join_frequency.csv"
+      - "title:Join Frequency - {{ siteid }}"
+      - "height:4"
+      - "width:9"
+      - "barlogscale:False"
+
+- name: Export join frequency horizontally for PPTx values
+  connect: source
+  export:
+    file: vhc--join_frequency_horz.csv
+    sql: |
+      Select
+       cast(cast(sum(case when join_label=1 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join1_Mrequest_count --1
+      ,cast(cast(sum(case when join_label=2 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join2_Mrequest_count --2
+      ,cast(cast(sum(case when join_label=3 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join3_Mrequest_count --3
+      ,cast(cast(sum(case when join_label=4 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join4_Mrequest_count --4
+      ,cast(cast(sum(case when join_label=5 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join5_Mrequest_count --5
+      ,cast(cast(sum(case when join_label=6 then request_count else 0 end)/1e6 as decimal(18,1) format'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32))||'M' as join6_Mrequest_count --6
+      ,cast(cast(sum(request_count)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as total_Mrequest_count --7
+      ,cast(cast(cast(sum(case when join_label=1 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join1_request_pct --8
+      ,cast(cast(cast(sum(case when join_label=2 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join2_request_pct --9
+      ,cast(cast(cast(sum(case when join_label=3 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join3_request_pct --10
+      ,cast(cast(cast(sum(case when join_label=4 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join4_request_pct --11
+      ,cast(cast(cast(sum(case when join_label=5 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join5_request_pct --12
+      ,cast(cast(cast(sum(case when join_label=6 then request_count else 0 end) as decimal(32,4))
+      /cast(sum(request_count) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join6_request_pct --13
+      ,cast(cast(sum(case when join_label=1 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join1_Mcpu_sec --14
+      ,cast(cast(sum(case when join_label=2 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join2_Mcpu_sec --15
+      ,cast(cast(sum(case when join_label=3 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join3_Mcpu_sec --16
+      ,cast(cast(sum(case when join_label=4 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join4_Mcpu_sec --17
+      ,cast(cast(sum(case when join_label=5 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join5_Mcpu_sec --18
+      ,cast(cast(sum(case when join_label=6 then cpu_sec else 0 end)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as join6_Mcpu_sec --19
+      ,cast(cast(sum(cpu_sec)/1e6 as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))||'M' as total_Mcpu_sec --20
+      ,cast(cast(cast(sum(case when join_label=1 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join1_cpu_pct --21
+      ,cast(cast(cast(sum(case when join_label=2 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join2_cpu_pct --22
+      ,cast(cast(cast(sum(case when join_label=3 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join3_cpu_pct --23
+      ,cast(cast(cast(sum(case when join_label=4 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join4_cpu_pct --24
+      ,cast(cast(cast(sum(case when join_label=5 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join5_cpu_pct --25
+      ,cast(cast(cast(sum(case when join_label=6 then cpu_sec else 0 end) as decimal(32,4))
+      /cast(sum(cpu_sec) as decimal(32,4)) *100 as decimal(9,2)) as varchar(16))||'%' as join6_cpu_pct --26
+      ,max(DateCount)(INT) as DateCount -- 27
+      from vt_join_frequency
+
+
+
+#######################################################
+### Pirated from the "System CPU by Day" metric:
+#######################################################
+{% set logts = true %} # turn on option to have system_cpu generate per 10min increment
+{% include "vt_system_cpu_by_day.j2" %}
+
+- name: Export System CPU for Chart
+  connect: source
+  export:
+    file: vhc--system_cpu_by_day.csv
+    sql: |
+      select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#EFEFEF"
+      ,cast(sum(CPU_IOWait ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#C39BD3"
+      ,cast(sum(CPU_OS     ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
+      ,cast(sum(CPU_DBS    ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
+      ,cast(sum(CPU_Total  ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Total %--#F01D1D"
+      ,cast(max(CPU_COD_Total_Active_Pct) as decimal(38,4)) * 100 as "CPU Total Available %--#9C0A0A"
+      from vt_System_CPU_by_Day
+      group by 1
+      order by 1
+
+- name: Chart System CPU - Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_cpu_by_day.csv
+      - pngfile:vhc--system_cpu_by_day_line.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:12
+
+- name: Chart System CPU - Stacked Bars by Day
+  chart:
+    command: chart/bar_xLabel_yElseStack.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_day.csv
+      - pngfilepath:vhc--system_cpu_by_day_stacked.png
+      - title:System CPU - {{ siteid }}
+      - ycolumns:[4,3,2,1]
+      - height:6
+      - width:12
+      - ylabel:CPU Percent to Total
+      - legendxy:(0.5, -0.2)
+
+
+- name: Export System CPU for Chart, COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_cpu_by_day_wCOD.csv
+    sql: |
+      select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,cast(sum(CPU_Full_IOWait ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU IOWait %--#C39BD3"
+      ,cast(sum(CPU_Full_OS     ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU OS %--#43A9BD"
+      ,cast(sum(CPU_Full_DBS    ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU DBS %--#142CF6"
+      from vt_System_CPU_by_Day
+      group by 1
+      order by 1
+
+- name: Chart System CPU - Line chart by Day, COD Adjusted
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_cpu_by_day_wCOD.csv
+      - pngfile:vhc--system_cpu_by_day_line_wCOD.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:12
+
+- name: Chart System CPU - Stacked Bars by Day, COD Adjusted
+  chart:
+    command: chart/bar_xLabel_yElseStack.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_day_wCOD.csv
+      - pngfilepath:vhc--system_cpu_by_day_stacked_wCOD.png
+      - title:System CPU - {{ siteid }}
+      - ycolumns:[3,2,1]
+      - height:6
+      - width:12
+      - ylabel:CPU Percent to Total
+      - legendxy:(0.5, -0.2)
+
+
+- name: Export Read/Write CPU by Day of Week for charting
+  connect: source
+  export:
+    file: vhc--system_cpu_by_dayofweek.csv
+    sql: |
+      Select cast(cast(LogDate as date format'e4') as varchar(16)) as dayofweek
+      ,cast(sum(CPU_OS+CPU_DBS)    as decimal(38,0)) as "Aggregate CPU Seconds"
+      ,cast(sum(HostWrite_KB)*1000 as decimal(38,0)) as "Write Bytes"
+      from vt_System_CPU_by_Day
+      group by 1
+      order by case
+          when dayofweek = 'Sunday'    then 1
+          when dayofweek = 'Monday'    then 2
+          when dayofweek = 'Tuesday'   then 3
+          when dayofweek = 'Wednesday' then 4
+          when dayofweek = 'Thursday'  then 5
+          when dayofweek = 'Friday'    then 6
+          when dayofweek = 'Saturday'  then 7
+          end
+
+- name: Chart System CPU by Day of Week
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - file:vhc--system_cpu_by_dayofweek.csv
+      - title:CPU by Day of Week - {{ siteid }}
+      - height:6
+      - width:12
+      - sort:0 # 0=none/sql default, 1 thru N = column to sort
+
+
+- name: Export System CPU for Heatmap
+  connect: source
+  export:
+    file: vhc--system_cpu_by_day_heatmap.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,LogHr as "Hour"
+      ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System CPU - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_day_heatmap.csv
+      - pngfilepath:vhc--system_cpu_by_day_heatmap.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+      
+      
+- name: Export System Peak CPU for Heatmap
+  connect: source
+  export:
+    file: vhc--system_peak_cpu_by_day_heatmap.csv
+    sql: |
+      select
+        "LogDate"
+        ,"Hour"
+        ,Max("CPU Use%")
+      From  
+          (select
+           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+          ,LogHr as "Hour"
+          ,LogMin as "Minute"
+          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1,2,3)vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Peak CPU - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_day_heatmap.csv
+      - pngfilepath:vhc--system_peak_cpu_by_day_heatmap.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+
+- name: Export System CPU for Heatmap, COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_cpu_by_day_heatmap_wCOD.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,LogHr as "Hour"
+      ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_COD_Active_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System CPU - Heatmap Days x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_cpu_by_day_heatmap_wCOD.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Export System Peak CPU for Heatmap, COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_peak_cpu_by_day_heatmap_wCOD.csv
+    sql: |
+      select
+        "LogDate"
+        ,"Hour"
+        ,Max("CPU Use%")
+      From
+          (select
+           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+          ,LogHr as "Hour"
+          ,LogMin as "Minute"
+          ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_COD_Active_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1,2,3)vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Peak CPU - Heatmap Days x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_peak_cpu_by_day_heatmap_wCOD.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Export System CPU by Day of Week for HeatMap
+  connect: source
+  export:
+    file: vhc--system_cpu_by_dayofweek_heatmap.csv
+    sql: |
+      Select
+       cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+      ,LogHr as "Hour"
+      ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System CPU - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_cpu_by_dayofweek_heatmap.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Export System Peak CPU by Day of Week for HeatMap
+  connect: source
+  export:
+    file: vhc--system_peak_cpu_by_dayofweek_heatmap.csv
+    sql: |
+      select
+        "Day of the Week"
+        ,"Hour"
+        ,Max("CPU Use%")
+      From
+          (Select
+           cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+          ,LogHr as "Hour"
+          ,LogMin as "Minute"
+          ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1,2,3)vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2   
+      
+
+- name: Chart System Peak CPU - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Export System CPU by Day of Week for HeatMap, COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_cpu_by_dayofweek_heatmap_wCOD.csv
+    sql: |
+      Select
+       cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+      ,LogHr as "Hour"
+      ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_COD_Active_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      from vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System CPU - Heatmap Day of Week x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_cpu_by_dayofweek_heatmap_wCOD.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+
+- name: Export System Peak CPU by Day of Week for HeatMap, COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.csv
+    sql: |
+      select
+        "Day of the Week"
+        ,"Hour"
+        ,Max("CPU Use%")
+      From      
+          (Select
+           cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+          ,LogHr as "Hour"
+          ,LogMin as "Minute"
+          ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_COD_Active_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          from vt_System_CPU_by_Day
+          group by 1,2,3)vt_System_CPU_by_Day
+      group by 1,2
+      order by 1,2 
+
+- name: Chart System Peak CPU - Heatmap Day of Week x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+#######################################################
+### Pirated from the "System IO" Metric
+#######################################################
+{% set io_percentile = 990 if  io_percentile is not defined else io_percentile %}
+{% set td15 = true  if tdver[:2]=='15' else false %}
+{% include "vt_system_io_by_day.j2" %}
+
+
+- name: Export System IO percentile setting
+  connect: source
+  export:
+    file: vhc--system_IO_percentile_setting.csv
+    sql: select cast( {{ io_percentile }}/10.0 as decimal(9,1) format 'ZZZ.9%')(varchar(8)) as pctl
+
+# Line Chart:
+- name: Export System IO for Line Chart (IOTA+IOBusy)
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_allPctl.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      {% if not td15 %}
+      ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      {% endif %}
+      {% if full_cod_io < 1.0000 %}
+      ,{{ full_cod_io * 100 }} as "IO Available %--#9C0A0A"
+      {% endif %}
+      ,100.00 as "IO Max %--#F01D1D"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOTA and IOBusy, Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_allPctl.csv
+      - title:System IO% Busy, IOTA and Max Observed - {{ siteid }}
+      - height:6
+      - width:12
+
+
+# Line Chart, COD Adjusted
+- name: Export System IO for Line Chart (IOTA+IOBusy), COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_allPctl_wCOD.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      {% if not td15 %}
+      ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      {% endif %}
+      {% if workload_cod_io < 1.0000 %}
+      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
+      {% endif %}
+      ,100.00 as "IO Max %--#F01D1D"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOTA and IOBusy, Line chart by Day, COD Adjusted
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_allPctl_wCOD.csv
+      - title:System IO% Busy, IOTA and Max Observed, COD Adjusted - {{ siteid }}
+      - height:6
+      - width:12
+
+
+
+
+# Line Chart:
+- name: Export System IO for Line Chart (IOTA)
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_justIOTA.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      {% if td15 %}
+      ,0 as "IOTA Busy%--#204BDB"
+      {% else %}
+      ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      {% endif %}
+      {% if workload_cod_io < 1.0000 %}
+      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
+      {% endif %}
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOTA, Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_justIOTA.csv
+      - title:System IOTA - {{ siteid }}
+      - height:6
+      - width:12
+
+
+# Line Chart, COD Adjusted:
+- name: Export System IO for Line Chart (IOTA), COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_justIOTA_wCOD.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      {% if td15 %}
+      ,0 as "IOTA Busy%--#204BDB"
+      {% else %}
+      ,cast(avg(IOTA_Pct)*100 / {{ workload_cod_io }} as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      {% endif %}
+      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOTA, Line chart by Day, COD Adjusted
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_justIOTA_wCOD.csv
+      - title:System IOTA, COD Adjusted - {{ siteid }}
+      - height:6
+      - width:12
+
+
+# Line Chart:
+- name: Export System IO for Line Chart (IOBusy)
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_justIOBusy.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      {% if workload_cod_io < 1.0000 %}
+      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
+      {% endif %}
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOBusy, Line chart by Day
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_justIOBusy.csv
+      - title:System IO% Busy (Max Observed) - {{ siteid }}
+      - height:6
+      - width:12
+
+
+
+# Line Chart:
+- name: Export System IO for Line Chart (IOBusy), COD Adjusted
+  connect: source
+  export:
+    file: vhc--system_IO_BusyPct_justIOBusy_wCOD.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      ,100 as "IO Available %--#9C0A0A"
+      ,100.00 as "IO Max%--#B21300"
+      from vt_system_io_by_day
+      group by LogDate
+      order by LogDate
+
+- name: Chart IO% to Max, IOBusy, Line chart by Day, COD Adjusted
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - file:vhc--system_IO_BusyPct_justIOBusy_wCOD.csv
+      - title:System IO% Busy (Max Observed), COD Adjusted - {{ siteid }}
+      - height:6
+      - width:12
+
+
+## Heatmaps:
+- name: Export System IO for Heatmap
+  connect: source
+  export:
+    file: vhc--system_IO_by_day_heatmap.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "LogDate"
+      ,LogHr as "Hour"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100 as decimal(38,2)) as "IOTA Busy%"
+      from vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+- name: Export System IO by Day of Week for HeatMap
+  connect: source
+  export:
+    file: vhc--system_IO_by_dayofweek_heatmap.csv
+    sql: |
+      Select
+       cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+      ,LogHr as "Hour"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100 as decimal(38,2)) as "IOTA Busy%"
+      from vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_maxobserved.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Chart System IOTA - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_iota.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Chart System IOTA Busy - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_iota.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+
+
+
+## Heatmaps, adjusted for COD:
+- name: Export System IO for Heatmap, COD adjusted
+  connect: source
+  export:
+    file: vhc--system_IO_by_day_heatmap_wCOD.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "LogDate"
+      ,LogHr as "Hour"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IOTA Busy%"
+      from vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+- name: Export System IO by Day of Week for HeatMap, COD adjusted
+  connect: source
+  export:
+    file: vhc--system_IO_by_dayofweek_heatmap_wCOD.csv
+    sql: |
+      Select
+       cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
+      ,LogHr as "Hour"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100  / {{ workload_cod_io }} as decimal(38,2)) as "IOTA Busy%"
+      from vt_system_io_by_day
+      group by 1,2
+      order by 1,2
+
+- name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_maxobserved_wCOD.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Chart System IOTA - Heatmap Day of Week x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_iota_wCOD.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved_wCOD.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+- name: Chart System IOTA Busy - Heatmap Days x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_iota_wCOD.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+
+
+#######################################################
+### Pirated from "Allocated Utilization per Table" metric
+#######################################################
+{% include "vt_allocated_utilization_per_table.j2" %}
+
+{% if export_detail %}
+- name: Export Allocated Utilization per Table
+  connect: source
+  export:
+    file: vhc--allocated_utilization_per_table.csv
+    sql: |
+      select LogDate, DatabaseName, TableName
+      ,sum(Use_Cnt) as Use_Cnt
+      ,sum(Request_Cnt) as Request_Cnt
+      ,Avg(Avg_Allocation_Pct) as Avg_Allocation_Pct
+      ,sum(Allocated_CPU) as Allocated_CPU
+      ,sum(Allocated_IOCnt) as Allocated_IOCnt
+      ,sum(Allocated_IOGB) as Allocated_IOGB
+      ,sum(Allocated_CDS_GB) as Allocated_CDS_GB
+      ,max(Table_CurrentPerm_GB) as Table_CurrentPerm_GB
+      from vt_allocated_utilization_per_table
+      group by 1,2,3
+      order by DatabaseName, TableName, LogDate desc
+{% endif %}
+
+- name: Export Allocated Utilization per Database
+  connect: source
+  export:
+    file: vhc--allocated_utilization_per_database.csv
+    sql: |
+      select LogDate, DatabaseName
+      ,Avg(Avg_Allocation_Pct) as Avg_Allocation_Pct
+      ,sum(Use_Cnt) as Use_Cnt
+      ,sum(Request_Cnt) as Request_Cnt
+      ,sum(Allocated_CPU) as Allocated_CPU
+      ,sum(Allocated_IOCnt) as Allocated_IOCnt
+      ,sum(Allocated_IOGB) as Allocated_IOGB
+      ,sum(Allocated_CDS_GB) as Allocated_CDS_GB
+      ,max(Table_CurrentPerm_GB) as Table_CurrentPerm_GB
+      from vt_allocated_utilization_per_table
+      group by 1,2
+      order by DatabaseName, LogDate desc
+
+
+# definiton for  alloc_columns  can be found at the top of this document
+{% for alloc_column in alloc_columns %}
+- name: Export TOP 50 most highly utilized databases by {{ alloc_column }}
+  connect: source
+  export:
+    file: vhc--allocated_utilization_top50_databases_{{ alloc_column }}.csv
+    sql: |
+      select top 50 DatabaseName
+      ,sum({{ alloc_column }})(bigint) as "{{ alloc_column | replace("_", " ") }}"
+      ,trim(cast(Avg(Avg_Allocation_Pct) as decimal(9,2))*100) as "Average Allocation Percent"
+      from vt_allocated_utilization_per_table
+      group by 1
+      order by 2 desc
+
+- name: "Chart join frequency volume, with CPU line overlay"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--allocated_utilization_top50_databases_{{ alloc_column }}.csv"
+      - "title:Allocated Utilization - Top 50 Databases - {{ siteid }}"
+      - "height:4"
+      - "width:21"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "legendx:0.5"
+      - "barlogscale:False"
+{% endfor %}
+
+
+
+
+#######################################################
+### Pirated from "Queries by Runtime Bucket" metric
+#######################################################
+{% include 'vt_queries_by_runtime_bucket.j2' %}
+
+- name: "export SUM of Queries by Runtime"
+  connect: source
+  export:
+    file: vhc--queries_by_runtime_bucket_sum.csv
+    sql: |
+      Select
+       LogDate as "Log Date"
+      ,sum("RT < 1 sec"   ) as "RT < 1 sec"
+      ,sum("RT 1-5 sec"   ) as "RT 1-5 sec"
+      ,sum("RT 5-10 sec"  ) as "RT 5-10 sec"
+      ,sum("RT 10-30 sec" ) as "RT 10-30 sec"
+      ,sum("RT 30-60 sec" ) as "RT 30-60 sec"
+      ,sum("RT 1-5 min"   ) as "RT 1-5 min"
+      ,sum("RT 5-10 min"  ) as "RT 5-10 min"
+      ,sum("RT 10-30 min" ) as "RT 10-30 min"
+      ,sum("RT 30-60 min" ) as "RT 30-60 min"
+      ,sum("RT > 1 hour"  ) as "RT > 1 hour"
+      from vt_queries_by_runtime_bucket
+      group by 1
+      order by 1
+
+- name: Chart Queries by Runtime SUM Bucket by Date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--queries_by_runtime_bucket_sum.csv"
+      - "title:Queries by Runtime SUM Bucket - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+- name: "export AVG of Queries by Runtime"
+  connect: source
+  export:
+    file: vhc--queries_by_runtime_bucket_avg.csv
+    sql: |
+      Select
+       LogDate as "Log Date"
+      ,avg("Avg RT < 1 sec"   ) AS "Avg RT < 1 sec"
+      ,avg("Avg RT 1-5 sec"   ) AS "Avg RT 1-5 sec"
+      ,avg("Avg RT 5-10 sec"  ) AS "Avg RT 5-10 sec"
+      ,avg("Avg RT 10-30 sec" ) AS "Avg RT 10-30 sec"
+      ,avg("Avg RT 30-60 sec" ) AS "Avg RT 30-60 sec"
+      ,avg("Avg RT 1-5 min"   ) AS "Avg RT 1-5 min"
+      ,avg("Avg RT 5-10 min"  ) AS "Avg RT 5-10 min"
+      ,avg("Avg RT 10-30 min" ) AS "Avg RT 10-30 min"
+      ,avg("Avg RT 30-60 min" ) AS "Avg RT 30-60 min"
+      ,avg("Avg RT > 1 hour"  ) AS "Avg RT > 1 hour"
+      from vt_queries_by_runtime_bucket
+      group by 1
+      order by 1
+
+- name: Chart Queries by Runtime AVG Bucket by Date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--queries_by_runtime_bucket_avg.csv"
+      - "title:Queries by Runtime AVG Bucket - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+{% if td15 %}
+- name: "export Queries by Runtime by Bucket"
+  connect: source
+  export:
+    file: vhc--queries_by_runtime_bucket_unpivot.csv
+    sql: |
+      select cast('RT < 1 sec'   as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT < 1 sec")   as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 1-5 sec'   as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 1-5 sec")   as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 5-10 sec'  as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 5-10 sec")  as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 10-30 sec' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 10-30 sec") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 30-60 sec' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 30-60 sec") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 1-5 min'   as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 1-5 min")   as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 5-10 min'  as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 5-10 min")  as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 10-30 min' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 10-30 min") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT 30-60 min' as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT 30-60 min") as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+          union all
+      select cast('RT > 1 hour'  as varchar(64)) as Runtime_Bucket
+           , cast(sum("RT > 1 hour")  as bigint) as Request_Count
+      from vt_queries_by_runtime_bucket group by 1
+
+{% else %}
+
+- name: "export Queries by Runtime by Bucket"
+  connect: source
+  export:
+    file: vhc--queries_by_runtime_bucket_unpivot.csv
+    sql: |
+      Select
+       Runtime_Bucket
+      ,sum(cast(Request_Count as bigint)) as Request_Count
+      from vt_queries_by_runtime_bucket
+      unpivot (Request_Count for Runtime_Bucket in
+      (("RT < 1 sec"  ) as 'RT < 1 sec'
+      ,("RT 1-5 sec"  ) as 'RT 1-5 sec'
+      ,("RT 5-10 sec" ) as 'RT 5-10 sec'
+      ,("RT 10-30 sec") as 'RT 10-30 sec'
+      ,("RT 30-60 sec") as 'RT 30-60 sec'
+      ,("RT 1-5 min"  ) as 'RT 1-5 min'
+      ,("RT 5-10 min" ) as 'RT 5-10 min'
+      ,("RT 10-30 min") as 'RT 10-30 min'
+      ,("RT 30-60 min") as 'RT 30-60 min'
+      ,("RT > 1 hour" ) as 'RT > 1 hour')) tmp
+      group by 1
+      order by case
+               when Runtime_Bucket = 'RT < 1 sec'   then 1
+               when Runtime_Bucket = 'RT 1-5 sec'   then 2
+               when Runtime_Bucket = 'RT 5-10 sec'  then 3
+               when Runtime_Bucket = 'RT 10-30 sec' then 4
+               when Runtime_Bucket = 'RT 30-60 sec' then 5
+               when Runtime_Bucket = 'RT 1-5 min'   then 6
+               when Runtime_Bucket = 'RT 5-10 min'  then 7
+               when Runtime_Bucket = 'RT 10-30 min' then 8
+               when Runtime_Bucket = 'RT 30-60 min' then 9
+               when Runtime_Bucket = 'RT > 1 hour'  then 10 end
+{% endif %}
+
+- name: Chart Queries by Runtime by Bucket
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--queries_by_runtime_bucket_unpivot.csv"
+      - "title:Queries by Runtime Bucket - {{ siteid }}"
+      - "height:6"
+      - "width:16"
+      - "xrotate:90"
+
+- name: Chart Queries by Runtime by Bucket, LogScale
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--queries_by_runtime_bucket_unpivot.csv"
+      - "title:Queries by Runtime Bucket - {{ siteid }}"
+      - "height:6"
+      - "width:16"
+      - "xrotate:90"
+      - "barlogscale:True"
+      - "pngfile:queries_by_runtime_unpivot_log.png"
+
+
+
+#######################################################
+### Pirated from the "Feature Usage" Metric
+#######################################################
+{% include "vt_feature_usage.j2" %}
+
+
+# produce list of all Features by count:
+- name: "Create vt_feature_usage_detail for detailed graphing"
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_feature_usage_detail as (
+      with dat as
+          (   select FeatureName
+              ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
+              ,sum(   cast(sum_parsercputime as decimal(38,2))
+                    + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+              ,1 as ActiveFlag
+              from vt_Feature_Usage
+              group by 1)
+      , dim as
+          (
+              select Feature_Name as FeatureName from vt_decode_feature where DBQL_FeatureInfo_Flag = 'Y'
+          )
+      Select
+       coalesce(dat.FeatureName, dim.FeatureName)                  as "Feature"
+      ,cast(coalesce(Average_Daily_Use_Count, 0) as BigInt)        as "Average Daily Use Count"
+      ,cast(coalesce(Average_CPU_Seconds_per_Query, 0) as BigInt)  as "Average CPU Seconds per Query"
+      ,coalesce(dat.ActiveFlag, 0) as ActiveFlag
+      from dat
+      right outer join dim
+       on dim.FeatureName = dat.FeatureName
+      ) with data primary index ("Feature") on commit preserve rows
+
+- name: "Export for charting: ALL detailed ClearScape_Features"
+  connect: source
+  export:
+    file: VHC--feature_usage_x_ClearScapeFeature.csv
+    sql: |
+      select FeatureName
+      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
+      ,sum(   cast(sum_parsercputime as decimal(38,2))
+            + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+      from vt_Feature_Usage
+      where Feature_Category = 'ClearScape'
+      group by 1
+      Order by 2 Desc
+
+- name: "Export for charting: ClearScape SubCategory"
+  connect: source
+  export:
+    file: VHC--feature_usage_x_ClearScape_SubCategory.csv
+    sql: |
+      select Feature_SubCategory
+      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
+      ,sum(   cast(sum_parsercputime as decimal(38,2))
+            + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+      from vt_Feature_Usage
+      where Feature_Category = 'ClearScape'
+      group by 1
+      Order by 2 Desc
+      
+- name: "Export for charting: Unused ClearScape Features"
+  connect: source
+  export:
+    file: VHC--feature_usage_x_Clearscape_Feature_inactive.csv
+    sql: |
+      select FEATURE_NAME as ClearScape_Feature
+      from vt_decode_Feature df
+      where FEATURE_NAME NOT IN (Select FeatureName from vt_Feature_Usage)
+      and Feature_Category = 'ClearScape'
+    
+- name: "Export for charting: ClearScape Queries by Date"
+  connect: source
+  export:
+    file: VHC--feature_usage_x_Clearscape_Queries_By_Date.csv
+    sql: |
+      select LogDate
+      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) as Statement_Count
+      from vt_Feature_Usage
+      where Feature_Category = 'ClearScape'
+      group by 1
+      Order by 1
+      
+- name: "Export for charting: ClearScape CPU by Date"
+  connect: source
+  export:
+    file: VHC--feature_usage_x_Clearscape_CPU_By_Date.csv
+    sql: |
+      select LogDate
+      ,sum(   cast(sum_parsercputime as decimal(38,2))
+            + cast(sum_ampcputime    as decimal(38,2)) ) / sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+      from vt_Feature_Usage
+      where Feature_Category = 'ClearScape'
+      group by 1
+      Order by 1
+      
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature2.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 desc
+
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature3.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 3 desc
+
+
+- name: "Export for charting: ALL detailed Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature.csv
+    sql: Select * from vt_feature_usage_detail order by 2 asc
+
+- name: "Chart for charting: ALL detailed Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--feature_usage_x_Feature.csv"
+      - "title:Average Count Usage by Feature - {{ siteid }}"
+      - "height:25"
+      - "width:5"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+- name: "Chart for charting: all ClearScape ACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:VHC--feature_usage_x_ClearScapeFeature.csv"
+      - "title:Average Count Usage by ClearScape Active Feature - {{ siteid }}"
+      - "height:15"
+      - "width:4"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+- name: "Chart for charting: all ClearScape ACTIVE Features by SubCategory"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:VHC--feature_usage_x_ClearScape_SubCategory.csv"
+      - "title:ClearScape Features By SubCategory - {{ siteid }}"
+      - "height:8.25"
+      - "width:11.25"
+      - "barlogscale:False"
+      - "legendy:1.1"
+
+      
+- name: ClearScape Queries By Date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:VHC--feature_usage_x_Clearscape_Queries_By_Date.csv"
+      - "title:ClearScape Statement Count By Date - {{ siteid }}"
+      - "width:7.5"
+      - "height:6.25"
+      
+- name: ClearScape CPU By Date
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:VHC--feature_usage_x_Clearscape_CPU_By_Date.csv"
+      - "title:ClearScape CPU By Date - {{ siteid }}"
+      - "width:7.5"
+      - "height:6.25"
+      
+      
+- name: "Export for charting: all ACTIVE Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature_active.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 1 order by 2 asc
+
+- name: "Chart for charting: all ACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--feature_usage_x_Feature_active.csv"
+      - "title:Average Count Usage by Active Feature - {{ siteid }}"
+      - "height:20"
+      - "width:5"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+
+- name: "Export for charting: all INACTIVE Features by Name"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_Feature_inactive.csv
+    sql: Select * from vt_feature_usage_detail where ActiveFlag = 0 order by 2 asc
+
+- name: "Chart for charting: all INACTIVE Features by Name"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--feature_usage_x_Feature_inactive.csv"
+      - "title:Average Count Usage by Inactive Feature - {{ siteid }}"
+      - "height:10"
+      - "width:3"
+      - "labelsize:8"
+      - "xcolumns:[1]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"  # disable
+      - "xlabel:"
+      - "ylabel:"
+
+# see creation of list:  feature_columns  at the very beginning of this script
+{% for feature_column in feature_columns %}
+
+- name: "Export for charting: {{ feature_column }}"
+  connect: source
+  export:
+    file: vhc--feature_usage_x_{{ feature_column }}.csv
+    sql: |
+      select {{ feature_column }}
+      ,sum(   cast(Request_Total_Cnt as decimal(38,2)) ) as "Feature Count"
+      ,sum(   cast(sum_parsercputime as decimal(38,2))
+            + cast(sum_ampcputime    as decimal(38,2))
+          ) / nullifzero("Feature Count") as "Average CPU Seconds"
+      from vt_Feature_Usage
+      group by 1
+      order by 2 desc
+
+
+- name: "Chart (linear): {{ feature_column }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--feature_usage_x_{{ feature_column }}.csv"
+      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
+      - "height:5"
+      - "width:9"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:vhc--feature_usage_x_{{ feature_column }}_linear.png"
+
+- name: "Chart (log): {{ feature_column }}"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:vhc--feature_usage_x_{{ feature_column }}.csv"
+      - "title:Feature Score by {{ feature_column }} - {{ siteid }}"
+      - "height:5"
+      - "width:9"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "pngfile:vhc--feature_usage_x_{{ feature_column }}_log.png"
+      - "logscale:true"
+
+{% endfor %}
+
+
+
+
+# if full VHC (not on-a-page)
+- name: PPTx final build for Vantage Health Check (v4.2)
+  ppt:
+    file: ppt/Vantage Health Check v4.2.pptx
+
+{% else %}
+
+# if VHC-on-a-page
+- name: PPTx final build for Vantage Health Check On-a-Page (v4.2)
+  ppt:
+    file: ppt/Vantage Health Check On a Page.pptx
+
+{% endif %}
+
+
+
+
+
+## End TCA
+{% endif %}
