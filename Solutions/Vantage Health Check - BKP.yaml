@@ -1347,42 +1347,6 @@ tasks:
       - colors:[white,green,yellow,red]
       - heatmapmin:0
       - heatmapmax:100
-      
-      
-- name: Export System Peak CPU for Heatmap
-  connect: source
-  export:
-    file: vhc--system_peak_cpu_by_day_heatmap.csv
-    sql: |
-      select
-        "LogDate"
-        ,"Hour"
-        ,Max("CPU Use%")
-      From  
-          (select
-           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-          ,LogHr as "Hour"
-          ,LogMin as "Minute"
-          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
-          from vt_System_CPU_by_Day
-          group by 1,2,3)vt_System_CPU_by_Day
-      group by 1,2
-      order by 1,2
-
-- name: Chart System Peak CPU - Heatmap Days x Hour
-  chart:
-    command: chart/heatmap_xLabel_yLabel_Values.py
-    params:
-      - csvfilepath:vhc--system_peak_cpu_by_day_heatmap.csv
-      - pngfilepath:vhc--system_peak_cpu_by_day_heatmap.png
-      - title:System Peak CPU - {{ siteid }}
-      - height:6
-      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
-      - annotate:{{ annotate_chart | default('True') }}
-      - heatmapcolorcount:4
-      - colors:[white,green,yellow,red]
-      - heatmapmin:0
-      - heatmapmax:100
 
 
 - name: Export System CPU for Heatmap, COD Adjusted
@@ -1413,40 +1377,7 @@ tasks:
       - heatmapmin:0
       - heatmapmax:100
 
-- name: Export System Peak CPU for Heatmap, COD Adjusted
-  connect: source
-  export:
-    file: vhc--system_peak_cpu_by_day_heatmap_wCOD.csv
-    sql: |
-      select
-        "LogDate"
-        ,"Hour"
-        ,Max("CPU Use%")
-      From
-          (select
-           cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-          ,LogHr as "Hour"
-          ,LogMin as "Minute"
-          ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_COD_Active_Total) * 100 as decimal(18,2)) as "CPU Use%"
-          from vt_System_CPU_by_Day
-          group by 1,2,3)vt_System_CPU_by_Day
-      group by 1,2
-      order by 1,2
 
-- name: Chart System Peak CPU - Heatmap Days x Hour, COD Adjusted
-  chart:
-    command: chart/heatmap_xLabel_yLabel_Values.py
-    params:
-      - csvfilepath:vhc--system_peak_cpu_by_day_heatmap_wCOD.csv
-      - pngfilepath:vhc--system_peak_cpu_by_day_heatmap_wCOD.png
-      - title:System Peak CPU - {{ siteid }}
-      - height:6
-      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
-      - annotate:{{ annotate_chart | default('True') }}
-      - heatmapcolorcount:4
-      - colors:[white,green,yellow,red]
-      - heatmapmin:0
-      - heatmapmax:100
 
 - name: Export System CPU by Day of Week for HeatMap
   connect: source
@@ -1477,42 +1408,6 @@ tasks:
       - heatmapmin:0
       - heatmapmax:100
 
-- name: Export System Peak CPU by Day of Week for HeatMap
-  connect: source
-  export:
-    file: vhc--system_peak_cpu_by_dayofweek_heatmap.csv
-    sql: |
-      select
-        "Day of the Week"
-        ,"Hour"
-        ,Max("CPU Use%")
-      From
-          (Select
-           cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
-          ,LogHr as "Hour"
-          ,LogMin as "Minute"
-          ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
-          from vt_System_CPU_by_Day
-          group by 1,2,3)vt_System_CPU_by_Day
-      group by 1,2
-      order by 1,2   
-      
-
-- name: Chart System Peak CPU - Heatmap Day of Week x Hour
-  chart:
-    command: chart/heatmap_xLabel_yLabel_Values.py
-    params:
-      - csvfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap.csv
-      - pngfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap.png
-      - title:System Peak CPU - {{ siteid }}
-      - height:6
-      - width:3
-      - annotate:{{ annotate_chart | default('True') }}
-      - heatmapcolorcount:4
-      - colors:[white,green,yellow,red]
-      - xslice:[1,0]
-      - heatmapmin:0
-      - heatmapmax:100
 
 - name: Export System CPU by Day of Week for HeatMap, COD Adjusted
   connect: source
@@ -1544,41 +1439,7 @@ tasks:
       - heatmapmax:100
 
 
-- name: Export System Peak CPU by Day of Week for HeatMap, COD Adjusted
-  connect: source
-  export:
-    file: vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.csv
-    sql: |
-      select
-        "Day of the Week"
-        ,"Hour"
-        ,Max("CPU Use%")
-      From      
-          (Select
-           cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
-          ,LogHr as "Hour"
-          ,LogMin as "Minute"
-          ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_COD_Active_Total) * 100 as decimal(18,2)) as "CPU Use%"
-          from vt_System_CPU_by_Day
-          group by 1,2,3)vt_System_CPU_by_Day
-      group by 1,2
-      order by 1,2 
 
-- name: Chart System Peak CPU - Heatmap Day of Week x Hour, COD Adjusted
-  chart:
-    command: chart/heatmap_xLabel_yLabel_Values.py
-    params:
-      - csvfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.csv
-      - pngfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.png
-      - title:System Peak CPU - {{ siteid }}
-      - height:6
-      - width:3
-      - annotate:{{ annotate_chart | default('True') }}
-      - heatmapcolorcount:4
-      - colors:[white,green,yellow,red]
-      - xslice:[1,0]
-      - heatmapmin:0
-      - heatmapmax:100
 
 #######################################################
 ### Pirated from the "System IO" Metric
@@ -2281,7 +2142,7 @@ tasks:
       where Feature_Category = 'ClearScape'
       group by 1
       Order by 2 Desc
-      
+
 - name: "Export for charting: Unused ClearScape Features"
   connect: source
   export:
@@ -2291,7 +2152,7 @@ tasks:
       from vt_decode_Feature df
       where FEATURE_NAME NOT IN (Select FeatureName from vt_Feature_Usage)
       and Feature_Category = 'ClearScape'
-    
+
 - name: "Export for charting: ClearScape Queries by Date"
   connect: source
   export:
@@ -2303,7 +2164,7 @@ tasks:
       where Feature_Category = 'ClearScape'
       group by 1
       Order by 1
-      
+
 - name: "Export for charting: ClearScape CPU by Date"
   connect: source
   export:
@@ -2316,7 +2177,7 @@ tasks:
       where Feature_Category = 'ClearScape'
       group by 1
       Order by 1
-      
+
 - name: "Export for charting: ALL detailed Features by Name"
   connect: source
   export:
@@ -2377,7 +2238,7 @@ tasks:
       - "barlogscale:False"
       - "legendy:1.1"
 
-      
+
 - name: ClearScape Queries By Date
   chart:
     command: chart/line_xDate_yElse.py
@@ -2386,7 +2247,7 @@ tasks:
       - "title:ClearScape Statement Count By Date - {{ siteid }}"
       - "width:7.5"
       - "height:6.25"
-      
+
 - name: ClearScape CPU By Date
   chart:
     command: chart/line_xDate_yElse.py
@@ -2395,8 +2256,8 @@ tasks:
       - "title:ClearScape CPU By Date - {{ siteid }}"
       - "width:7.5"
       - "height:6.25"
-      
-      
+
+
 - name: "Export for charting: all ACTIVE Features by Name"
   connect: source
   export:
