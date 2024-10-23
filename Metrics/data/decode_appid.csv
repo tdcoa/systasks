@@ -8,6 +8,7 @@ Like,TECHALERT.CLIENT.SERVICE%,TECHALERT.CLIENT.SERVICE,Support,Teradata,1101002
 Like,TERADATA_Database_CHECK%,TERADATA_Database_CHECK,Support,Teradata,110525210,Transcend
 Like,MICROSOFT.POWERBI.ENTERPRISE%,Power BI,Analytics,Microsoft,111600083,Transcend
 Like,Microsoft.MASHUP.CONTAINER%,Power BI,Analytics,Microsoft,112433082,Transcend
+Like,MICROSOFT.POWERBI.DATAMOVEMENT%,Power BI,Analytics,Microsoft,112433083,Transcend
 Like,PreViewProcessingService%,SQL Server,Load/Transform,Microsoft,113433088,Transcend
 Like,ReportingServicesService%,SQL Server,Load/Transform,Microsoft,113433089,Transcend
 Like,WINDOWSFORMSAPPLICATION%,Visual Studio,Application,Microsoft,114000107,Transcend
@@ -73,6 +74,12 @@ Like,TPTUPD%,TPT Update,Load/Transform,Teradata,135825215,Transcend
 Like,VECOMP%,Visual Explain,Support,Teradata,135825220,Transcend
 Like,CLARITYDATATRANSFERService%,Clarity Load/Transform,Analytics,Clarity,137100019,Transcend
 Like,KREFERENCEDATAPURGEUTILITY%,Kalido MDM,Load/Transform,Magnitude,137100063,Transcend
+Like,KREFDATAPP%,Kalido MDM,Load/Transform,Magnitude,137100064,Transcend
+Like,KREFDATALDR%,Kalido MDM,Load/Transform,Magnitude,137100065,Transcend
+Like,KMTBUILD%,Kalido MDM,Load/Transform,Magnitude,137100066,Transcend
+Like,KOFFLINEDELETE%,Kalido MDM,Load/Transform,Magnitude,137100067,Transcend
+Like,KATTRBUILD%,Kalido MDM,Load/Transform,Magnitude,137100068,Transcend
+Like,KUNIFIEDLOADCONTROLLER%,Kalido MDM,Load/Transform,Magnitude,137100069,Transcend
 Like,IMPADMIN%,Cognos Business Intelligence,Analytics,IBM,137133040,Transcend
 Like,PMDESIGN%,Informatica,Load/Transform,Informatica,137133051,Transcend
 Like,MSACCESS%,Access,Application,Microsoft,137133071,Transcend
@@ -221,6 +228,7 @@ Like,Airflow%,Airflow,Application,Apache,225100010,Transcend
 Like,BRIOQRY%,BrioQry,Analytics,Brio,225100018,Transcend
 Like,DBEAVER%,Universal Database Client,Analytics,DBeaver,225100022,Transcend
 Like,ADEPTRA%,Adeptra,Analytics,FICO,225100028,Transcend
+Like,ACLDA32%,ACL for Win,Analytics,Highbond,225100035,Transcend
 Like,ACLDA64%,ACL for Win,Analytics,Highbond,225100034,Transcend
 Like,MXSTASK%,Kalido MDM,Load/Transform,Magnitude,225100066,Transcend
 Like,PHANTOM%,PhantomBuster CRM,Analytics,PhantomBuster,225100137,Transcend
@@ -261,3 +269,7 @@ Like,%FCPROC%,Business Objects,Analytics,SAP,1241766157,Transcend
 Like,%PENTAHO.%,Pentaho Data Integration,Load/Transform,Hitachi,1300100035,Transcend
 Like,%ANACONDA%,Python,Analytics,Python.org,1300100139,Transcend
 Like,%PYT,Python,Analytics,Python.org,1350100140,Transcend
+Like,CRANBERRYSERVICE64%,Syniti Knowledge Platform,Application,Syniti,1350100141,Transcend
+Like,UIPATH.EXECUTOR%,UiPath Business Automation Platform,Application,UIPath,1350100142,Transcend
+Like,STATAMP%,Stata,Analytics,StataCorp,1350100143,Transcend
+Like,CAS%,CAS Discovery Platform,Analytics,CAS ,1350100144,Transcend

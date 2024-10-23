@@ -186,7 +186,7 @@
             {% if 'LogTS' in run.included %}
             ,cast(cast(cast(starttime as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
             {% endif %}
-            ,AppID ,StatementType, Statements, 1 as Query_Flag, StatementGroup
+            ,REGEXP_REPLACE(appid, '[^a-zA-Z0-9\s.;:_]', '', 1, 0, 'i') as AppID ,StatementType, Statements, 1 as Query_Flag, StatementGroup
             {{ ',WDName AS Workload_Definition' if 'Workload_Definition' in run.included }}
             ,UserName, ErrorCode, Abortflag, LSN
             ,cast(HashAmp()+1 as Integer) as Total_AMPs
@@ -461,7 +461,7 @@
              {% if 'LogTS' in run.included %}
              ,cast(cast(cast(CollectTimeStamp as format 'YYYY-MM-DDBHH') AS CHAR(13)) || ':00:00' as timestamp(0))  as LogTS
              {% endif %}
-            ,AppID, QueryCount as Statements, 1 as Query_Flag, {{ "'Summary Queries'" if td15 else "UserName" }} as UserName, 0 as ErrorCode, '' as Abortflag, 0 as LSN
+            ,REGEXP_REPLACE(appid, '[^a-zA-Z0-9\s.;:_]', '', 1, 0, 'i') as AppID, QueryCount as Statements, 1 as Query_Flag, {{ "'Summary Queries'" if td15 else "UserName" }} as UserName, 0 as ErrorCode, '' as Abortflag, 0 as LSN
 
             /* ====== ENHANCED FIELDS ======= */
             ,cast(HashAmp()+1 as Integer) as Total_AMPs
