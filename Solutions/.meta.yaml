@@ -35,3 +35,7 @@ tasklists:
   Upload to Transcend - GSSResUsage Sizing Data:
     tags: [gss]
     doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_GSSResUsage_Sizing_Data.aspx
+
+  Vantage Health Check - Trends:
+    doc: https://teradata.sharepoint.com/:u:/r/teams/SalesTech/COA/docs/SitePages/Vantage-Health-Check-Trends.aspx
+    tags: [demo]

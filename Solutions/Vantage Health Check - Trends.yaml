@@ -13,7 +13,18 @@ version: 1.0
 {% set enddate   = 'DATE-1'    if enddate   is not defined else enddate %}
 {% set export_detail = False   if export_detail is not defined else export_detail %}
 {% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
+{% set   wlm_cod_cpu = 1.0000    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
+{% set    pm_cod_cpu = 1.0000    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
+{% set  epod_cod_cpu = 1.0000    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
+{% set full_cod_cpu = (wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu) | round(6) %}
+{% set workload_cod_cpu = (wlm_cod_cpu * epod_cod_cpu) | round(6) %}
 
+{% set    wlm_cod_io = 1.0000    if    wlm_cod_io is not defined else  wlm_cod_io   %}
+{% set   epod_cod_io = 1.0000    if   epod_cod_io is not defined else epod_cod_io   %}
+{% set workload_cod_io = wlm_cod_io * epod_cod_io | round(6) %}
+{% set full_cod_io = workload_cod_io %}
+
+{% set td15 = True if tdver[:2]=='15' else False %}
 
 tasks:
 
@@ -61,7 +72,19 @@ tasks:
        ,'{{ tca }}'              as TCA
        from (sel 1 one ) a
 
-
+- name: "Retrieve COD limit"
+  connect: source
+  export:
+    file: oap--COD.csv
+    sql: |
+         SELECT 'CPULimit',  trim(cast(CPULimit as decimal(9,2))) as CPULimit  FROM (Select {{ full_cod_cpu | default(1.0) }} * 100 as CPULimit) As d
+         union all
+         SELECT 'IOLimit',  trim(cast(IOLimit as decimal(9,2))) as IOLimit FROM (Select {{ full_cod_io | default(1.0) }} * 100 as IOLimit) As d
+         union all
+         SELECT '# Nodes', cast(count(distinct nodeid) as varchar(16)) FROM dbc.resusagespma where TheDate = current_date
+         union all
+         SELECT * from (SELECT '# AMPs' as label, cast(HASHAMP() + 1 as varchar(16)) as total_amps) x
+         order by 1
 
 ### -- TCA Not implemented yet:
 {% if tca %}
@@ -78,7 +101,7 @@ tasks:
     file: vhc--intro.csv
     sql: Select * from vt_site_info
     
-{% include "vt_disk_space.j2" %}
+{% include "vt_disk_space_trends.j2" %}
 
 - name: Export disk space Monthly summary - VHC
   connect: source
@@ -88,13 +111,15 @@ tasks:
       select
        TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
       ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2)) as varchar(32)) as "Max Available Space(TB)" --For Chart
       ,cast(cast(avg(System_CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)"
+      ,cast(cast(avg(System_CurrentPerm_GB)/1024 as Decimal(18,2)) as varchar(32)) as "Used Space(TB)" --For Chart
       ,cast(cast(
        (cast(avg(System_CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
-       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+       as Decimal(18,4) format 'Z99.9%') as varchar(32)) "Filled Percent"
       from(
           Select LogDate
-          ,Avg(System_CurrentPerm_GB) as System_CurrentPerm_GB
+          ,Avg(Table_CurrentPerm_GB_New) as System_CurrentPerm_GB
           ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
           from vt_disk_space
           group by LogDate) a
@@ -111,7 +136,7 @@ tasks:
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Max Available Space (TB),Used Space (TB)" 
+      - "bar_columns:Max Available Space(TB),Used Space(TB)" 
       - "bar_colors:#4E95D9,#E97132"
 
 - name: Export disk space Quarterly summary - VHC
@@ -122,13 +147,15 @@ tasks:
       select
        cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
       ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Max Available Space (TB)"
+      ,cast(cast(avg(System_MaxPerm_GB)/1024     as decimal(18,2)) as varchar(32)) as "Max Available Space(TB)" --For Chart
       ,cast(cast(avg(System_CurrentPerm_GB)/1024 as Decimal(18,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) as "Used Space (TB)"
+      ,cast(cast(avg(System_CurrentPerm_GB)/1024 as Decimal(18,2)) as varchar(32)) as "Used Space(TB)" --For Chart
       ,cast(cast(
        (cast(avg(System_CurrentPerm_GB) as Decimal(18,4)) / nullifzero(cast(avg(System_MaxPerm_GB) as Decimal(18,4))))*100
-       as Decimal(18,4) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32)) "Filled Percent"
+       as Decimal(18,4) format 'Z99.9%') as varchar(32)) "Filled Percent"
       from(
           Select LogDate
-          ,Avg(System_CurrentPerm_GB) as System_CurrentPerm_GB
+          ,Avg(Table_CurrentPerm_GB_New) as System_CurrentPerm_GB
           ,Avg(System_MaxPerm_GB) as System_MaxPerm_GB
           from vt_disk_space
           group by LogDate) a
@@ -145,7 +172,7 @@ tasks:
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Max Available Space (TB),Used Space (TB)" 
+      - "bar_columns:Max Available Space(TB),Used Space(TB)" 
       - "bar_colors:#4E95D9,#E97132"
 
 
@@ -185,7 +212,7 @@ tasks:
     params:
       - csvfilepath:vhc--system_monthly_cpu_heatmap.csv
       - pngfilepath:vhc--system_monthly_cpu_heatmap.png
-      - title:Monthly CPU Heatmap - {{ siteid }}
+      - title:Monthly CPU Usage% Heatmap - {{ siteid }}
       - height:6
       - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
@@ -201,7 +228,8 @@ tasks:
     sql: |
       select
         cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
-        ,cast(avg("CPU Use%") as decimal (18,2)) as "Avg_CPU_Use%"
+        ,cast(avg("CPU Use%") as decimal (18,1)) as "Avg_CPU_Use%"
+        ,Cast({{ full_cod_cpu | default(1.0) }} * 100 as decimal (18,1)) as "CPU_Available" 
       From
           (select
            cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
@@ -217,12 +245,13 @@ tasks:
     params:
       - "csvfile:vhc--system_quarterly_cpu_summary.csv"
       - "x_column:Quarter"
-      - "title:Quarterly CPU Summary - {{ siteid }}"
+      - "title:Quarterly CPU Usage Summary - {{ siteid }}"
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Avg_CPU_Use%" 
-      - "bar_colors:#4E95D9"
+      - "bar_columns:CPU_Available,Avg_CPU_Use%" 
+      - "bar_colors:#4E95D9,#E97132"
+      - "show_percentage:true"
 
 - name: Export System Monthly CPU Summary
   connect: source
@@ -231,7 +260,8 @@ tasks:
     sql: |
       select
         TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
-        ,cast(avg("CPU Use%") as decimal (18,2)) as "Avg_CPU_Use%"
+        ,cast(avg("CPU Use%") as decimal (18,1)) as "Avg_CPU_Use%"
+        ,Cast({{ full_cod_cpu | default(1.0) }} * 100 as decimal (18,1)) as "CPU_Available" 
       From
           (select
            LogDate
@@ -247,12 +277,13 @@ tasks:
     params:
       - "csvfile:vhc--system_monthly_cpu_summary.csv"
       - "x_column:Month_Year"
-      - "title:Monthly CPU Summary - {{ siteid }}"
+      - "title:Monthly CPU Usage Summary - {{ siteid }}"
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Avg_CPU_Use%" 
-      - "bar_colors:#4E95D9"
+      - "bar_columns:CPU_Available,Avg_CPU_Use%" 
+      - "bar_colors:#4E95D9,#E97132"
+      - "show_percentage:true"
 
 - name: Export System Daily CPU Comparison
   connect: source
@@ -301,7 +332,7 @@ tasks:
     params:
       - csvfilepath:vhc--system_monthly_io_heatmap.csv
       - pngfilepath:vhc--system_monthly_io_heatmap.png
-      - title:Monthly IO Heatmap - {{ siteid }}
+      - title:Monthly IO Busy % Heatmap - {{ siteid }}
       - height:6
       - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
@@ -318,6 +349,7 @@ tasks:
       select
         cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
         ,cast(avg("IO Busy%") as decimal (18,2)) as "Avg_IO_Busy%"
+        ,Cast({{ full_cod_io | default(1.0) }} * 100 as decimal (18,1)) as "IO_Limit" 
       From
           (select
            cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
@@ -333,12 +365,13 @@ tasks:
     params:
       - "csvfile:vhc--system_quarterly_io_summary.csv"
       - "x_column:Quarter"
-      - "title:Quarterly IO Summary - {{ siteid }}"
+      - "title:Quarterly IO Busy Summary - {{ siteid }}"
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Avg_IO_Busy%" 
-      - "bar_colors:#4E95D9"
+      - "bar_columns:IO_Limit,Avg_IO_Busy%" 
+      - "bar_colors:#4E95D9,#E97132"
+      - "show_percentage:true"
       
 
 - name: Export System Monthly IO Summary
@@ -349,6 +382,7 @@ tasks:
       select
         TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year
         ,cast(avg("IO Busy%") as decimal (18,2)) as "Avg_IO_Busy%"
+        ,Cast({{ full_cod_io | default(1.0) }} * 100 as decimal (18,1)) as "IO_Limit" 
       From
           (select
            LogDate
@@ -364,12 +398,13 @@ tasks:
     params:
       - "csvfile:vhc--system_monthly_io_summary.csv"
       - "x_column:Month_Year"
-      - "title:Monthly IO Summary - {{ siteid }}"
+      - "title:Monthly IO Busy Summary - {{ siteid }}"
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Avg_IO_Busy%" 
-      - "bar_colors:#4E95D9"
+      - "bar_columns:IO_Limit,Avg_IO_Busy%" 
+      - "bar_colors:#4E95D9,#E97132"
+      - "show_percentage:true"
       
 
 - name: Export System Daily IO Comparison
@@ -402,12 +437,16 @@ tasks:
     sql: |
       select TO_CHAR(LogDate, 'YYYY-MM') AS Month_Year      
       ,count(distinct LogDate) as LogDayCnt
-      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Statements (M)"
-      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Queries (M)"
-      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Stmts Per Day (M)"
-      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Qry Per Day (M)"
-      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Stmts Per Month (M)"
-      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Qry Per Month (M)"
+      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Total Statements (M)"
+      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Statements(M)" --For Chart
+      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Total Queries (M)"
+      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Queries(M)" --For Chart
+      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Avg Stmts Per Day (M)"
+      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Avg Qry Per Day(M)" --For Chart
+      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Avg Stmts Per Month (M)"
+      ,cast(cast(sum(Statement_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Stmts Per Month(M)" --For Chart
+      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Avg Qry Per Month (M)"
+      ,cast(cast(sum(Query_Total_Cnt)/LogDayCnt * 30 as decimal(18,2)) /1000000 as decimal(18,2)) as "Avg Qry Per Month(M)" --For Chart
       from vt_dbql_core
       group by 1
       order by 1 
@@ -422,9 +461,9 @@ tasks:
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Total Statements (M),Total Queries (M)" 
+      - "bar_columns:Total Statements(M),Total Queries(M)" 
       - "bar_colors:#4E95D9,#E97132"
-      - "line_columns:Avg Stmts Per Month (M),Avg Qry Per Month (M)" 
+      - "line_columns:Avg Stmts Per Month(M),Avg Qry Per Month(M)" 
       - "line_colors:#4DA32F,#F2B800"
       
 - name: Export Activity count Quarterly Summary
@@ -433,8 +472,10 @@ tasks:
     file: vhc--activity_counts_quarterly_summary.csv
     sql: |
       select cast(extract(year from LogDate) as varchar(4)) || '-Q' || cast(((extract(month from LogDate) - 1) / 3 + 1) as varchar(1)) as "Quarter"
-      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Statements (M)"
-      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Queries (M)"
+      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Total Statements (M)"
+      ,cast(cast(sum(Statement_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Statements(M)" --For Chart
+      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2))(FORMAT 'ZZZ,ZZZ,ZZ9.99') as "Total Queries (M)"
+      ,cast(cast(sum(Query_Total_Cnt) as decimal(18,2)) /1000000 as decimal(18,2)) as "Total Queries(M)" --For Chart
       from vt_dbql_core
       group by 1
       order by 1 
@@ -449,7 +490,7 @@ tasks:
       - "height:6"
       - "width:12"
       - "save:True" 
-      - "bar_columns:Total Statements (M),Total Queries (M)" 
+      - "bar_columns:Total Statements(M),Total Queries(M)" 
       - "bar_colors:#4E95D9,#E97132"
       
 ### Release Spool:
