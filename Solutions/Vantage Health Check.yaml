@@ -1215,14 +1215,14 @@ tasks:
 - name: Export System CPU for Chart
   connect: source
   export:
-    file: vhc--system_cpu_by_day.csv
+    file: vhc--system_cpu_by_day.csv #CPU Consumed % of Full Platform Available (No COD)
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,cast(sum(CPU_Idle   ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Idle %--#EFEFEF"
-      ,cast(sum(CPU_IOWait ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#C39BD3"
-      ,cast(sum(CPU_OS     ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
-      ,cast(sum(CPU_DBS    ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
-      ,cast(sum(CPU_Total  ) as decimal(38,4)) / cast(sum(CPU_Total) as decimal(38,4)) * 100 as "CPU Total %--#F01D1D"
+      ,cast(sum(CPU_Full_Idle   ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU Idle %--#EFEFEF"
+      ,cast(sum(CPU_Full_IOWait ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU IOWait %--#C39BD3"
+      ,cast(sum(CPU_Full_OS     ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU OS %--#43A9BD"
+      ,cast(sum(CPU_Full_DBS    ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU DBS %--#142CF6"
+      ,cast(sum(CPU_Full_Total  ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100 as "CPU Total %--#F01D1D"
       ,cast(max(CPU_COD_Total_Active_Pct) as decimal(38,4)) * 100 as "CPU Total Available %--#9C0A0A"
       from vt_System_CPU_by_Day
       group by 1
@@ -1258,9 +1258,9 @@ tasks:
     file: vhc--system_cpu_by_day_wCOD.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,cast(sum(CPU_Full_IOWait ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU IOWait %--#C39BD3"
-      ,cast(sum(CPU_Full_OS     ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU OS %--#43A9BD"
-      ,cast(sum(CPU_Full_DBS    ) as decimal(38,4)) / cast(sum(CPU_Full_Total) as decimal(38,4)) * 100.00 as "CPU DBS %--#142CF6"
+      ,cast(sum(CPU_Full_IOWait ) as decimal(38,4)) / cast(sum(CPU_COD_Active_Total) as decimal(38,4)) * 100.00 as "CPU IOWait %--#C39BD3"
+      ,cast(sum(CPU_Full_OS     ) as decimal(38,4)) / cast(sum(CPU_COD_Active_Total) as decimal(38,4)) * 100.00 as "CPU OS %--#43A9BD"
+      ,cast(sum(CPU_Full_DBS    ) as decimal(38,4)) / cast(sum(CPU_COD_Active_Total) as decimal(38,4)) * 100.00 as "CPU DBS %--#142CF6"
       from vt_System_CPU_by_Day
       group by 1
       order by 1
@@ -1328,7 +1328,7 @@ tasks:
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
       ,LogHr as "Hour"
-      ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      ,cast(cast(sum(CPU_Full_DBS + CPU_Full_OS ) as decimal(38,4)) / sum(CPU_Full_Total) * 100 as decimal(18,2)) as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
       order by 1,2
@@ -1363,7 +1363,7 @@ tasks:
            cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
           ,LogHr as "Hour"
           ,LogMin as "Minute"
-          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          ,cast(cast(sum(CPU_DBS + CPU_OS ) as decimal(38,4)) / sum(CPU_Full_Total) * 100 as decimal(18,2)) as "CPU Use%"
           from vt_System_CPU_by_Day
           group by 1,2,3)vt_System_CPU_by_Day
       group by 1,2
@@ -1456,7 +1456,7 @@ tasks:
       Select
        cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
       ,LogHr as "Hour"
-      ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+      ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Full_Total) * 100 as decimal(18,2)) as "CPU Use%"
       from vt_System_CPU_by_Day
       group by 1,2
       order by 1,2
@@ -1491,7 +1491,7 @@ tasks:
            cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
           ,LogHr as "Hour"
           ,LogMin as "Minute"
-          ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Total) * 100 as decimal(18,2)) as "CPU Use%"
+          ,cast(cast(sum(CPU_DBS + CPU_OS) as decimal(38,4)) / sum(CPU_Full_Total) * 100 as decimal(18,2)) as "CPU Use%"
           from vt_System_CPU_by_Day
           group by 1,2,3)vt_System_CPU_by_Day
       group by 1,2
