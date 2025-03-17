@@ -29,7 +29,7 @@ tasks:
     files: ["{{dirs.systasks}}/Metrics/messages/No_TCA.txt"]
 {% else %}
 
-
+{% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
 {% set export_all = True if export_all is not defined else export_all %}
 {% set chart = True if chart is not defined else chart %}
