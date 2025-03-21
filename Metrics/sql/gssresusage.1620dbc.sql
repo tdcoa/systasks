@@ -46,7 +46,7 @@
 -- enddate: {{ enddate }}
 
 CREATE VOLATILE MULTISET TABLE vt_gssresusage_prework as (
-/* gss_resusage_td1620-R004 */
+/* gss_resusage_td1620-R006 */
 sel
 'TD16v2.0' (named "Version")
 ,spma_dt.LogDate (named "LogDate")
@@ -70,6 +70,8 @@ end (Named "AMPS")
 ,WM_COD (Named "WMCOD")
 ,IO_COD (Named "IOCOD")
 
+,extract(minute from "Timestamp") (named "Minute01")
+,extract(second from "Timestamp") (named "Seconds00")
 ,spma_dt.TDEnabledCPUs (named "ETcoreCPUs")
 ,diskspacev_dt.SumCurrPerm (named "SumCurrPerm")
 ,diskspacev_dt.SumMaxPerm (named "SumMaxPerm")
@@ -94,8 +96,8 @@ end) ) as decimal(5,2)) (named "NodeCPUPower")
 
 ,NodeCPUPower * NumNodes * AvgCPUBusy / 100 (format 'ZZ,ZZ9.9') (Named "ConsumedCPUPower")
 
-,case when CPUs/2 < (.2 * (ConsumedTCPU) + .8 * (ConsumedTIO / 350 / CPUs / 2)) then CPUs/2 
-	else (.2 * (ConsumedTCPU) + .8 * (ConsumedTIO / 350 / CPUs / 2)) 
+,case when CPUs/2 < (.2 * (ConsumedTCPU) + .8 * (ConsumedTIO / 350 / CPUs / 2)) then CPUs/2
+	else (.2 * (ConsumedTCPU) + .8 * (ConsumedTIO / 350 / CPUs / 2))
 	end (named "ConsumedTCore")
 
 ,NumNodes * CPUs / 2 * AvgCPUBusy / 100 (format 'ZZ,ZZ9.9') (Named "ConsumedTCPU")
@@ -182,8 +184,8 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,sum(LogSpoolDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "LogSpoolDBSecNode_SVPR")
 ,sum(LogSpoolCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "LogSpoolCISecNode_SVPR")
 
-,sum(PhySpoolCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolDBSecNode_SVPR")
-,sum(PhySpoolDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")
+,sum(PhySpoolDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolDBSecNode_SVPR")
+,sum(PhySpoolCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")
 ,sum(PhyPermDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhyPermDBSecNode_SVPR")
 ,sum(PhyPermCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhyPermCISecNode_SVPR")
 
@@ -224,7 +226,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 ,sum(FCRRequests) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "CylReadRequestsSecNode_SVPR")
 ,sum(SuccessfulFCRs) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "CylReadSecNode_SVPR")
-,sum(FCRBlocksRead) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "FCRBlocksRead")(named "CylReadBlocksSecNode_SVPR")
+,sum(FCRBlocksRead) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "CylReadBlocksSecNode_SVPR")
 ,sum(FCRDeniedThresh) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9') (named "CylReadDenThrSecNode_SVPR")
 ,sum(FCRDeniedCache)  / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "CylReadDenCacheSecNode_SVPR")
 
@@ -337,7 +339,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,max(TotalAMPCPUBusy) / CPUs / RSSInterval (format 'ZZ9.9') (named "MaxAMPCPUBusy")
 ,sum(TotalGTW_PECPUBusy) / NumNodes / CPUs / RSSInterval (format 'ZZ9.9') (named "AvgGTW_PECPUBusy")
 ,max(TotalGTW_PECPUBusy) / CPUs / RSSInterval (format 'ZZ9.9') (named "MaxGTW_PECPUBusy")
- 
+
 /* VH Cache */
 
 ,sum(VHAgedOut) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "AvgVHAgedOut_SVPR")
@@ -371,19 +373,19 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,zeroifnull(PctCPUComp) / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) (named "TtlTCPUComp_Est1")
 ,zeroifnull(PctCPUUnComp) / 100 * NumNodes  * CPUs / 2 / (PMCOD / 100)   (named "TtlTCPUUnComp_Est1")
 
-,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2") 
-,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2") 
+,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2")
+,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2")
 
-,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3") 
-,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3") 
+,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3")
+,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3")
 
 ,zeroifnull(sum(CompCPUMS) / NumNodes / RSSInterval / nullifzero(PreCompMBSecNode_SVPR))  (named "CPUMSMBComp")
 ,zeroifnull(sum(UnCompCPUMS) / NumNodes / RSSInterval / nullifzero(PostUnCompMBSecNode_SVPR))  (named "CPUMSMBUnComp")
 
 /* NCS Node sizing */
 
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes") 
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode") 
+,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes")
+,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode")
 ,MaxGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "MaxTCPUForNCSNode")
 
 ,sum(NtwReadKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgNtwReadMBSecNode")
@@ -397,7 +399,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 from dbc.dbcinfo info,
 (
-sel 
+sel
 sum(CurrentPerm) (named "SumCurrPerm")
 ,sum(MaxPerm) (named "SumMaxPerm")
 ,sum(PeakSpool) (named "SumPeakSpool")
@@ -410,8 +412,8 @@ FROM DBC.DiskSpaceV
 sel
 thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,thedate (format 'EEE') (named "LogDay")
-,cast(thetime as int) / 1000 * 1000   (format '99:99:99') (named "LogTime")
-,600 (named "SPMAInterval")
+,cast(thetime as int) / 10 * 10      (format '99:99:99') (named "LogTime")
+,Secs (named "SPMAInterval")
 ,NodeID
 ,NodeType
 ,vproc1
@@ -479,8 +481,8 @@ group by 1,2,3,4,5,6,7,8,9,10,11,12,13
 (
 sel
 thedate (format 'yyyy-mm-dd')(named "LogDate")
-,cast(thetime as int) / 1000 * 1000      (format '99:99:99') (named "LogTime")
-,600 (named "SVPRInterval")
+,cast(thetime as int) / 10 * 10      (format '99:99:99') (named "LogTime")
+,Secs (named "SVPRInterval")
 ,NodeID
 
 ,sum(FilePDbAcqs)(named "LogPermDBRead")
@@ -596,7 +598,7 @@ AND
 
 group by 1,2,3,4
 
-) svpr_dt 
+) svpr_dt
 on spma_dt.LogDate = svpr_dt.LogDate
 and spma_dt.LogTime = svpr_dt.LogTime
 and spma_dt.nodeid = svpr_dt.nodeid
@@ -604,8 +606,8 @@ left join
 (
 sel
 thedate (format 'yyyy-mm-dd')(named "LogDate")
-,cast(thetime as int) / 1000 * 1000      (format '99:99:99') (named "LogTime")
-,600 (named "SPDSKInterval")
+,cast(thetime as int) / 10 * 10      (format '99:99:99') (named "LogTime")
+,Secs (named "SPDSKInterval")
 ,NodeID
 ,sum(case when PdiskType = 'DISK' then ReadKB else 0 END) (named "HDDReadKB")
 ,sum(case when PdiskType = 'DISK' then WriteKB else 0 END) (named "HDDWriteKB")
@@ -657,9 +659,9 @@ group by 1,2,3,4
 on spma_dt.LogDate = spdsk_dt.LogDate
 and spma_dt.LogTime = spdsk_dt.LogTime
 and spma_dt.nodeid = spdsk_dt.nodeid
-where  info.infokey (NOT CS) = 'VERSION' (NOT CS) 
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
---- order by 5,14,22,23
+where  info.infokey (NOT CS) = 'VERSION' (NOT CS)
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
+-- order by 5,14,24,25
 
 
 
