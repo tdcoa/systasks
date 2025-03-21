@@ -5,7 +5,7 @@ replace macro systemfe.gss_resusage_td1410
 , ENDTIME (INT, DEFAULT 240000)
 )
 AS (
-/* gss_resusage_td1410-R002 */
+/* gss_resusage_td1410-R005 */
 sel
 'TD1410v1.72' (named "Version")
 ,spma_dt.LogDate (named "LogDate")
@@ -139,8 +139,8 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,sum(LogSpoolDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "LogSpoolDBSecNode_SVPR")
 ,sum(LogSpoolCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "LogSpoolCISecNode_SVPR")
 
-,sum(PhySpoolCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolDBSecNode_SVPR")
-,sum(PhySpoolDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")
+,sum(PhySpoolDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolDBSecNode_SVPR")
+,sum(PhySpoolCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")
 ,sum(PhyPermDBRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhyPermDBSecNode_SVPR")
 ,sum(PhyPermCIRead) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "PhyPermCISecNode_SVPR")
 
@@ -181,7 +181,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 ,sum(FCRRequests) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "CylReadRequestsSecNode_SVPR")
 ,sum(SuccessfulFCRs) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "CylReadSecNode_SVPR")
-,sum(FCRBlocksRead) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "FCRBlocksRead")(named "CylReadBlocksSecNode_SVPR")
+,sum(FCRBlocksRead) / NumNodes / RSSInterval (format 'ZZ,ZZZ,ZZ9.9') (named "CylReadBlocksSecNode_SVPR")
 ,sum(FCRDeniedThresh) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9') (named "CylReadDenThrSecNode_SVPR")
 ,sum(FCRDeniedCache)  / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "CylReadDenCacheSecNode_SVPR")
 
@@ -268,7 +268,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,max(TotalAMPCPUBusy) / CPUs / RSSInterval (format 'ZZ9.9') (named "MaxAMPCPUBusy")
 ,sum(TotalGTW_PECPUBusy) / NumNodes / CPUs / RSSInterval (format 'ZZ9.9') (named "AvgGTW_PECPUBusy")
 ,max(TotalGTW_PECPUBusy) / CPUs / RSSInterval (format 'ZZ9.9') (named "MaxGTW_PECPUBusy")
- 
+
 /* VH Cache */
 
 ,sum(VHAgedOut) / NumNodes / RSSInterval (format 'ZZ,ZZ9.9')(named "AvgVHAgedOut_SVPR")
@@ -298,13 +298,13 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,zeroifnull(PctCPUComp) / 100 * NodeT * NumNodes / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyCompNodes_Est1")
 ,zeroifnull(PctCPUUnComp) / 100 * NodeT * NumNodes / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyUnCompNodes_Est1")
 
-,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.16 / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyCompNodes_Est2") 
-,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.021 / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyUnCompNodes_Est2") 
+,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.16 / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyCompNodes_Est2")
+,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.021 / (PMCOD / 100) * 1.2 / 300 (named "TtlBentleyUnCompNodes_Est2")
 
 /* others go off of reads/writes & assumes 3x compression */
 
-,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.20 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyCompNodes_Est3") 
-,LogPermReadMBSecNode_SVPR * NumNodes * 0.026 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyUnCompNodes_Est3") 
+,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.20 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyCompNodes_Est3")
+,LogPermReadMBSecNode_SVPR * NumNodes * 0.026 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyUnCompNodes_Est3")
 
 ,TtlPhyPermWriteMBSecNode_SVPR * NumNodes * 0.20 / (PMCOD / 100) * 1.2 * 3 / 300 (named "TtlBentleyCompNodes_Est4")
 
@@ -318,13 +318,13 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 /* for reference -- legacy compression cost estimates */
 
-,TtlPhyPermWriteMBSecNode_SVPR * NumNodes * .64 (named "OrigCompEst") 
+,TtlPhyPermWriteMBSecNode_SVPR * NumNodes * .64 (named "OrigCompEst")
 ,LogPermReadMBSecNode_SVPR * NumNodes * .064 (named "OrigUnCompEst")
 
 /* NCS Node sizing */
 
 ,AvgGTW_PECPUBusy / 100 * NodeT * NumNodes / (PMCOD / 100) * 1.2 / 100 / 160 (named "TtlBentleyNCSNodes") -- 6800C -like NCS node, 6700C is 2x this.
-,AvgGTW_PECPUBusy / 100 * NodeT / (PMCOD / 100) * 1.2 / 100 (named "AvgGTW_PENCSNode") 
+,AvgGTW_PECPUBusy / 100 * NodeT / (PMCOD / 100) * 1.2 / 100 (named "AvgGTW_PENCSNode")
 ,MaxGTW_PECPUBusy / 100 * NodeT / (PMCOD / 100) * 1.2 / 100 (named "MaxGTW_PENCSNode")
 
 ,sum(NtwReadKB) / NumNodes / RSSInterval / 1024.0 (format 'ZZZ,ZZ9.9') (named "AvgNtwReadMBSecNode")
@@ -338,7 +338,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 
 from dbc.dbcinfo info,
 (
-sel 
+sel
 sum(CurrentPerm) (named "SumCurrPerm")
 ,sum(MaxPerm) (named "SumMaxPerm")
 ,sum(PeakSpool) (named "SumPeakSpool")
@@ -536,7 +536,7 @@ AND
 
 group by 1,2,3,4
 
-) svpr_dt 
+) svpr_dt
 on spma_dt.LogDate = svpr_dt.LogDate
 and spma_dt.LogTime = svpr_dt.LogTime
 and spma_dt.nodeid = svpr_dt.nodeid
