@@ -1,85 +1,29 @@
 tasklists:
 
-  Allocated Utilization per Table:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Allocated_Utilization_per_Table.aspx
-
   Concurrency:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Concurrency.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_Concurrency.aspx
 
   DBC Column Summary:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Column_Summary.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_DBC_Column_Summary.aspx
 
   DBC Constraint:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Constraint.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_DBC_Constraint.aspx
 
   DBC Indices by Database:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Indices_by_Database.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_DBC_Indices_by_Database.aspx
 
   DBC Object Count:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBC_Object_Count.aspx
-
-  DBQL Core Metrics Daily:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_DBQL_Core_Metrics.aspx
-
-  Decode App:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_App.aspx
-
-  Decode Other Types:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_Other_Types.aspx
-
-  Decode Statement:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_Statement.aspx
-
-  Decode TDInternal Databases:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_TDBInternal.aspx
-
-  Decode User:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Decode_User.aspx
-
-  Disk Space by Table:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Disk_Space_by_Table.aspx
-
-  Feature Usage:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Feature_Usage.aspx
-
-  Join Frequency:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Join_Frequency.aspx
-
-  Join Graph:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Join_Graph.aspx
-
-  Queries by RunTime Bucket:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Queries_by_RunTime_Bucket.aspx
-
-  Site Info:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Site_Info.aspx
-
-  Statement Count by Table:
-    tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Statement_Count_by_Table.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_DBC_Object_Count.aspx
 
   System CPU by Day:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_System_CPU_by_Day.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_System_CPU_by_Day.aspx
 
   Transfer Bytes In-Out:
     tags: []
-    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Metric_Transfer_Bytes_In_Out.aspx
+    doc: https://teradata.sharepoint.com/teams/ServicessAnalyticsHub/COA/Documentation/SitePages/Metric_Transfer_Bytes_In_Out.aspx
