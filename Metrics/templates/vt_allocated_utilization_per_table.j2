@@ -1,5 +1,5 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
-{% if not 'vt_allocated_utilization_per_table' in run.completed %}
+{% if not 'vt_allocated_util_per_t' in run.completed %}
 
 ### SET DEFAULT GENERATION BEHAVIOR
 {% set process_chunks  = 3     if process_chunks  is not defined else process_chunks %}
@@ -18,14 +18,14 @@
 
 {% for ichunk in range(1, process_chunks+1) %}
 
-- name: {{ 'Create' if ichunk==1 else 'Insert into' }} vt_allocated_utilization_per_table (chunk {{ ichunk }} of {{ process_chunks }})
+- name: {{ 'Create' if ichunk==1 else 'Insert into' }} vt_allocated_util_per_t (chunk {{ ichunk }} of {{ process_chunks }})
   connect: source
   execute:
     sql: |
       {% if ichunk == 1 %}
-      create volatile table vt_allocated_utilization_per_table as (
+      create volatile table vt_allocated_util_per_t as (
       {% else %}
-      insert into vt_allocated_utilization_per_table
+      insert into vt_allocated_util_per_t
       {% endif %}
       with /* COA-V2 */
       dbql as (
@@ -125,7 +125,7 @@
 {% endfor %}
 
 
-- name: "Collect Stats on vt_allocated_utilization_per_table"
+- name: "Collect Stats on vt_allocated_util_per_t"
   connect: source
   execute:
     sql: |
@@ -135,7 +135,7 @@
         ,column (LogDate, DatabaseName)
         ,column (LogDate)
         ,column (DatabaseName)
-      on vt_allocated_utilization_per_table
+      on vt_allocated_util_per_t
 
 {% endif %}
-{{ run.completed.append('vt_allocated_utilization_per_table') or '' }}
+{{ run.completed.append('vt_allocated_util_per_t') or '' }}

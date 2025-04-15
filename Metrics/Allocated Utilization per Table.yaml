@@ -1,5 +1,5 @@
 description: >
-  Creates a volatile table vt_allocated_utilization_per_table that allocates
+  Creates a volatile table vt_allocated_util_per_t that allocates
   CPU, IO, and CDS to each DB.Table based on the number of times that table
   was used in all queries (object logging required).
 
@@ -50,7 +50,7 @@ tasks:
       ,sum(Allocated_IOGB) as Allocated_IOGB
       ,sum(Allocated_CDS_GB) as Allocated_CDS_GB
       ,max(Table_CurrentPerm_GB) as Table_CurrentPerm_GB
-      from vt_allocated_utilization_per_table
+      from vt_allocated_util_per_t
       group by 1,2,3
       order by DatabaseName, TableName, LogDate desc
 {% endif %}
@@ -69,7 +69,7 @@ tasks:
       ,sum(Allocated_IOGB) as Allocated_IOGB
       ,sum(Allocated_CDS_GB) as Allocated_CDS_GB
       ,max(Table_CurrentPerm_GB) as Table_CurrentPerm_GB
-      from vt_allocated_utilization_per_table
+      from vt_allocated_util_per_t
       group by 1,2
       order by DatabaseName, LogDate desc
 
@@ -83,7 +83,7 @@ tasks:
       select top 50 DatabaseName
       ,sum({{ column }})(bigint) as {{ column }}
       ,trim(cast(Avg(Avg_Allocation_Pct) as decimal(9,2))*100) as Avg_Allocation_Pct
-      from vt_allocated_utilization_per_table
+      from vt_allocated_util_per_t
       group by 1
       order by 2 desc
 
