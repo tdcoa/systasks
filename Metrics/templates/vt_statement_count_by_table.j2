@@ -12,14 +12,14 @@
 
 {% for ichunk in range(1, process_chunks+1) %}
 
-- name: {{ 'Create' if ichunk==1 else 'Insert into' }} prework table vt_statement_count_by_table_prework (chunk {{ ichunk }} of {{ process_chunks }})
+- name: {{ 'Create' if ichunk==1 else 'Insert into' }} prework table vt_statement_count_by_t_pw (chunk {{ ichunk }} of {{ process_chunks }})
   connect: source
   execute:
     sql: |
       {% if ichunk == 1 %}
-      create volatile table vt_statement_count_by_table_prework as (
+      create volatile table vt_statement_count_by_t_pw as (
       {% else %}
-      insert into vt_statement_count_by_table_prework
+      insert into vt_statement_count_by_t_pw
       {% endif %}
         Select
            {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
@@ -64,7 +64,7 @@
         ,Statement_Bucket
         ,Statement_Class
         ,sum(Request_Count) as Request_Count
-        from vt_statement_count_by_table_prework p
+        from vt_statement_count_by_t_pw p
         join vt_decode_statement s
           on p.StatementType = s.Statement_Type
         group by 1,2,3,4,5
@@ -78,10 +78,10 @@
   execute:
     sql: collect stats on vt_statement_count_by_table column(LogDate, TableName)
 
-- name: drop prework vt_statement_count_by_table_prework
+- name: drop prework vt_statement_count_by_t_pw
   connect: source
   execute:
-    sql: drop table vt_statement_count_by_table_prework
+    sql: drop table vt_statement_count_by_t_pw
 
 {% endif %}
 {{ run.completed.append('vt_statement_count_by_table') or '' }}

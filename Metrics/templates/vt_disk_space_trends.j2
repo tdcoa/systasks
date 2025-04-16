@@ -3,11 +3,11 @@
 
 {% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
 
-- name: Create vt_disk_space_prework_tablesize
+- name: Create vt_disk_space_prework_ts
   connect: source
   execute:
     sql: |
-      create volatile table vt_disk_space_prework_tablesize   as (
+      create volatile table vt_disk_space_prework_ts   as (
           Select
            {{ 'DATE-1 as' if not pdcr }} LogDate
           ,DatabaseName
@@ -35,7 +35,7 @@
           group by 1,2,3
       ) with data primary index (LogDate, DatabaseName, TableName)  on commit preserve rows
 
-- name: Collect Stats on vt_disk_space_prework_tablesize
+- name: Collect Stats on vt_disk_space_prework_ts
   connect: source
   execute:
     sql: |
@@ -43,14 +43,14 @@
             column (LogDate, DatabaseName, TableName)
            ,column (LogDate, DatabaseName)
            ,column (LogDate)
-      on vt_disk_space_prework_tablesize
+      on vt_disk_space_prework_ts
 
 
-- name: Create vt_disk_space_prework_databasespace
+- name: Create vt_disk_space_prework_db
   connect: source
   execute:
     sql: |
-      create volatile table   vt_disk_space_prework_databasespace   as (
+      create volatile table   vt_disk_space_prework_db   as (
           Select
            {{ 'DATE-1 as' if not pdcr }} LogDate
           ,DatabaseName
@@ -73,14 +73,14 @@
       ) with data primary index (LogDate, DatabaseName)  on commit preserve rows
 
 
-- name: Collect Stats on vt_disk_space_prework_databasespace
+- name: Collect Stats on vt_disk_space_prework_db
   connect: source
   execute:
     sql: |
       collect stats
            column (LogDate, DatabaseName)
           ,column (LogDate)
-      on vt_disk_space_prework_databasespace
+      on vt_disk_space_prework_db
 
 
 - name: Create vt_disk_space
@@ -113,8 +113,8 @@
         ,Days_Table_Exists
         ,Total_Days_in_Range
         ,Table_Scale_Pct
-        from vt_disk_space_prework_tablesize as t
-        join vt_disk_space_prework_databasespace as d
+        from vt_disk_space_prework_ts as t
+        join vt_disk_space_prework_db as d
          on t.LogDate = d.LogDate
         and t.DatabaseName = d.DatabaseName
       ) with data primary index (LogDate, DatabaseName, TableName) on commit preserve rows
@@ -133,15 +133,15 @@
 
 
 {% if not save_prework %}
-- name: "Drop prework table: vt_disk_space_prework_databasespace"
+- name: "Drop prework table: vt_disk_space_prework_db"
   connect: source
   execute:
-    sql: drop table vt_disk_space_prework_databasespace
+    sql: drop table vt_disk_space_prework_db
 
-- name: "Drop prework table: vt_disk_space_prework_tablesize"
+- name: "Drop prework table: vt_disk_space_prework_ts"
   connect: source
   execute:
-    sql: drop table vt_disk_space_prework_tablesize
+    sql: drop table vt_disk_space_prework_ts
 {% endif %}
 
 {% endif %}
