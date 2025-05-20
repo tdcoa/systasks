@@ -16,7 +16,7 @@ Notes:
 
 # Tasks
 
-A task is of a *type* and has *name*, an optional *connection target* and a specific task definition
+A task is of a *type* and has *name*, an optional *connection target* and a specific task definition.
 
 Attributes:
 
