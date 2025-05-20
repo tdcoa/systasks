@@ -168,7 +168,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
         item.patch.set_visible(False)
 
     if save:
-        plt.savefig(pngfile, bbox_extra_artist=lgd, bbox_inches='tight', transparent=True)
+        plt.savefig(pngfile, bbox_extra_artists=[lgd], bbox_inches='tight', transparent=True)
     else:
         plt.show()
 

@@ -142,7 +142,7 @@ def line_xDate_yElse(**kwargs):
             i+=1
 
     if save:
-        plt.savefig(csvfile.replace('.csv','.png'), bbox_extra_artist=lgd, bbox_inches='tight')
+        plt.savefig(csvfile.replace('.csv','.png'), bbox_extra_artists=[lgd], bbox_inches='tight')
     else:
         plt.show()
 

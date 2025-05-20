@@ -34,7 +34,9 @@ def Prework(log, arg, data):
     plt.xlabel(xlabel, fontsize = arg.labelsize, color='grey')
     plt.ylabel(arg.ylabel, loc = "top", fontsize = arg.labelsize, color='grey')
     plt.tick_params(axis='y', colors='grey')
-    plt.gca().yaxis.grid(True) # turn on yaxis vertical lines
+    ax = plt.gca()
+    ax.yaxis.grid(True)  # turn on yaxis vertical lines
+    ax.set_axisbelow(True)
     log.debug('Prework Complete!')
     return plt
 
