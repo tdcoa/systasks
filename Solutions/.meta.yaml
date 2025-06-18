@@ -11,3 +11,7 @@ tasklists:
   Vantage Health Check - Trends:
     doc: https://teradata.sharepoint.com/:u:/r/teams/SalesTech/COA/docs/SitePages/Vantage-Health-Check-Trends.aspx
     tags: [demo]
+
+  VHC + VHC Trends:
+    doc: https://teradata.sharepoint.com/teams/SalesTech/COA/docs/SitePages/Solution_VHC+VHC_Trends.aspx
+    tags: [demo]
