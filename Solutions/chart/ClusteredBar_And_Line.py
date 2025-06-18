@@ -1,7 +1,17 @@
+import importlib.util
 import sys
+from pathlib import Path
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+
+lib_path = Path(__file__).parent / "coaVizLib.py"
+spec = importlib.util.spec_from_file_location("coaVizLib", lib_path)
+coaVizLib = importlib.util.module_from_spec(spec)
+sys.modules["coaVizLib"] = coaVizLib
+spec.loader.exec_module(coaVizLib)
+
 def coaprint(*args):
    # print(*args)
    return None
