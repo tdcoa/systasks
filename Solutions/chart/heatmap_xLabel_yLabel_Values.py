@@ -1,5 +1,12 @@
-import coaVizLib, sys, os
+import importlib.util
+import sys, os
 from pathlib import Path
+
+lib_path = Path(__file__).parent / "coaVizLib.py"
+spec = importlib.util.spec_from_file_location("coaVizLib", lib_path)
+coaVizLib = importlib.util.module_from_spec(spec)
+sys.modules["coaVizLib"] = coaVizLib
+spec.loader.exec_module(coaVizLib)
 
 version = 1.1
 
