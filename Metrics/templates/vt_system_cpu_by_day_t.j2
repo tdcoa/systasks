@@ -1,20 +1,21 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
-{% if not 'vt_System_CPU_by_Day' in run.completed %}
+{% if not 'vt_System_CPU_by_Day_t' in run.completed %}
 
 {% set   wlm_cod_cpu = 1.00    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
 {% set    pm_cod_cpu = 1.00    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
 {% set  epod_cod_cpu = 1.00    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
-
+{% set startdate = 'DATE-365' %}
+{% set enddate   = 'DATE-1' %}
 
 # The initial pull of this logic now originates from the GSSResUsage data (GSSResUsage Core):
-{% include "vt_gssresusage_core.j2" %}
+{% include "vt_gssresusage_core_t.j2" %}
 
 
-- name:  "Create vt_System_CPU_by_Day"
+- name:  "Create vt_System_CPU_by_Day_t"
   connect: source
   execute:
     sql: |
-      create volatile table vt_System_CPU_by_Day as
+      create volatile table vt_System_CPU_by_Day_t as
       (
         select
          Site_ID
@@ -156,7 +157,7 @@
                 ,SUM(AvgNtwReadMBSecNode) *1024 as HostRead_KB   -- this is 1024 (MiB) instead of 1000 (MB) because the
                 ,SUM(AvgNtwWriteMBSecNode)*1024 as HostWrite_KB  --   GSSResUSage SQL is /1024 to (errantly) get to MB
 
-                from vt_gssresusage_core
+                from vt_gssresusage_core_t
                 where LogDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
                 group by
                  LogDate {{ ",LogMin, LogHr, LogTS" if logts else "" }}
@@ -173,8 +174,8 @@
     sql: |
       collect stats
         column (LogDate  {{ ", LogTS" if logts else "" }} )
-      on vt_System_CPU_by_Day
+      on vt_System_CPU_by_Day_t
 
 
 {% endif %}
-{{ run.completed.append('vt_System_CPU_by_Day') or '' }}
+{{ run.completed.append('vt_System_CPU_by_Day_t') or '' }}
