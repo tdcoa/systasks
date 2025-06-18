@@ -23,10 +23,11 @@
         ,SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
         ,Node_Type, Node_Cnt, vCPU_per_Node
 
-        -- COD Numbers from COA Variables: pm_cod_cpu, wlm_cod_cpu, epod_cod_cpu
-        ,{{ pm_cod_cpu }}   as CPU_COD_PM_Active_Pct
-        ,{{ wlm_cod_cpu }}  as CPU_COD_WLM_Active_Pct
-        ,{{ epod_cod_cpu }} as CPU_COD_EPOD_Active_Pct
+        -- COD Numbers from ResUsage: PMCOD, WMCOD, ETcoreCPUs/vCPU_per_Node
+        ,cast(PMCOD as decimal(18,4)) / 100   as CPU_COD_PM_Active_Pct
+        ,cast(WMCOD as decimal(18,4)) / 100  as CPU_COD_WLM_Active_Pct
+        ,cast(ETcoreCPUs as decimal(6,4)) / nullifzero(vCPU_per_Node) as CPU_COD_EPOD_Active_Pct
+
         ,cast(CPU_COD_WLM_Active_Pct
             * CPU_COD_EPOD_Active_Pct
             * CPU_COD_PM_Active_Pct as decimal(38,4)) as CPU_COD_Total_Active_Pct
@@ -99,6 +100,11 @@
                 ,NodeGen                                 as Node_Type
                 ,NumNodes                                as Node_Cnt
                 ,CPUs                                    as vCPU_per_Node
+
+                --Fetch ResUsage COD Values
+                ,Avg(PMCOD)                              as PMCOD
+                ,Avg(WMCOD)                              as WMCOD
+                ,Max(ETcoreCPUs)                         as ETcoreCPUs
 
                 -- Match the correct number of CPU seconds based on aggregation level
                 ,(count(*)*600) * Node_Cnt * vCPU_per_Node as CPU_Total

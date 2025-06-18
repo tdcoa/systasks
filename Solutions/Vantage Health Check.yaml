@@ -112,13 +112,6 @@ tasks:
        ,{{ enddate }} as EndDate
        ,'{{ export_detail }}' as Export_Details
        ,'{{ process_chunks }}' as Process_Chunks
-       ,'{{ full_cod_cpu }}'     as Full_COD_CPU
-       ,'{{ pm_cod_cpu }}'       as   pm_cod_cpu
-       ,'{{ wlm_cod_cpu }}'      as   wlm_cod_cpu
-       ,'{{ epod_cod_cpu }}'     as   epod_cod_cpu
-       ,'{{ full_cod_io }}'      as Full_COD_IO
-       ,'{{ wlm_cod_io }}'       as   wlm_cod_io
-       ,'{{ epod_cod_io }}'      as   epod_cod_io
        ,'{{ tca }}'              as TCA
        from (sel 1 one ) a
 
@@ -480,20 +473,6 @@ tasks:
        order by 1;
 {% endif %}
 
-# full process simply take associated variables:
-- name: "Retrieve COD limit"
-  connect: source
-  export:
-    file: oap--COD.csv
-    sql: |
-         SELECT 'CPULimit',  trim(cast(CPULimit as decimal(9,2))) as CPULimit  FROM (Select {{ full_cod_cpu | default(1.0) }} * 100 as CPULimit) As d
-         union all
-         SELECT 'IOLimit',  trim(cast(IOLimit as decimal(9,2))) as IOLimit FROM (Select {{ full_cod_io | default(1.0) }} * 100 as IOLimit) As d
-         union all
-         SELECT '# Nodes', cast(count(distinct nodeid) as varchar(16)) FROM dbc.resusagespma where TheDate = current_date
-         union all
-         SELECT * from (SELECT '# AMPs' as label, cast(HASHAMP() + 1 as varchar(16)) as total_amps) x
-         order by 1
 
 - name: "Get system information"
   connect: source
@@ -512,6 +491,22 @@ tasks:
 # to generate the CPU Heatmap
 {% set logts = true %}
 {% include "vt_system_cpu_by_day.j2" %}
+{% include "vt_system_io_by_day.j2" %}
+
+# fetch COD limits from ResUsage
+- name: "Retrieve COD limit"
+  connect: source
+  export:
+    file: oap--COD.csv
+    sql: |
+         SELECT 'CPULimit',  trim(cast(CPULimit as decimal(9,2))) as CPULimit  FROM (Select avg(CPU_COD_Total_Active_Pct) * 100 as CPULimit from vt_System_CPU_by_Day) As d
+         union all
+         SELECT 'IOLimit',  trim(cast(IOLimit as decimal(9,2))) as IOLimit FROM (Select avg(IO_COD_Total_Active_Pct) * 100 as IOLimit from vt_system_io_by_day) As d
+         union all
+         SELECT '# Nodes', cast(count(distinct nodeid) as varchar(16)) FROM dbc.resusagespma where TheDate = current_date
+         union all
+         SELECT * from (SELECT '# AMPs' as label, cast(HASHAMP() + 1 as varchar(16)) as total_amps) x
+         order by 1
 
 - name: "Generate Heatmap data"
   connect: source
@@ -554,7 +549,7 @@ tasks:
     params:
       - "csvfilepath:oap--SPMADetailData.csv"
       - "pngfilepath:oap--CPUHeapmapAvg.png"
-      - "title:CPU Use% by Weekday/Hour (COD {{ full_cod_cpu *100.0 }}%)"
+      - "title:CPU Use% by Weekday/Hour"
       - "xcolumns:[1]"
       - "ycolumns:[2,3]"
       - "height:6"
@@ -1585,7 +1580,6 @@ tasks:
 #######################################################
 {% set io_percentile = 990 if  io_percentile is not defined else io_percentile %}
 {% set td15 = true  if tdver[:2]=='15' else false %}
-{% include "vt_system_io_by_day.j2" %}
 
 
 - name: Export System IO percentile setting
@@ -1608,9 +1602,7 @@ tasks:
       {% if not td15 %}
       ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
       {% endif %}
-      {% if full_cod_io < 1.0000 %}
-      ,{{ full_cod_io * 100 }} as "IO Available %--#9C0A0A"
-      {% endif %}
+      ,max(IO_COD_Total_Active_Pct) * 100 as "IO Available %--#9C0A0A"
       ,100.00 as "IO Max %--#F01D1D"
       from vt_system_io_by_day
       group by LogDate
@@ -1634,15 +1626,13 @@ tasks:
     sql: |
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
-      ,cast(avg(ObservedMax995_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
-      ,cast(avg(ObservedMax990_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
-      ,cast(avg(ObservedMax980_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
       {% if not td15 %}
-      ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      ,cast(avg(IOTA_Pct)*100 / max(IO_COD_Total_Active_Pct) as decimal(9,2)) as "IOTA Busy%--#204BDB"
       {% endif %}
-      {% if workload_cod_io < 1.0000 %}
-      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
-      {% endif %}
+      ,max(IO_COD_Total_Active_Pct) * 100 as "IO Available %--#9C0A0A"
       ,100.00 as "IO Max %--#F01D1D"
       from vt_system_io_by_day
       group by LogDate
@@ -1673,9 +1663,7 @@ tasks:
       {% else %}
       ,cast(avg(IOTA_Pct)*100 as decimal(9,2)) as "IOTA Busy%--#204BDB"
       {% endif %}
-      {% if workload_cod_io < 1.0000 %}
-      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
-      {% endif %}
+      ,max(IO_COD_Total_Active_Pct) as "IO Available %--#9C0A0A"
       ,100.00 as "IO Max%--#B21300"
       from vt_system_io_by_day
       group by LogDate
@@ -1702,9 +1690,9 @@ tasks:
       {% if td15 %}
       ,0 as "IOTA Busy%--#204BDB"
       {% else %}
-      ,cast(avg(IOTA_Pct)*100 / {{ workload_cod_io }} as decimal(9,2)) as "IOTA Busy%--#204BDB"
+      ,cast(avg(IOTA_Pct)*100 / max(IO_COD_Total_Active_Pct) as decimal(9,2)) as "IOTA Busy%--#204BDB"
       {% endif %}
-      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
+      ,max(IO_COD_Total_Active_Pct) as "IO Available %--#9C0A0A"
       ,100.00 as "IO Max%--#B21300"
       from vt_system_io_by_day
       group by LogDate
@@ -1731,9 +1719,7 @@ tasks:
       ,cast(avg(ObservedMax995_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
       ,cast(avg(ObservedMax990_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
       ,cast(avg(ObservedMax980_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
-      {% if workload_cod_io < 1.0000 %}
-      ,{{ workload_cod_io * 100 }} as "IO Available %--#9C0A0A"
-      {% endif %}
+      ,max(IO_COD_Total_Active_Pct) as "IO Available %--#9C0A0A"
       ,100.00 as "IO Max%--#B21300"
       from vt_system_io_by_day
       group by LogDate
@@ -1758,10 +1744,10 @@ tasks:
     sql: |
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "Date"
-      ,cast(avg(ObservedMax995_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
-      ,cast(avg(ObservedMax990_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
-      ,cast(avg(ObservedMax980_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
-      ,100 as "IO Available %--#9C0A0A"
+      ,cast(avg(ObservedMax995_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy (0.995pctl Observed Max)--#88E691"
+      ,cast(avg(ObservedMax990_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy (0.990pctl Observed Max)--#26B133"
+      ,cast(avg(ObservedMax980_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy (0.980pctl Observed Max)--#AEF4B5"
+      ,max(IO_COD_Total_Active_Pct) as "IO Available %--#9C0A0A"
       ,100.00 as "IO Max%--#B21300"
       from vt_system_io_by_day
       group by LogDate
@@ -1884,8 +1870,8 @@ tasks:
       select
        cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(16)) as "LogDate"
       ,LogHr as "Hour"
-      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy%"
-      ,cast(avg(IOTA_Pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IOTA Busy%"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IOTA Busy%"
       from vt_system_io_by_day
       group by 1,2
       order by 1,2
@@ -1898,8 +1884,8 @@ tasks:
       Select
        cast(TD_DAY_OF_WEEK(LogDate) as char(1)) || cast(cast(LogDate as date format'e4') as varchar(16)) as "Day of the Week"
       ,LogHr as "Hour"
-      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / {{ workload_cod_io }} as decimal(38,2)) as "IO Busy%"
-      ,cast(avg(IOTA_Pct) *100  / {{ workload_cod_io }} as decimal(38,2)) as "IOTA Busy%"
+      ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy%"
+      ,cast(avg(IOTA_Pct) *100  / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IOTA Busy%"
       from vt_system_io_by_day
       group by 1,2
       order by 1,2

@@ -2,6 +2,7 @@
 {% if not 'vt_system_io_by_day' in run.completed %}
 
 {% set td15 = true  if tdver[:2]=='15' else false %}
+{% set tdversion = tdver.replace('.','') %}
 {% set percentiles = [1000, 995, 990, 980, 950, 900, 800 ] %}
 
 - name:  "Create vt_system_io_by_day"
@@ -25,6 +26,14 @@
         ,cast(max(NodeType) as varchar(10)) as Node_Type
         ,cast(count(distinct NodeID) as smallint) as Node_Cnt
         ,cast(max(NCPUs) as smallint) as vCPU_per_Node
+        ,CASE when max(PM_COD_IO) > max(WM_COD_IO) then max(WM_COD_IO) ELSE max(PM_COD_IO) END (Named "IO_COD")
+        ,{{'max(NCPUs)' if tdversion | int < 1620
+            else ('max(SpareInt)' if tdversion | int == 1620
+            else 'max(TDEnabledCPUs)')
+            }} (Named "ETcoreCPUs")
+        ,cast(IO_COD as decimal(18,4)) / 100  as IO_COD_Active_Pct
+        ,cast(ETcoreCPUs as decimal(6,4)) / nullifzero(vCPU_per_Node) as IO_COD_EPOD_Active_Pct
+        ,cast(IO_COD_Active_Pct * IO_COD_EPOD_Active_Pct as decimal(38,4)) as IO_COD_Total_Active_Pct
 
         /* Read/Writes I/O */
         ,sum(FileAcqReads+FilePreReads+FileWrites)(BIGINT) as IOs

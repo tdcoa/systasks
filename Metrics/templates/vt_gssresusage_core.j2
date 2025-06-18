@@ -44,6 +44,7 @@
              ,PMCOD                                           SMALLINT
              ,WMCOD                                           FLOAT
              ,IOCOD                                           FLOAT
+             ,ETcoreCPUs                                      SMALLINT
              ,MinMemSizeGB                                    DECIMAL(18,3)
              ,MaxMemSizeGB                                    DECIMAL(18,3)
              ,NumNodes                                        INTEGER
@@ -273,6 +274,7 @@
       ,"PMCOD"
       ,"WMCOD"
       ,"IOCOD"
+      ,"ETcoreCPUs"
       ,"MinMemSizeGB"
       ,"MaxMemSizeGB"
       ,"NumNodes"
@@ -723,6 +725,7 @@
        ,cast(  PMCOD                              as  SMALLINT)            as PMCOD
        ,cast(  WMCOD                              as  FLOAT)               as WMCOD
        ,cast(  IOCOD                              as  FLOAT)               as IOCOD
+       ,cast(  {{ 'CPUs' if tdversion | int < 1620 else 'ETcoreCPUs' }}   as  SMALLINT) as ETcoreCPUs
        ,cast(  MinMemSizeGB                       as  DECIMAL(18,3))       as MinMemSizeGB
        ,cast(  MaxMemSizeGB                       as  DECIMAL(18,3))       as MaxMemSizeGB
        ,cast(  NumNodes                           as  INTEGER)             as NumNodes

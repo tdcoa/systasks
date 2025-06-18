@@ -170,11 +170,6 @@
       ,current_timestamp(0) as Run_Timestamp
       ,cast(cast(Run_Timestamp as DATE format 'mmmmbddbyyyy')as varchar(20)) as Run_Date
       ,{{process_chunks | default(1) }} as Process_Chunks
-      ,'{{ pm_cod_cpu   | default(1.00)  }}' as PM_COD_CPU
-      ,'{{ wlm_cod_cpu  | default(1.00)  }}' as WLM_COD_CPU
-      ,'{{ epod_cod_cpu | default(1.00)  }}' as EPOD_COD_CPU
-      ,'{{ wlm_cod_io   | default(1.00)  }}' as WLM_COD_IO
-      ,'{{ epod_cod_io  | default(1.00)  }}' as EPOD_COD_IO
       ,'{{ reconcile    | default(false) }}' as Reconcile
       ,'{{ custom_decode_folder }}' as Custom_Decode_Folder
 
