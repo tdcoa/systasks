@@ -1,0 +1,103 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if 'vt_feature_usage_sea' not in run.completed %}
+
+### ============= SET DEFAULT EXECUTION BEHAVIOR =============
+{% set td15 = True if tdver[:2] == '15' else False %}
+{% set process_chunks = 1 if process_chunks is not defined else process_chunks %}
+
+- name: Create vt_Prep_Export table
+  connect: source
+  execute:
+    sql: |
+      CREATE VOLATILE TABLE vt_Prep_Export (
+          EXTRACT_ORDER                   CHAR(1),
+          YEAR_MONTH_DATE                VARCHAR(100),
+          PRODUCT_CATEGORY               VARCHAR(100),
+          FEATURE_CATEGORY               VARCHAR(100),
+          FEATURE_SUBCATEGORY            VARCHAR(100),
+          FEATURE_NAME                   VARCHAR(100),
+          FEATURE_NOTES                  VARCHAR(1000),
+          MBO_IND                        VARCHAR(100),
+          Sum_AMPCPUTimeMinutes          VARCHAR(100),
+          Avg_CPUTimeMinutes_Per_Request VARCHAR(100),
+          Sum_TotalIOGIG                 VARCHAR(100),
+          Avg_IOGIG_Per_Request          VARCHAR(100),
+          Count_Request_Total            VARCHAR(100)
+      ) no primary index
+      ON COMMIT PRESERVE ROWS
+
+{% include "vt_decode_feature.j2" %}
+
+{% if not td15 %}
+  {% include "vt_datedriver.j2" %}
+
+- name: Insert column headers into vt_Prep_Export
+  connect: source
+  execute:
+    sql: |
+        INSERT INTO vt_Prep_Export
+        SELECT
+          '1',
+          'year_month_date',
+          'Product_Category',
+          'Feature_Category',
+          'Feature_SubCategory',
+          'Feature_Name',
+          'Feature_Notes',
+          'Feature_Role_Relevance',
+          'Sum_AMPCPUTimeMinutes',
+          'Avg_CPUTimeMinutes_Per_Request',
+          'Sum_TotalIOGIG',
+          'Avg_IOGIG_Per_Request',
+          'Count_Request_Total'
+
+  {% for ichunk in range(1, process_chunks + 1) %}
+- name: "Insert into vt_Prep_Export (chunk {{ ichunk }} of {{ process_chunks }})"
+  connect: source
+  execute:
+    sql: |
+        INSERT INTO vt_Prep_Export
+        SELECT
+          '2',
+          CAST(CAST(EXTRACT(YEAR FROM logdate) AS VARCHAR(4)) || '-' ||
+               LPAD(CAST(EXTRACT(MONTH FROM logdate) AS VARCHAR(2)), 2, '0') AS CHAR(8)) AS year_month_date,
+          mdm.Product_Category,
+          mdm.Feature_Category,
+          mdm.Feature_SubCategory,
+          feat.FeatureName AS Feature_Name,
+          FEATURE_NOTES,
+          CASE mbo_ind
+            WHEN 0 THEN 'Invalid'
+            WHEN 1 THEN 'CSM Relevant Features'
+            WHEN -1 THEN 'Other Features'
+            ELSE 'Unknown'
+          END AS Feature_Role_Relevance,
+          SUM(CAST(AMPCPUTime AS DECIMAL(38, 2))) AS Sum_AMPCPUTimeMinutes,
+          CAST(Sum_AMPCPUTimeMinutes / Count_Request_Total AS DECIMAL(38, 2)) AS Avg_CPUTimeMinutes_Per_Request,
+          SUM(CAST(ReqIOKB / 1048576 AS DECIMAL(38, 2))) AS Sum_TotalIOGIG,
+          CAST(Sum_TotalIOGIG / Count_Request_Total AS DECIMAL(38, 2)) AS Avg_IOGIG_Per_Request,
+          ZEROIFNULL(CAST(COUNT(*) AS BIGINT)) AS Count_Request_Total
+        FROM {{ dbc.log }} AS dbql
+        JOIN dbc.qrylogfeaturelistv feat
+          ON (BYTES(dbql.featureusage) = 256
+              AND GETBIT(dbql.featureusage, (2047 - feat.featurebitpos)) = 1)
+        LEFT JOIN vt_decode_feature mdm
+          ON mdm.feature_name = feat.featurename
+        WHERE LogDate IN (
+            SELECT Calendar_Date FROM vt_DateDriver WHERE Process_Chunk = {{ ichunk }}
+        )
+          AND featureusage IS NOT NULL
+        GROUP BY 1, 2, 3, 4, 5, 6, 7, 8
+  {% endfor %}
+
+- name: Collect Stats on vt_Prep_Export
+  connect: source
+  execute:
+    sql: |
+        COLLECT STATS
+          COLUMN (year_month_date, Feature_Name)
+        ON vt_Prep_Export
+
+{% endif %}
+{% endif %}
+{{ run.completed.append('vt_feature_usage_sea') or '' }}
