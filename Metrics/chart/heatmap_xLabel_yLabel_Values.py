@@ -20,10 +20,11 @@ try:
     data = coaVizLib.coaData(log, arg)
     plt = coaVizLib.Prework(log, arg, data)
 
-
     ### ========== START CHART-SPECIFIC CODE ========== ###
     import seaborn as sns
     import matplotlib.colors as clr
+    import numpy as np
+    from matplotlib.colors import ListedColormap, BoundaryNorm
 
     log.info('STARTING CHARTING PROCESS: HEATMAP: heatmap_xLabel_yLabel_Values')
     log.info('Performing required dataframe pivot... ')
@@ -42,13 +43,41 @@ try:
         arg.heatmapmax = int(dfh.max().max())
         log.debug('heatmapmax set to %i' %arg.heatmapmax)
 
-    # define custom colormap:
-    log.debug('Applying Colors to HeatMap\nNOTE: Heatmaps apply colors per value, not series, so we reset here to recover used custom colors')
-    data.colors.reset()
-    colorlist = list(data.colors.getnextcolors( arg.heatmapcolorcount ))
-    cmap = clr.LinearSegmentedColormap.from_list("", colorlist)
-    sns.heatmap(dfh.T, cmap=cmap, annot=arg.annotate, fmt='.0f', vmin=arg.heatmapmin, vmax=arg.heatmapmax, annot_kws={'fontsize': 10})
-    plt.gca().tick_params(axis='y', labelrotation = 0)
+    # Define custom color ranges
+    cmap_colors = [
+        (1, 1, 1),                     # 0 - 50: White
+        (146/255, 208/255, 80/255),    # 51 - 70: Green
+        (1, 1, 0),                     # 71 - 80: Yellow
+        (1, 192/255, 0),               # 81 - 90: Orange
+        (1, 0, 0),                     # 91 - 99: Red
+        (1/255, 0, 0)                  # 100: Black (very dark red)
+    ]
+    boundaries = [0, 50, 70, 80, 90, 99, 100]
+    cmap = ListedColormap(cmap_colors)
+    norm = BoundaryNorm(boundaries, ncolors=len(cmap_colors))
+
+    # Draw heatmap without annotations
+    ax = sns.heatmap(
+        dfh.T,
+        cmap=cmap,
+        norm=norm,
+        annot=False,
+        cbar=True,
+        vmin=arg.heatmapmin,
+        vmax=arg.heatmapmax,
+        linecolor='black',
+        linewidths=0.5
+    )
+    plt.gca().tick_params(axis='y', labelrotation=0)
+
+    # Manually add annotations with conditional text color
+    for y in range(dfh.shape[1]):
+        for x in range(dfh.shape[0]):
+            val = dfh.T.iloc[y, x]
+            if np.isnan(val):
+                continue
+            text_color = 'white' if val > 99 else 'black'
+            ax.text(x + 0.5, y + 0.5, f'{val:.0f}', ha='center', va='center', color=text_color, fontsize=10)
 
     # turn off unwanted options:
     arg.xlabelflex = 0
@@ -58,7 +87,7 @@ try:
     plt = coaVizLib.Postwork(log, arg, data, plt)
 
 except Exception as e:
-    msg = 'ERROR OCCURED DURING CHART GENERATION of file: %s\n%s' %(str(arg.pngfilepath), str(e))
+    msg = 'ERROR OCCURRED DURING CHART GENERATION of file: %s\n%s' %(str(arg.pngfilepath), str(e))
     if len(data.dfmain)==0:
         msg = msg + '\n\nNOTE: DataFrame ("%s") contained no data, maybe you want to check that out.\n\n' %str(arg.csvfilepath)
     msg = msg + 'Final argument list, for your reading pleasure\n  (for more detail, see log file: "%s"):\n\n%s' %(coaLog.logfilename, arg.dictdisplay(arg.__dict__))
