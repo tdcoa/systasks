@@ -9,7 +9,7 @@ def human_format(num, pos):
     while abs(num) >= 1000:
         magnitude += 1
         num /= 1000.00
-    return '%.1f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+    return '%.1f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])
 
 def args2dict(args):
     # args = ['file:bq--join_frequency.csv','title:Join Frequency', 'height:6', 'width:12', 'dateadjust:0.5', 'pancake', 'foo:bar:bam']
@@ -43,7 +43,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     from matplotlib.ticker import FuncFormatter
     import matplotlib.patches as mpatches
     from datetime import date
-    default_colors = ['#27C1BD','#636363','#EC8D1A','#038DAC','#EEA200','purple','green', 'orange', 'red','blue','yellow','brown','black']
+    default_colors = ['#27C1BD','#636363','#EC8D1A','#038DAC','#EEA200','purple','green', 'orange', 'red','blue','yellow','brown','black','#C39BD3','#8E13BF','#4E245F','#89327E','#F239DB','#A787A3','#2C4D95','#112F6E']
     formatter = FuncFormatter(human_format)
 
     # define all variables, with defaults
@@ -160,7 +160,9 @@ def barline_xLabels_yBar_yLine(**kwargs):
         lgnd.append( mpatches.Patch(color=y['color'],label=y['name']))
     lgd = ax.legend(handles=lgnd, loc='upper center', bbox_to_anchor=(legendx, legendy), shadow=True, ncol=5)
 
-    plt.xticks(x)  # forces all values to be displayed
+    x_labels = df[df.columns[0]].astype(str)
+    x_positions = np.arange(len(x_labels))
+    plt.xticks(ticks=x_positions, labels=x_labels)  # forces all values to be displayed
     plt.title(title, fontsize=14, y=1.0, pad=30, color='grey')
 
     # turn all backgrounds transparent

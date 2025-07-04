@@ -160,7 +160,9 @@ def barline_xLabels_yBar_yLine(**kwargs):
         lgnd.append( mpatches.Patch(color=y['color'],label=y['name']))
     lgd = ax.legend(handles=lgnd, loc='upper center', bbox_to_anchor=(legendx, legendy), shadow=True, ncol=5)
 
-    plt.xticks(x)  # forces all values to be displayed
+    x_labels = df[df.columns[0]].astype(str)
+    x_positions = np.arange(len(x_labels))
+    plt.xticks(ticks=x_positions, labels=x_labels)  # forces all values to be displayed
     plt.title(title, fontsize=14, y=1.0, pad=30, color='grey')
 
     # turn all backgrounds transparent

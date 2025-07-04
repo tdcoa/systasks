@@ -544,6 +544,24 @@ tasks:
          order by 1,2,3;
 
 # generate chart from CPU data:
+{% if old_heatmap == true %}
+- name: "Chart Heatmap for Median CPU by weekday/hour (OLD)"
+  chart:
+    command: {{ dirs.systasks }}/Metrics/chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - "csvfilepath:oap--SPMADetailData.csv"
+      - "pngfilepath:oap--CPUHeapmapMed.png"
+      - "title:CPU Use% by Weekday/Hour"
+      - "xcolumns:[1]"
+      - "ycolumns:[2,4]"
+      - "height:6"
+      - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
+      - "heatmapcolorcount:4"
+      - "colors:[white,green,yellow,red]"
+      - "heatmapmin:0"
+      - "heatmapmax:100"
+      - "xslice:[1,4]"
+{% else %}
 - name: "Chart Heatmap for Median CPU by weekday/hour"
   chart:
     command: {{ dirs.systasks }}/Metrics/chart/heatmap_xLabel_yLabel_Values.py
@@ -558,8 +576,28 @@ tasks:
       - "heatmapmin:0"
       - "heatmapmax:100"
       - "xslice:[1,4]"
+{% endif %}
 
 
+{% if old_heatmap == true %}
+- name: "Chart Heatmap for Average CPU by weekday/hour"
+  chart:
+    command: {{ dirs.systasks }}/Metrics/chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - "csvfilepath:oap--SPMADetailData.csv"
+      - "pngfilepath:oap--CPUHeapmapAvg.png"
+      - "title:CPU Use% by Weekday/Hour (COD {{ full_cod_cpu *100.0 }}%)"
+      - "xcolumns:[1]"
+      - "ycolumns:[2,3]"
+      - "height:6"
+      - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
+      - "heatmapcolorcount:4"
+      - "colors:[white,green,yellow,red]"
+      - "heatmapmin:0"
+      - "heatmapmax:100"
+      - "xslice:[1,4]"
+
+{% else %}
 # generate chart from CPU data:
 - name: "Chart Heatmap for Average CPU by weekday/hour"
   chart:
@@ -575,9 +613,7 @@ tasks:
       - "heatmapmin:0"
       - "heatmapmax:100"
       - "xslice:[1,4]"
-
-
-
+{% endif %}
 
 {% include "vt_disk_space.j2" %}
 
@@ -753,22 +789,25 @@ tasks:
     file: vhc--query_delaytime.csv
     sql: |
       select LogDate
-      ,sum(RunTime_Total_Sec) as "Total_Run_Time_Sec"
-      ,coalesce(sum(DelayTime_Sec),1) as "Total_Delay_Time_Sec"
+      ,cast(sum(RunTime_Total_Sec) as decimal(38,1)) as "Run_Time_Sec"
+      ,cast(coalesce(sum(DelayTime_Sec),1) as decimal(38,1)) as "Delay_Time_Sec"
+      ,cast((Delay_Time_Sec/Run_Time_Sec)*100 as decimal(10,1))(FORMAT 'ZZZ,ZZZ,ZZ9.9%') as DelayTime_Pct
       from vt_dbql_core dbql
       group by 1
       Order by 1
 
 - name: Chart Query Delay Time
   chart:
-    command: chart/barline_xLabels_yBar_yLine.py
+    command: chart/bar_xLabel_yStack_datatable.py
     params:
       - "file:vhc--query_delaytime.csv"
       - "title:Query Delay Time - {{ siteid }}"
-      - "height:4"
-      - "width:9"
+      - "height:6"
+      - "width:11"
       - "barlogscale:False"
-      - "xrotate:90"      
+      - "xrotate:90"
+      - "xcolumns:[0]"
+      - "ycolumns:[1,2]"
 
 ### Release Spool:
 # ------------------
@@ -1307,6 +1346,19 @@ tasks:
       - ylabel:CPU Percent to Total
       - legendxy:(0.5, -0.2)
 
+- name: Export CPU COD Details
+  connect: source
+  export:
+    file: vhc--resusage_cpu_cod.csv
+    sql: |
+      select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
+      ,cast(avg(CPU_COD_PM_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "CPU_COD_PM_Active_Pct"
+      ,cast(avg(CPU_COD_WLM_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "CPU_COD_WM_Active_Pct"
+      ,cast(avg(CPU_COD_EPOD_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "TD_Enabled_CPUs_Pct"
+      ,cast(avg(CPU_COD_Total_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "CPU_COD_Total_Active_Pct"
+      from vt_System_CPU_by_Day
+      group by 1
+      order by 1
 
 - name: Export System CPU for Chart, COD Adjusted
   connect: source
@@ -1389,6 +1441,25 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+
+{% if old_heatmap == true %}
+- name: Chart System CPU - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_day_heatmap.csv
+      - pngfilepath:vhc--system_cpu_by_day_heatmap.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System CPU - Heatmap Days x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1401,8 +1472,8 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
-      
-      
+{% endif %}
+
 - name: Export System Peak CPU for Heatmap
   connect: source
   export:
@@ -1423,6 +1494,24 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+{% if old_heatmap == true %}
+- name: Chart System Peak CPU - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_day_heatmap.csv
+      - pngfilepath:vhc--system_peak_cpu_by_day_heatmap.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Peak CPU - Heatmap Days x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1435,7 +1524,7 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
-
+{% endif %}
 
 - name: Export System CPU for Heatmap, COD Adjusted
   connect: source
@@ -1450,6 +1539,24 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+{% if old_heatmap == true %}
+- name: Chart System CPU - Heatmap Days x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_cpu_by_day_heatmap_wCOD.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System CPU - Heatmap Days x Hour, COD Adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1462,6 +1569,7 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
 - name: Export System CPU, COD Adjusted
   connect: source
@@ -1500,6 +1608,24 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+{% if old_heatmap == true %}
+- name: Chart System Peak CPU - Heatmap Days x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_peak_cpu_by_day_heatmap_wCOD.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Peak CPU - Heatmap Days x Hour, COD Adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1512,6 +1638,8 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
+
 
 - name: Export System CPU by Day of Week for HeatMap
   connect: source
@@ -1526,6 +1654,25 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+{% if old_heatmap == true %}
+- name: Chart System CPU - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_cpu_by_dayofweek_heatmap.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System CPU - Heatmap Day of Week x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1539,6 +1686,7 @@ tasks:
       - xslice:[1,0]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
 - name: Export System Peak CPU by Day of Week for HeatMap
   connect: source
@@ -1561,6 +1709,24 @@ tasks:
       order by 1,2   
       
 
+{% if old_heatmap == true %}
+- name: Chart System Peak CPU - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Peak CPU - Heatmap Day of Week x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1574,6 +1740,7 @@ tasks:
       - xslice:[1,0]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
 - name: Export System CPU by Day of Week for HeatMap, COD Adjusted
   connect: source
@@ -1588,6 +1755,25 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+{% if old_heatmap == true %}
+- name: Chart System CPU - Heatmap Day of Week x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_cpu_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_cpu_by_dayofweek_heatmap_wCOD.png
+      - title:System CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System CPU - Heatmap Day of Week x Hour, COD Adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1601,7 +1787,7 @@ tasks:
       - xslice:[1,0]
       - heatmapmin:0
       - heatmapmax:100
-
+{% endif %}
 
 - name: Export System Peak CPU by Day of Week for HeatMap, COD Adjusted
   connect: source
@@ -1623,6 +1809,25 @@ tasks:
       group by 1,2
       order by 1,2 
 
+
+{% if old_heatmap == true %}
+- name: Chart System Peak CPU - Heatmap Day of Week x Hour, COD Adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.png
+      - title:System Peak CPU - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Peak CPU - Heatmap Day of Week x Hour, COD Adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1636,6 +1841,7 @@ tasks:
       - xslice:[1,0]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
 #######################################################
 ### Pirated from the "System IO" Metric
@@ -1865,6 +2071,26 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+{% if old_heatmap == true %}
+- name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_maxobserved.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1879,7 +2105,29 @@ tasks:
       - ycolumns:[1,2]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
+
+
+{% if old_heatmap == true %}
+- name: Chart System IOTA - Heatmap Day of Week x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_iota.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System IOTA - Heatmap Day of Week x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1894,7 +2142,27 @@ tasks:
       - ycolumns:[1,3]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
+
+{% if old_heatmap == true %}
+- name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1908,7 +2176,27 @@ tasks:
       - ycolumns:[1,2]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
+
+{% if old_heatmap == true %}
+- name: Chart System IOTA Busy - Heatmap Days x Hour
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_iota.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System IOTA Busy - Heatmap Days x Hour
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1922,9 +2210,7 @@ tasks:
       - ycolumns:[1,3]
       - heatmapmin:0
       - heatmapmax:100
-
-
-
+{% endif %}
 
 ## Heatmaps, adjusted for COD:
 - name: Export System IO for Heatmap, COD adjusted
@@ -1955,6 +2241,27 @@ tasks:
       group by 1,2
       order by 1,2
 
+
+
+{% if old_heatmap == true %}
+- name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_maxobserved_wCOD.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Busy (Max Observed {{ io_percentile }}) - Heatmap Day of Week x Hour, COD adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1969,7 +2276,28 @@ tasks:
       - ycolumns:[1,2]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
+
+{% if old_heatmap == true %}
+- name: Chart System IOTA - Heatmap Day of Week x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_dayofweek_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_dayofweek_heatmap_iota_wCOD.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:3
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - xslice:[1,0]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System IOTA - Heatmap Day of Week x Hour, COD adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1984,7 +2312,27 @@ tasks:
       - ycolumns:[1,3]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
+
+{% if old_heatmap == true %}
+- name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_maxobserved_wCOD.png
+      - title:System IO Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System IO Busy (Max Observed {{ io_percentile }}) - Heatmap Days x Hour, COD adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -1998,7 +2346,27 @@ tasks:
       - ycolumns:[1,2]
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
+
+{% if old_heatmap == true %}
+- name: Chart System IOTA Busy - Heatmap Days x Hour, COD adjusted
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_IO_by_day_heatmap_wCOD.csv
+      - pngfilepath:vhc--system_IO_by_day_heatmap_iota_wCOD.png
+      - title:System IOTA Busy - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,3]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System IOTA Busy - Heatmap Days x Hour, COD adjusted
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -2012,9 +2380,7 @@ tasks:
       - ycolumns:[1,3]
       - heatmapmin:0
       - heatmapmax:100
-
-
-
+{% endif %}
 #######################################################
 ### Pirated from "Allocated Utilization per Table" metric
 #######################################################
