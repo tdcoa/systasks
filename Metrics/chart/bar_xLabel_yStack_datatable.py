@@ -98,10 +98,10 @@ def barline_xLabels_yBar_yLine(**kwargs):
 
     for i, y in enumerate(ys):
         bar = ax.bar(x, y, bottom=bottom, color=colors[i], label=ycol_names_bar[i], linewidth=2)
-        for j, value in enumerate(y):
-            if value > 0:
-                ax.text(j, bottom[j] + value / 2, human_format(value), ha='center', va='center',
-                        fontsize=4.5, color='white')
+        #for j, value in enumerate(y):
+        #    if value > 0:
+        #        ax.text(j, bottom[j] + value / 2, human_format(value), ha='center', va='center',
+        #                fontsize=4.5, color='white')
         bottom += y
         lgnd.append(mpatches.Patch(color=colors[i], label=ycol_names_bar[i]))
 
