@@ -1,5 +1,5 @@
 description: Vantage Health Check Trends for the main metrics to report Current Month to previous month, Quarter to quarter, current month to 6 months before differences.
-version: 1.0
+version: 1.1
 
 ### VHC changes should be made to the full version first,
 ### then copy/pasted to the OAP version and below toggled:
@@ -27,7 +27,7 @@ version: 1.0
 {% set td15 = True if tdver[:2]=='15' else False %}
 
 tasks:
-        
+
 
 
 ### ============= STANDARD PRE-PROCESSING =============
@@ -64,7 +64,7 @@ tasks:
        ,'{{ tca }}'              as TCA
        from (sel 1 one ) a
 
-{% set logts = true %}                                                                                        
+{% set logts = true %}
 {% include "vt_system_cpu_by_day_trends.j2" %}
 {% include "vt_system_io_by_day.j2" %}
 
@@ -204,6 +204,23 @@ tasks:
       group by 1,2
       order by 1,2
 
+{% if old_heatmap == true %}
+- name: Chart System Monthly CPU for Heatmap
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_monthly_cpu_heatmap.csv
+      - pngfilepath:vhc--system_monthly_cpu_heatmap.png
+      - title:Monthly CPU Usage% Heatmap - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+{% else %}
 - name: Chart System Monthly CPU for Heatmap
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -216,6 +233,7 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
 - name: Export System Monthly Peak CPU for Heatmap
   connect: source
@@ -237,19 +255,37 @@ tasks:
       group by 1,2
       order by 1,2
 
+{% if old_heatmap == true %}
+- name: Chart System Monthly Peak CPU for Heatmap
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_monthly_peak_cpu_heatmap.csv
+      - pngfilepath:vhc--system_monthly_peak_cpu_heatmap.png
+      - title:Monthly Peak CPU Usage% Heatmap - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+{% else %}
 - name: Chart System Monthly Peak CPU for Heatmap
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
     params:
       - csvfilepath:vhc--system_monthly_peak_cpu_heatmap.csv
       - pngfilepath:vhc--system_monthly_peak_cpu_heatmap.png
-      - title:Monthly CPU Usage% Heatmap - {{ siteid }}
+      - title:Monthly Peak CPU Usage% Heatmap - {{ siteid }}
       - height:6
       - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
-            
+{% endif %}
+
 - name: Export System Quarterly CPU Summary
   connect: source
   export:
@@ -444,6 +480,24 @@ tasks:
       group by 1,2
       order by 1,2
 
+{% if old_heatmap == true %}
+- name: Chart System Monthly IO for Heatmap
+  chart:
+    command: chart/heatmap_xLabel_yLabel_Values_old.py
+    params:
+      - csvfilepath:vhc--system_monthly_io_heatmap.csv
+      - pngfilepath:vhc--system_monthly_io_heatmap.png
+      - title:Monthly IO Busy % Heatmap - {{ siteid }}
+      - height:6
+      - width:{{ (12 * (heatmap_width_scale | default(1.00))) | round(2) }}
+      - annotate:{{ annotate_chart | default('True') }}
+      - heatmapcolorcount:4
+      - colors:[white,green,yellow,red]
+      - ycolumns:[1,2]
+      - heatmapmin:0
+      - heatmapmax:100
+
+{% else %}
 - name: Chart System Monthly IO for Heatmap
   chart:
     command: chart/heatmap_xLabel_yLabel_Values.py
@@ -456,6 +510,7 @@ tasks:
       - annotate:{{ annotate_chart | default('True') }}
       - heatmapmin:0
       - heatmapmax:100
+{% endif %}
 
 - name: Export System Quarterly IO Summary
   connect: source
