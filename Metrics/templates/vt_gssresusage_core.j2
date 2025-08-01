@@ -486,7 +486,7 @@
           ,tca.rss_intvl_ss
           ,tca.node_type_desc
           ,tca.amp_cnt
-          ,Null as PE_Only_Node_Flag -- TCA does not allow "PE-Only Node" string
+          ,cast(case when tca.amp_cnt='0' then 1 else 0 end as smallint) as PE_Only_Node_Flag
           ,tca.cpu_cnt
           ,tca.dbs_vrsn
           ,tca.pm_cod_pct
@@ -719,7 +719,7 @@
        ,cast(  RSSInterval                        as  SMALLINT)            as RSSInterval
        ,cast(  NodeGen                            as  VARCHAR(8) )         as NodeGen
        ,cast(case when pw.AMPS like 'P%' then 0 else AMPs end as smallint) as AMPS  -- will be 0 for PE-Only
-       ,cast(case when pw.AMPS like 'P%' then 0 else    1 end as smallint) as PE_Only_Node_Flag
+       ,cast(case when pw.AMPS like 'P%' then 1 else    0 end as smallint) as PE_Only_Node_Flag
        ,cast(  CPUs                               as  SMALLINT)            as CPUs
        ,cast(  DBSRelease                         as  VARCHAR(50) )        as DBSRelease
        ,cast(  PMCOD                              as  SMALLINT)            as PMCOD

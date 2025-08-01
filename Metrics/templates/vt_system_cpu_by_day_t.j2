@@ -159,6 +159,7 @@
 
                 from vt_gssresusage_core_t
                 where LogDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+                and PE_Only_Node_Flag=0
                 group by
                  LogDate {{ ",LogMin, LogHr, LogTS" if logts else "" }}
                 ,NodeGen, NumNodes, CPUs
