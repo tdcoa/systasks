@@ -27,7 +27,7 @@
         -- COD Numbers from ResUsage: PMCOD, WMCOD, ETcoreCPUs/vCPU_per_Node
         ,cast(PMCOD as decimal(18,4)) / 100   as CPU_COD_PM_Active_Pct
         ,cast(WMCOD as decimal(18,4)) / 100  as CPU_COD_WLM_Active_Pct
-        ,cast(ETcoreCPUs as decimal(6,4)) / nullifzero(vCPU_per_Node) as CPU_COD_EPOD_Active_Pct
+        ,cast(ETcoreCPUs as decimal(9,4)) / cast(nullifzero(vCPU_per_Node) as decimal(9,4)) as CPU_COD_EPOD_Active_Pct
         ,cast(CPU_COD_WLM_Active_Pct
             * CPU_COD_EPOD_Active_Pct
             * CPU_COD_PM_Active_Pct as decimal(38,4)) as CPU_COD_Total_Active_Pct
@@ -106,7 +106,7 @@
                 ,Avg(WMCOD)                              as WMCOD
                 ,Max(ETcoreCPUs)                         as ETcoreCPUs
                 -- Match the correct number of CPU seconds based on aggregation level
-                ,(count(*)*600) * Node_Cnt * vCPU_per_Node as CPU_Total
+                ,cast((count(*)*600) * Node_Cnt * vCPU_per_Node as BIGINT)as CPU_Total
 
                 -- Reverse-engineer GSSResUsage Query results into component pieces
                 -- Average CPU (additive // can include Idle)
@@ -119,10 +119,10 @@
                 ,cast(  Avg(AvgCPUBusy   /100.0000)
                                    - CPU_OS_RawAvgPct as decimal(38,6))  as CPU_DBS_RawAvgPct
 
-                ,CPU_Idle_RawAvgPct +
+                ,CAST(CPU_Idle_RawAvgPct +
                  CPU_IOWait_RawAvgPct +
                  CPU_OS_RawAvgPct +
-                 CPU_DBS_RawAvgPct       as CPU_Total_RawAvgPct
+                 CPU_DBS_RawAvgPct       as decimal(38,6)) AS CPU_Total_RawAvgPct
 
                 -- Translate into Average CPU Seconds
                 ,cast(CPU_Idle_RawAvgPct    * CPU_Total as decimal(38,4)) as CPU_Avg_Idle
@@ -154,8 +154,8 @@
                 ,cast(CPU_IOWait_MaxMaxPct * CPU_Total as decimal(38,4)) as CPU_MaxMax_IOWait
                 ,cast(  CPU_Busy_MaxMaxPct * CPU_Total as decimal(38,4)) as CPU_MaxMax_Busy
 
-                ,SUM(AvgNtwReadMBSecNode) *1024 as HostRead_KB   -- this is 1024 (MiB) instead of 1000 (MB) because the
-                ,SUM(AvgNtwWriteMBSecNode)*1024 as HostWrite_KB  --   GSSResUSage SQL is /1024 to (errantly) get to MB
+                ,cast(SUM(AvgNtwReadMBSecNode) *1024 as BIGINT) as HostRead_KB   -- this is 1024 (MiB) instead of 1000 (MB) because the
+                ,cast(SUM(AvgNtwWriteMBSecNode)*1024 as  BIGINT) as HostWrite_KB  --   GSSResUSage SQL is /1024 to (errantly) get to MB
 
                 from vt_gssresusage_core_t
                 where LogDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}

@@ -1,5 +1,5 @@
 description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
-version: 4.0
+version: 4.1
 
 ### VHC changes should be made to the full version first,
 ### then copy/pasted to the OAP version and below toggled:
@@ -433,6 +433,21 @@ tasks:
         FROM vt_dbql_core
         GROUP BY 1
         ORDER BY 2 DESC
+
+- name: "Chart top 25 users"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:oap--top_25_users.csv"
+      - "pngfilepath:oap--top_25_users.png"
+      - "title:Top 25 Users, Query Count & CPU Usage"
+      - "height:6"
+      - "width:12"
+      - "xrotate:90"
+      - "legendy:1.1"
+      - "legendx:0.5"
+      - "barlogscale:False"
+
 - name: Chart User query volume, with CPU line overlay
   chart:
     command: chart/barline_xLabels_yBar_yLine.py
@@ -443,15 +458,6 @@ tasks:
       - "width:9"
       - "barlogscale:False"
 
-- name: Chart 25 User query volume, with CPU line overlay
-  chart:
-    command: chart/barline_xLabels_yBar_yLine.py
-    params:
-      - "file:oap--top_25_users.csv"
-      - "title:User 25 Query Count & CPU Usage"
-      - "height:4"
-      - "width:9"
-      - "barlogscale:False"
 - name: Export App_ID categorized counts for  pptx
   connect: source
   export:
@@ -789,9 +795,9 @@ tasks:
     file: vhc--query_delaytime.csv
     sql: |
       select LogDate
-      ,cast(sum(RunTime_Total_Sec) as decimal(38,1)) as "Run_Time_Sec"
-      ,cast(coalesce(sum(DelayTime_Sec),1) as decimal(38,1)) as "Delay_Time_Sec"
-      ,cast((Delay_Time_Sec/Run_Time_Sec)*100 as decimal(10,1))(FORMAT 'ZZZ,ZZZ,ZZ9.9%') as DelayTime_Pct
+      ,cast(sum(RunTime_Total_Sec) as decimal(38,4)) as "Run_Time_Sec"
+      ,cast(coalesce(sum(DelayTime_Sec),1) as decimal(38,4)) as "Delay_Time_Sec"
+      ,cast((Delay_Time_Sec/Run_Time_Sec)*100 as decimal(38,1)) as DelayTime_Pct
       from vt_dbql_core dbql
       group by 1
       Order by 1
@@ -807,7 +813,7 @@ tasks:
       - "barlogscale:False"
       - "xrotate:90"
       - "xcolumns:[0]"
-      - "ycolumns:[1,2]"
+      - "ycolumns:[2,1]"
 
 ### Release Spool:
 # ------------------
@@ -1352,14 +1358,24 @@ tasks:
     file: vhc--resusage_cpu_cod.csv
     sql: |
       select cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
-      ,cast(avg(CPU_COD_PM_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "CPU_COD_PM_Active_Pct"
-      ,cast(avg(CPU_COD_WLM_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "CPU_COD_WM_Active_Pct"
-      ,cast(avg(CPU_COD_EPOD_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "TD_Enabled_CPUs_Pct"
-      ,cast(avg(CPU_COD_Total_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9%') as "CPU_COD_Total_Active_Pct"
+      ,cast(avg(CPU_COD_PM_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9') as "CPU_COD_PM_Active_Pct"
+      ,cast(avg(CPU_COD_WLM_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9') as "CPU_COD_WM_Active_Pct"
+      ,cast(avg(CPU_COD_EPOD_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9') as "TD_Enabled_CPUs_Pct"
+      ,cast(avg(CPU_COD_Total_Active_Pct) * 100.00 as decimal(5,2) format 'ZZZ.9') as "CPU_COD_Total_Active_Pct"
       from vt_System_CPU_by_Day
       group by 1
       order by 1
 
+- name: Chart CPU COD Details
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--resusage_cpu_cod.csv"
+      - "title:Resusage CPU COD - {{ siteid }}"
+      - "pngfilepath:vhc--resusage_cpu_cod.png"
+      - "width:12"
+      - "height:6"
+      
 - name: Export System CPU for Chart, COD Adjusted
   connect: source
   export:
@@ -1577,8 +1593,8 @@ tasks:
     file: vhc--system_cpu_wCOD.csv
     sql: |
       select
-        Avg("CPU Use%") AS Avg_CPU
-        ,Max("CPU Use%") AS Peak_CPU
+        CAST(Avg("CPU Use%") as decimal(18,2)) AS Avg_CPU
+        ,CAST(Max("CPU Use%") as decimal(18,2)) AS Peak_CPU
       From
           (select
            cast(cast(LogDate as date format 'yyyy-mm-dd') as varchar(10)) as "LogDate"
@@ -2685,6 +2701,7 @@ tasks:
       select Count(Distinct FeatureName) as ClearScape_Used
       from vt_Feature_Usage
       where Feature_Category = 'ClearScape'
+      
 - name: "Export for charting: ClearScape SubCategory"
   connect: source
   export:
@@ -2906,14 +2923,14 @@ tasks:
 
 
 # if full VHC (not on-a-page)
-- name: PPTx final build for Vantage Health Check (v4.2)
+- name: PPTx final build for Vantage Health Check (v4.3)
   ppt:
-    file: ppt/Vantage Health Check v4.2.pptx
+    file: ppt/Vantage Health Check v4.3.pptx
 
 {% else %}
 
 # if VHC-on-a-page
-- name: PPTx final build for Vantage Health Check On-a-Page (v4.2)
+- name: PPTx final build for Vantage Health Check On-a-Page (v4.3)
   ppt:
     file: ppt/Vantage Health Check On a Page.pptx
 

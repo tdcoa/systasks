@@ -32,7 +32,7 @@
             else 'max(TDEnabledCPUs)')
             }} (Named "ETcoreCPUs")
         ,cast(IO_COD as decimal(18,4)) / 100  as IO_COD_Active_Pct
-        ,cast(ETcoreCPUs as decimal(6,4)) / nullifzero(vCPU_per_Node) as IO_COD_EPOD_Active_Pct
+        ,cast(ETcoreCPUs as decimal(9,4)) / cast(nullifzero(vCPU_per_Node) as decimal(9,4)) as IO_COD_EPOD_Active_Pct
         ,cast(IO_COD_Active_Pct * IO_COD_EPOD_Active_Pct as decimal(38,4)) as IO_COD_Total_Active_Pct
 
         /* Read/Writes I/O */

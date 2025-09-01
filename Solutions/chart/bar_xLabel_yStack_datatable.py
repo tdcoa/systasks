@@ -76,7 +76,7 @@ def barline_xLabels_yBar_yLine(**kwargs):
     ys = [df[name].astype(float) for name in ycol_names_bar]
 
     # ---- Extend bar colors if needed
-    base_colors = ['#27C1BD', '#636363']
+    base_colors = ['#CF0000','#72B5D3']
     colors = (base_colors * (len(ycol_names_bar) // len(base_colors) + 1))[:len(ycol_names_bar)]
     formatter = FuncFormatter(human_format)
 

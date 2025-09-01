@@ -1,15 +1,29 @@
 {% set run = namespace(completed=[]) if run is not defined else run %}
 {% if not 'vt_dbql_core_t' in run.completed %}
 
+# =================================================================
+#     load dimensional table mappings:
+{% include "vt_datedriver.j2" %}
+{% include "vt_decode_appid.j2" %}
+{% include "vt_decode_user.j2" %}
+{% include "vt_decode_statement.j2" %}
+# =================================================================
+
+
+{% set debug   = False if debug is not defined else debug %}
+{% set varchar = 'VARCHAR(128)' if varchar is not defined else varchar %}
+{% set bigint  = 'BIGINT' if bigint is not defined else bigint %}
+{% set bigdec  = 'DECIMAL(38,4)' if bigdec is not defined else bigdec %}
+
 - name: "Create table: vt_dbql_core_t (td15 = {{td15}})"
   connect: source
   execute:
     sql: |
       create volatile table vt_dbql_core_t (
-         Site_ID                       varchar(64)
+         Site_ID                       {{ varchar }}
         ,LogDate                       DATE format 'yyyy-mm-dd'
-        ,Statement_Total_Cnt           bigint compress (null, 0)
-        ,Query_Total_Cnt               bigint compress (null, 0)
+        ,Statement_Total_Cnt           {{ bigint }} compress (null, 0)
+        ,Query_Total_Cnt           {{ bigint }} compress (null, 0)
       )
        primary index(LogDate)
        on commit preserve rows
@@ -19,8 +33,7 @@
 # -----------------------------------------------
 # ----- Loop Logic for filling vt_dbql_core_t -----
 # -----------------------------------------------
-
-- name: "INSERT into vt_dbql_core_t"
+- name: "INSERT into vt_dbql_core_t -- from DETAIL"
   connect: source
   execute:
     sql: |
@@ -28,25 +41,69 @@
         with dbql as(
             select
              {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
-            ,Statements, 1 as Query_Flag
+            ,Statements, 1 as Query_Flag, UserName, StatementType
+            ,case when TotalIOCount >(10**34) then 0 else TotalIOCount end as TotalIOCount_
+            ,case when ReqIOKB      >(10**34) then 0 else ReqIOKB      end as ReqIOKB_
+            ,case when ReqPhysIO    >(10**34) then 0 else ReqPhysIO    end as ReqPhysIO_
+            ,case when ReqPhysIOKB  >(10**34) then 0 else ReqPhysIOKB  end as ReqPhysIOKB_
             from {{ dbc.log }} as d
-            where LogDate between DATE-365 and DATE-1
+            {% if debug %}
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between DATE-365 and DATE-1
+            {% else %}
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between DATE-365 and DATE-1
+            {% endif %}
+            and TotalIOCount_ < (10**34)
+            and ReqIOKB_      < (10**34)
+            and ReqPhysIO_    < (10**34)
+            and ReqPhysIOKB_  < (10**34)
 
+        ),
+
+        stm as (
+        {% if debug %}
+                Select '' as Statement_Type, '' as Statement_Class, '' as Statement_Bucket, '' as Statement_Outcome
+                from (Select 1 as One) a where One=2
+        {% else %}
+                Select s.*
+                from vt_decode_statement as s
+        {% endif %}
+        ),
+
+        usr as (
+        {% if debug %}
+                Select DatabaseName as UserName2
+                ,'Unknown' as FullName
+                ,'Unknown' as UserType
+                ,'Unknown' as Organization
+                ,'Unknown' as Department
+                ,0 as Exclude_VantageUnit_Flag
+                ,0 as Exclude_Performance_Flag
+                from dbc.DatabasesV
+                where DBKind = 'U'
+        {% else %}
+                Select UserName as UserName2, FullName, UserType, Organization, Department
+                ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag
+                from vt_decode_user as u
+        {% endif %}
         )
         ------------------------------------
         ------------------------------------
         Select
         '{{ siteid }}' as Site_ID
         ,LogDate
-        ,zeroifnull(sum(cast(dbql.Statements as bigint))) as Statement_Total_Cnt
-        ,zeroifnull(sum(cast(dbql.Query_Flag as bigint))) as Query_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Statements as {{ bigint }}))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Query_Flag as {{ bigint }}))) as Query_Total_Cnt
+
         from dbql
+        join usr             on dbql.UserName = usr.UserName2            --<=== VT is complete 1:1 mapping, Equal Join OK
+        left outer join stm  on dbql.StatementType = stm.Statement_Type  --<=== may be incomplete, Outer Join required
+
         group by
          LogDate
 
 
 
-- name: "INSERT into vt_dbql_core_t"
+- name: "INSERT into vt_dbql_core_t -- from SUMMARY"
   connect: source
   execute:
     sql: |
@@ -54,25 +111,61 @@
         with dbql as(
             Select
              cast(CollectTimeStamp as date) (DATE, format 'YYYY-MM-DD') as LogDate
-             ,QueryCount as Statements, 1 as Query_Flag
+             ,QueryCount as Statements, 1 as Query_Flag, {{ "'Summary Queries'" if td15 else "UserName" }} as UserName
+             ,case when TotalIOCount     >(10**34) then 0 else TotalIOCount end as TotalIOCount_
+             {% if td15 %}
+             ,0 as ReqPhysIO_
+             ,0 as ReqIOKB_
+             ,0 as ReqPhysIOKB_
+             {% else %}
+             ,cast(case when ReqPhysIO   >(10**34) then 0 else ReqPhysIO   end as {{ bigdec }}) as ReqPhysIO_
+             ,cast(0                                                           as {{ bigint }}) as ReqIOKB_
+             ,cast(case when ReqPhysIOKB >(10**34) then 0 else ReqPhysIOKB end as {{ bigdec }}) as ReqPhysIOKB_
+             {% endif %}
             From {{ dbc.summary }} smry
-            where LogDate between DATE-365 and DATE-1
+            {% if debug %}
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between DATE-365 and DATE-1
+            {% else %}
+            where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between DATE-365 and DATE-1
+            {% endif %}
+            and TotalIOCount_ < (10**34)
+            and ReqIOKB_      < (10**34)
+            and ReqPhysIO_    < (10**34)
+            and ReqPhysIOKB_  < (10**34)
 
+        ),
+
+        usr as (
+        {% if debug %}
+                Select DatabaseName as UserName2
+                ,'Unknown' as FullName
+                ,'Unknown' as UserType
+                ,'Unknown' as Organization
+                ,'Unknown' as Department
+                ,0 as Exclude_VantageUnit_Flag
+                ,0 as Exclude_Performance_Flag
+                from dbc.DatabasesV
+                where DBKind = 'U'
+        {% else %}
+                Select UserName as UserName2, FullName, UserType, Organization, Department
+                ,Exclude_VantageUnit_Flag, Exclude_Performance_Flag
+                from vt_decode_user as u
+        {% endif %}
         )
-
         ------------------------------------
         ------------------------------------
         Select
         '{{ siteid }}' as Site_ID
         ,LogDate
-        ,zeroifnull(sum(cast(dbql.Statements as bigint))) as Statement_Total_Cnt
-        ,zeroifnull(sum(cast(dbql.Query_Flag as bigint))) as Query_Total_Cnt
+        
+        ,zeroifnull(sum(cast(dbql.Statements as {{ bigint }}))) as Statement_Total_Cnt
+        ,zeroifnull(sum(cast(dbql.Query_Flag as {{ bigint }}))) as Query_Total_Cnt
+
         from dbql
+        join usr             on dbql.UserName = usr.UserName2            --<=== VT is complete 1:1 mapping, Equal Join OK
+
         group by
          LogDate
-
-
-
 
 - name: "Collect Stats on vt_dbql_core_t"
   connect: source
