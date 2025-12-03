@@ -12,7 +12,7 @@
       create volatile table vt_system_io_by_day_t as
       (
         Select '{{ siteid }}' as Site_ID
-        ,cast(TheDate as format 'Y4-MM-DD') as LogDate
+        ,cast(TheDate as DATE format 'yyyy-mm-dd') as LogDate
         {% if logts %}
         ,cast(theTime/100 as int)-(LogHr*100) as LogMin
         ,cast(theTime/10000 as int) as LogHr
@@ -28,7 +28,7 @@
         ,cast(max(NCPUs) as smallint) as vCPU_per_Node
         ,CASE when max(PM_COD_IO) > max(WM_COD_IO) then max(WM_COD_IO) ELSE max(PM_COD_IO) END (Named "IO_COD")
         ,{{'max(NCPUs)' if tdversion | int < 1620
-            else ('max(SpareInt)' if tdversion | int == 1620
+            else ('CASE WHEN COALESCE (max(SpareInt),0) = 0 THEN max(NCPUs) ELSE max(SpareInt) END' if tdversion | int == 1620
             else 'max(TDEnabledCPUs)')
             }} (Named "ETcoreCPUs")
         ,cast(IO_COD as decimal(18,4)) / 100  as IO_COD_Active_Pct

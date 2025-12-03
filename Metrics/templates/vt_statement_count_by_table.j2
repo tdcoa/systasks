@@ -22,26 +22,17 @@
       insert into vt_statement_count_by_t_pw
       {% endif %}
         Select
-           {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
+           l.{{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') as LogDate
           ,cast(o.ObjectDatabaseName as VARCHAR(256)) as DatabaseName
           ,cast(o.ObjectTableName    as VARCHAR(256)) as TableName
           ,cast(l.StatementType      as VARCHAR(256)) as StatementType
           ,cast(count(*)             as BIGINT)       as Request_Count
         from {{ dbc.log }} as l
-        join (Select
-              {% if pdcr %}
-              LogDate as LogDate1
-              {% else %}
-              cast(CollectTimeStamp as DATE format 'YYYY-MM-DD') as LogDate1
-              {% endif %}
-              ,QueryID, ObjectDatabaseName, ObjectTableName
-              from   {{ dbc.obj }}
-              where logdate1 in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
-                and ObjectTableName is not null
-             ) as o
+        join {{ dbc.obj }} as o
           on l.QueryID = o.QueryID
-         and LogDate = o.LogDate1
-         and LogDate in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+         and l.LogDate = o.LogDate
+         and l.LogDate in(Select Calendar_Date from vt_datedriver where Process_Chunk = {{ ichunk }} )
+         and o.objecttablename is not null
         group by 1,2,3,4
       {% if ichunk == 1 %}
       ) with data
