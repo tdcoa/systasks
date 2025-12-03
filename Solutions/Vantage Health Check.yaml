@@ -1,5 +1,5 @@
 description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
-version: 4.1
+version: 4.2
 
 ### VHC changes should be made to the full version first,
 ### then copy/pasted to the OAP version and below toggled:
@@ -163,7 +163,7 @@ tasks:
       left outer join (Select distinct UserName from vt_dbql_core) d
         on d.UserName = u.UserName
 
-- name: Export query count analysis for pptx
+- name: Export query count analysis for  pptx
   connect: source
   export:
     file: oap--query_counts.csv
@@ -183,8 +183,8 @@ tasks:
       ,cast(cast(TotalSubSecondCntPerDayMil as Decimal(18,1) format 'ZZZ,ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "SubSecond Query Count Per Day (M)"
       ,cast(cast(SubSecondPct as Decimal(9,2) format 'ZZ9.9') as varchar(32)) as "SubSecond % of Total Queries" --14
       ,cast(cast(AvgRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Average Runtime Seconds" --15
-      ,cast(cast(MedianRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Median Runtime Seconds"
-      ,cast(cast(TotalQryCnt_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Primary Query Count"--17 (Query Counts)
+      ,cast(cast(MedianRunTimeSec as Decimal(9,2) format 'Z,ZZZ,ZZ9.99') as varchar(32)) as "Median Runtime Seconds"    
+      ,cast(cast(TotalQryCnt_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Total Primary Query Count"--17
       ,cast(cast(AvgQryPerSecond_Q as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Queries per Second"
       ,cast(cast(AvgQryPerDay_Q as Integer format 'ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Queries per Day" --19
       ,cast(cast(AvgMilQryPerDay_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Queries per Day (M)" --20
@@ -193,11 +193,13 @@ tasks:
       ,cast(cast(QryCntPerYear_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Query Count per Year"
       ,cast(cast(MilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (M)" --24
       ,cast(cast(BilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (B)"
+      ,cast(cast(TotalQryCnt_M as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Total Query Count (M) "
       from
       (
       select max(Site_ID) as Site_ID
       ,count(distinct LogDate) as LogDayCnt
       ,sum(Statement_Total_Cnt) AS TotalQryCnt
+      ,TotalQryCnt / 1e6  AS TotalQryCnt_M
       ,TotalQryCnt / LogDayCnt AS AvgQryPerDay
       ,AvgQryPerDay  / 1e6 AS AvgMilQryPerDay
       ,AvgQryPerDay * 30 AS AvgQryPerMonth
@@ -352,6 +354,20 @@ tasks:
       - legendxy:(0.5, -0.2)
       - colors:(#EFEFEF,#142CF6,#43A9BD,#F01D1D)
 
+{% include "vt_resusage_sps.j2" %}
+- name: Export vt_resusage_sps
+  connect: source
+  export:
+    file: oap--resusage_sps.csv
+    sql: |
+      select *
+      from vt_resusage_sps 
+      order by LogDate;;
+
+- name: DROP volatile table to save spool - vt_resusage_sps
+  connect: source
+  execute:
+    sql: drop table vt_resusage_sps
 
 {% include "vt_concurrency.j2" %}
 
@@ -520,6 +536,37 @@ tasks:
 {% include "vt_system_cpu_by_day.j2" %}
 {% include "vt_system_io_by_day.j2" %}
 
+
+# debug vt_system_io_by_day
+- name: "export vt_system_io_by_day data types"
+  connect: source
+  export:
+    file: oap--vt_system_io_by_day_types.csv
+    sql: |
+         select distinct type(logdate), type(ObservedMax990_IOBusy_pct) 
+         from vt_system_io_by_day;
+
+- name: "export vt_system_io_by_day"
+  connect: source
+  export:
+    file: oap--vt_system_io_by_day.csv
+    sql: |
+         select top 100 * from vt_system_io_by_day;  
+
+- name: "show vt_system_io_by_day"
+  connect: source
+  export:
+    file: oap--show_vt_system_io_by_day.csv
+    sql: |
+         show table vt_system_io_by_day;
+         
+- name: "help vt_system_io_by_day"
+  connect: source
+  export:
+    file: oap--help_vt_system_io_by_day.csv
+    sql: |
+         help table vt_system_io_by_day;
+         
 # fetch COD limits from ResUsage
 - name: "Retrieve COD limit"
   connect: source
@@ -534,6 +581,7 @@ tasks:
          union all
          SELECT * from (SELECT '# AMPs' as label, cast(HASHAMP() + 1 as varchar(16)) as total_amps) x
          order by 1
+
 - name: "Generate Heatmap data"
   connect: source
   export:
@@ -557,9 +605,9 @@ tasks:
     params:
       - "csvfilepath:oap--SPMADetailData.csv"
       - "pngfilepath:oap--CPUHeapmapMed.png"
-      - "title:CPU Use% by Weekday/Hour"
+      - "title:Avg CPU Use% by Weekday/Hour"
       - "xcolumns:[1]"
-      - "ycolumns:[2,4]"
+      - "ycolumns:[2,3]"
       - "height:6"
       - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
       - "heatmapcolorcount:4"
@@ -574,9 +622,9 @@ tasks:
     params:
       - "csvfilepath:oap--SPMADetailData.csv"
       - "pngfilepath:oap--CPUHeapmapMed.png"
-      - "title:CPU Use% by Weekday/Hour"
+      - "title:Avg CPU Use% by Weekday/Hour"
       - "xcolumns:[1]"
-      - "ycolumns:[2,4]"
+      - "ycolumns:[2,3]"
       - "height:6"
       - "width:{{ (9 * (heatmap_width_scale | default(1.00))) | round(2) }}"
       - "heatmapmin:0"
@@ -739,11 +787,13 @@ tasks:
       ,cast(cast(QryCntPerYear_Q as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Primary Query Count per Year"
       ,cast(cast(MilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (M)" --24
       ,cast(cast(BilQryCntPerYear_Q as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Primary Query Count per Year (B)"
+      ,cast(cast(TotalQryCnt_M as Decimal(18,1) format 'ZZZ,ZZZ,ZZ9.9') as varchar(32)) as "Total Query Count (M) "
       from
       (
       select max(Site_ID) as Site_ID
       ,count(distinct LogDate) as LogDayCnt
       ,sum(Statement_Total_Cnt) AS TotalQryCnt
+      ,TotalQryCnt / 1e6  AS TotalQryCnt_M
       ,TotalQryCnt / LogDayCnt AS AvgQryPerDay
       ,AvgQryPerDay  / 1e6 AS AvgMilQryPerDay
       ,AvgQryPerDay * 30 AS AvgQryPerMonth
@@ -851,7 +901,7 @@ tasks:
       ,Avg(Concurrency_80Pctl) as "80th Percentile--#9C9700"
       ,Avg(Concurrency_95Pctl) as "95th Percentile--#7E0606"
       ,MAX(Concurrency_Peak) as "Absolute Peak--#FF0000"
-      ,Avg("CPU Use%") as "CPU_Use%--#0000FF"
+      ,Avg("CPU Use%") as "CPU_Use%"
       from vt_concurrency vt_cc
       inner join
       (select
@@ -865,12 +915,13 @@ tasks:
 
 - name: Chart Concurrency
   chart:
-    command: chart/line_xDate_yElse.py
+    command: chart/line_xDate_2y_Axis.py
     params:
       - "file:vhc--concurrency2.csv"
       - "title:Concurrency - {{ siteid }}"
       - "width:12"
       - "height:6"
+      - "secondary:CPU_Use%"
 
 
 - name: Export concurrency for graphing (2 lines only)
@@ -1882,7 +1933,7 @@ tasks:
        cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 as decimal(38,2)) as "IO Busy%"
        ,' ' as col2
       from vt_system_io_by_day
-      where logdate between {{ startdate }} and {{ enddate }}
+      where logdate between {{ startdate }} (date, format 'YYYY-MM-DD') and {{ enddate }} (date, format 'YYYY-MM-DD')
 # Line Chart:
 - name: Export System IO for Line Chart (IOTA+IOBusy)
   connect: source
@@ -2919,18 +2970,40 @@ tasks:
 
 {% endfor %}
 
+- name: "Export for charting: QueryGrid SubCategory"
+  connect: source
+  export:
+    file: VHC--feature_usage_x_QueryGrid_SubCategory.csv
+    sql: |
+      select Feature_SubCategory
+          ,sum(cast(Request_Total_Cnt as decimal(38,2)) ) / count(distinct LogDate)  as Average_Daily_Use_Count
+          ,sum(cast(sum_parsercputime as decimal(38,2)) + cast(sum_ampcputime as decimal(38,2)) ) /
+          sum(Request_Total_Cnt)  as Average_CPU_Seconds_per_Query
+      from vt_Feature_Usage
+      where Feature_Category = 'QueryGrid'
+      group by 1
+      Order by 2 Desc
 
-
+- name: "Chart for charting: all ClearScape ACTIVE Features by SubCategory"
+  chart:
+    command: chart/barline_xLabels_yBar_yLine.py
+    params:
+      - "file:VHC--feature_usage_x_QueryGrid_SubCategory.csv"
+      - "title:QueryGrid Features By SubCategory - {{ siteid }}"
+      - "height:8.25"
+      - "width:11.25"
+      - "barlogscale:False"
+      - "legendy:1.1"
 
 # if full VHC (not on-a-page)
-- name: PPTx final build for Vantage Health Check (v4.3)
+- name: PPTx final build for Vantage Health Check (v4.4)
   ppt:
-    file: ppt/Vantage Health Check v4.3.pptx
+    file: ppt/Vantage Health Check v4.4.pptx
 
 {% else %}
 
 # if VHC-on-a-page
-- name: PPTx final build for Vantage Health Check On-a-Page (v4.3)
+- name: PPTx final build for Vantage Health Check On-a-Page (v4.4)
   ppt:
     file: ppt/Vantage Health Check On a Page.pptx
 

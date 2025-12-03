@@ -1,0 +1,45 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_resusage_sps' in run.completed %}
+
+
+- name:  Create vt_resusage_sps
+  connect: source
+  execute:
+    sql: |
+      Create Volatile Table vt_resusage_sps as
+      (
+      select
+        '{{ siteid | default('add variable: siteid')}}' as Site_ID,
+        thedate as LogDate,
+        hour(thetime) as LogHour,
+        WDid as Workload_ID,
+        --WDName as Workload_Name,
+        SUM(NumRequests) as Query_Count,
+        SUM(ActiveSessions) as Active_Sessions,
+        CAST(SUM(CPUUServ) / 1000.00 AS DECIMAL(32,2)) AS CPU_OS_Sec,
+        CAST(SUM(CPUUExec) / 1000.00 AS DECIMAL(32,2)) AS CPU_DBMS_Sec,
+        CAST(SUM(CPUUServOther) / 1000.00 AS DECIMAL(32,2)) AS CPU_OS_Other_Sec,
+        CAST(SUM(CPUUExecOther) / 1000.00 AS DECIMAL(32,2)) AS CPU_DBMS_Other_Sec,
+        CAST(SUM(WaitIO) / 1000.00 AS DECIMAL(32,2)) AS WaitIO,
+        CAST(SUM(CPURunDelay) / 1000.00 AS DECIMAL(32,2)) AS CPURunDelay,
+        sum(IOSubmittedKB)  as IOSubmittedKB,
+        --sum(IOCompletedKB)  as IOCompletedKB,
+        sum(IOCriticalSubmittedKB)  as IOCriticalSubmittedKB,
+        sum(FullPotentialIota)  as FullPotentialIota,
+        sum(CodPotentialIota)  as CodPotentialIota,
+        sum(UsedIota)  as UsedIota
+        from DBC.ResUsageSps
+        WHERE LogDate BETWEEN  {{ startdate | default('DATE-92')}}  AND {{ enddate | default('DATE-1')}}
+        group by 1,2,3,4
+      ) with data
+      primary index (LogDate)
+      on commit preserve rows
+      ;
+
+- name: Collect Stats on vt_resusage_sps
+  connect: source
+  execute:
+    sql: collect stats on vt_resusage_sps column(LogDate)
+
+{% endif %}
+{{ run.completed.append('vt_resusage_sps') or '' }}

@@ -40,7 +40,7 @@ def line_xDate_yElse(**kwargs):
     import matplotlib.pyplot as plt
     from matplotlib.ticker import FuncFormatter
     from datetime import date
-    default_colors = ['#27C1BD','#636363','#EC8D1A','#038DAC','#EEA200','purple','green', 'orange', 'red','blue','yellow','brown','black']
+    default_colors = ['#27C1BD','#636363','#EC8D1A','#038DAC','#EEA200','purple','green', 'orange', 'red','blue','yellow','brown','black','#C39BD3','#8E13BF','#4E245F','#89327E','#F239DB','#A787A3','#2C4D95','#112F6E']
     formatter = FuncFormatter(human_format)
     coaprint('line_xDate_yElse Started')
     coaprint('args:', kwargs)
