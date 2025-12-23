@@ -72,6 +72,7 @@
   {% set siteid    = 'siteid'  if siteid    is not defined else siteid    %}
   {% set reconcile = true      if reconcile is not defined else reconcile %}
   {% set reconcile_dbqlogrules = false if reconcile_dbqlogrules is not defined else reconcile_dbqlogrules %}
+  {% set io_ceiling_mode = 'observed'      if io_ceiling_mode is not defined else io_ceiling_mode %}
 
   # track original values for those modified above, for reconciliation
   {% set orig = {} %}
@@ -124,6 +125,7 @@
   {% set td15 = true if tdver[:2]=='15' else false %}
   {% set td16 = true if tdver[:2]=='16' else false %}
   {% set td17 = true if tdver[:2]=='17' else false %}
+  {% set td20 = true if tdver[:2]=='20' else false %}
 
 {% if reconcile %}
 # report out all variables:
@@ -160,6 +162,7 @@
       ,'{{ td15 }}' as TD15
       ,'{{ td16 }}' as TD16
       ,'{{ td17 }}' as TD17
+      ,'{{ td20 }}' as TD20
       ,{{ startdate }} as StartDate
       ,{{ enddate }} as EndDate
       ,'{{ your_name }}' as YourName
@@ -172,6 +175,7 @@
       ,{{process_chunks | default(1) }} as Process_Chunks
       ,'{{ reconcile    | default(false) }}' as Reconcile
       ,'{{ custom_decode_folder }}' as Custom_Decode_Folder
+      ,'{{ io_ceiling_mode | default('observed')}}' as IO_Ceiling_Mode
 
 {% if reconcile_dbqlogrules %}
 # report out logging rules:
@@ -191,5 +195,6 @@
                             ,"td15":td15
                             ,"td16":td16
                             ,"td17":td17
+                            ,"td20":td20
                             } %}
 {%- endmacro %}

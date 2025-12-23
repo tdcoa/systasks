@@ -4,6 +4,257 @@
 {% set td15 = true  if tdver[:2]=='15' else false %}
 {% set tdversion = tdver.replace('.','') %}
 {% set percentiles = [1000, 995, 990, 980, 950, 900, 800 ] %}
+{% set    io_ceiling_mode = 'observed'   if    io_ceiling_mode is not defined else  io_ceiling_mode   %}
+
+
+{% if io_ceiling_mode == 'spa' %}
+
+
+- name: create vt_spa_io_rating (if not already created)
+  connect: source
+  execute:
+    sql: |
+      /* define columns to match the CSV */
+      create volatile table vt_spa_io_rating
+      (
+        SITE_ID    varchar(64),
+        PctReadsKB decimal(9,2),
+        KBRead     decimal(9,2),
+        IO_Rating  decimal(18,6)
+      )
+      on commit preserve rows;
+
+
+- name: import spa ratings into vt_spa_io_rating
+  connect: source
+  import:
+    file: {{ custom_decode_folder | default (dirs.systasks / "Metrics" / "data") }}/decode_io_ceiling.csv
+    table: vt_spa_io_rating
+
+- name: Export SPA IO Rating Matrix
+  connect: source
+  export:
+    file: vhc--spa_io_rating_matrix.csv
+    sql: |
+      select * from vt_spa_io_rating
+
+
+- name:  "Create vt_system_io_by_day (SPA-rated ceiling)"
+  connect: source
+  execute:
+    sql: |
+      /* =======================================================================
+         vt_system_io_by_day (SPA path)
+         - Preserves the same output columns as the 'observed' branch
+         - Computes IO Busy% via SPA rating matrix (bilinear interpolation)
+         ======================================================================= */
+
+      create volatile table vt_system_io_by_day as
+      (
+        /* ---------- Interval-level features from ResUsage (by interval/node) ---------- */
+        with IntervalCalc as
+        (
+          select
+              '{{ siteid }}' as Site_ID
+            , cast(TheDate as format 'Y4-MM-DD') as LogDate
+
+            {% if logts %}
+            , cast(theTime/100 as int)-(LogHr*100) as LogMin
+            , cast(theTime/10000 as int) as LogHr
+            , cast(
+               cast(cast(theDate as date format 'yyyy-mm-ddb') as char(11)) ||
+               cast(cast(LogHr as int format '99:') as char(3)) ||
+               cast(cast(LogMin as int format '99') as char(2)) || ':00'
+               as timestamp(0)) as LogTS
+            {% else %}
+            , cast(theTime/10000 as int) as LogHr
+            {% endif %}
+
+            , SUBSTRING ((Current_Time (FORMAT 'HH:MI:SS.S(F)Z') (VARCHAR (20))) FROM 9 FOR 6) as UTC_Offset
+
+            , cast(max(NodeType) as varchar(10)) as Node_Type
+            , cast(count(distinct NodeID) as smallint) as Node_Cnt
+            , cast(max(NCPUs) as smallint) as vCPU_per_Node
+            , CASE when max(PM_COD_IO) > max(WM_COD_IO) then max(WM_COD_IO) ELSE max(PM_COD_IO) END (Named "IO_COD")
+            , {{ 'max(NCPUs)' if tdversion | int < 1620
+                 else ('max(SpareInt)' if tdversion | int == 1620
+                 else 'max(TDEnabledCPUs)') }} (Named "ETcoreCPUs")
+            , cast(IO_COD as decimal(18,4)) / 100  as IO_COD_Active_Pct
+            , cast(ETcoreCPUs as decimal(9,4)) / cast(nullifzero(vCPU_per_Node) as decimal(9,4)) as IO_COD_EPOD_Active_Pct
+            , cast(IO_COD_Active_Pct * IO_COD_EPOD_Active_Pct as decimal(38,4)) as IO_COD_Total_Active_Pct
+
+            /* Interval length in seconds */
+            , avg(secs) (named "RSSInterval")
+
+            /* Read/Write totals (preserve schema) */
+            , sum(FileAcqReads+FilePreReads+FileWrites)(BIGINT) as IOs
+            , sum(FileAcqReads+FilePreReads)(BIGINT)          as IOs_Read
+            , sum(FileWrites)(BIGINT)                         as IOs_Write
+            , sum(FileAcqReadKB+FilePreReadKB+FileWriteKB)(BIGINT) as IOKB
+            , sum(FileAcqReadKB+FilePreReadKB)(BIGINT)            as IOKB_Read
+            , sum(FileWriteKB)(BIGINT)                            as IOKB_Write
+
+            /* IOTA (preserve schema) */
+            {% if td15 %}
+            , 0 as MaxIOTA_cntB
+            , 0 as UsedIOTA_cntB
+            , 0 as Avg_IOTA_Pct
+            {% else %}
+            , sum(cast(UsedIOTA/1e9 as BIGINT)) as UsedIOTA_cntB
+            , sum(cast(FullPotentialIOTA/1e9 as BIGINT)) as MaxIOTA_cntB
+            , cast(UsedIOTA_cntB as decimal(38,4)) / nullifzero(MaxIOTA_cntB) as Avg_IOTA_Pct
+            {% endif %}
+
+            /* Host IO */
+            , SUM(HostReadKB)  as HostRead_KB
+            , SUM(HostWriteKB) as HostWrite_KB
+
+            /* Workload mix (KB basis) and average block size */
+            , zeroifnull( sum(FileAcqReadKB + FilePreReadKB)
+                          / nullifzero(sum(FileAcqReadKB + FilePreReadKB + FileWriteKB)) * 100 )
+              (format 'ZZ9.9') as PctReadsKB
+
+            , zeroifnull(
+                ( sum(FileAcqReadKB + FilePreReadKB) / 1024.0 / nullifzero(avg(secs)) )   /* Read MB/s */
+                / nullifzero( (sum(FileAcqReads) + sum(FilePreReads)) / nullifzero(avg(secs)) )
+                * 1024.0
+              )
+              (format 'Z,ZZ9.9') as KBRead
+
+            /* Observed throughput (max per node in interval, MB/s) */
+            , MAX(FileAcqReadKB + FilePreReadKB + FileWriteKB) / 1024.0 / nullifzero(avg(secs))
+              (format 'ZZZ,ZZ9.9') as MaxMBSecNode
+
+          from {{ dbc.spma }}
+          where TheDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+          group by 1,2
+          {{ ',3,4,5' if logts else ',3' }}
+        ),
+
+        /* ---------- Find bounding breakpoints within SPA matrix ---------- */
+        Bounds as
+        (
+          select ic.*
+               , (select MAX(PctReadsKB) from vt_spa_io_rating r
+                   where r.PctReadsKB <= ic.PctReadsKB) as PctLow
+               , (select MIN(PctReadsKB) from vt_spa_io_rating r
+                   where r.PctReadsKB >= ic.PctReadsKB) as PctHigh
+               , (select MAX(KBRead)     from vt_spa_io_rating r
+                   where r.KBRead    <= ic.KBRead)     as KBLow
+               , (select MIN(KBRead)     from vt_spa_io_rating r
+                   where r.KBRead    >= ic.KBRead)     as KBHigh
+          from IntervalCalc ic
+        ),
+
+        /* ---------- Fetch corner ratings (four matrix points) ---------- */
+        Corners as
+        (
+          select
+              b.*
+            , MAX(case when r.PctReadsKB=b.PctLow  and r.KBRead=b.KBLow  then r.IO_Rating end) as R_LL
+            , MAX(case when r.PctReadsKB=b.PctLow  and r.KBRead=b.KBHigh then r.IO_Rating end) as R_LH
+            , MAX(case when r.PctReadsKB=b.PctHigh and r.KBRead=b.KBLow  then r.IO_Rating end) as R_HL
+            , MAX(case when r.PctReadsKB=b.PctHigh and r.KBRead=b.KBHigh then r.IO_Rating end) as R_HH
+          from Bounds b
+          join vt_spa_io_rating r
+            on r.PctReadsKB in (b.PctLow, b.PctHigh)
+           and r.KBRead    in (b.KBLow,  b.KBHigh)
+          group by
+            b.Site_ID, LogDate
+            {{ ',LogTS, LogHr, LogMin' if logts else ', LogHr' }}
+            , UTC_Offset, Node_Type, Node_Cnt, vCPU_per_Node, IO_COD, ETcoreCPUs
+            , IO_COD_Active_Pct, IO_COD_EPOD_Active_Pct, IO_COD_Total_Active_Pct
+            , RSSInterval, IOs, IOs_Read, IOs_Write, IOKB, IOKB_Read, IOKB_Write
+            , MaxIOTA_cntB, UsedIOTA_cntB, Avg_IOTA_Pct, HostRead_KB, HostWrite_KB
+            , b.PctReadsKB, b.KBRead, MaxMBSecNode
+            , PctLow, PctHigh, KBLow, KBHigh
+        ),
+
+        /* ---------- Bilinear interpolation + interval Busy% ---------- */
+        SpaUsage as
+        (
+          select
+              c.*
+            , (
+                (coalesce(R_LL, R_LH, R_HL, R_HH) * ((PctHigh - PctReadsKB) * (KBHigh - KBRead))) +
+                (coalesce(R_LH, R_LL, R_HL, R_HH) * ((PctHigh - PctReadsKB) * (KBRead - KBLow))) +
+                (coalesce(R_HL, R_LL, R_LH, R_HH) * ((PctReadsKB - PctLow)   * (KBHigh - KBRead))) +
+                (coalesce(R_HH, R_LL, R_LH, R_HL) * ((PctReadsKB - PctLow)   * (KBRead - KBLow)))
+              ) / nullifzero( (PctHigh - PctLow) * (KBHigh - KBLow) ) as IO_Ceiling_MBps
+
+            , MaxMBSecNode / nullifzero(
+                (
+                  (coalesce(R_LL, R_LH, R_HL, R_HH) * ((PctHigh - PctReadsKB) * (KBHigh - KBRead))) +
+                  (coalesce(R_LH, R_LL, R_HL, R_HH) * ((PctHigh - PctReadsKB) * (KBRead - KBLow))) +
+                  (coalesce(R_HL, R_LL, R_LH, R_HH) * ((PctReadsKB - PctLow)   * (KBHigh - KBRead))) +
+                  (coalesce(R_HH, R_LL, R_LH, R_HL) * ((PctReadsKB - PctLow)   * (KBRead - KBLow)))
+                ) / nullifzero( (PctHigh - PctLow) * (KBHigh - KBLow) )
+              ) as IOBusy_pct_spa  /* 0..1 scale */
+          from Corners c
+        )
+
+        /* ---------- Final aggregation: preserve exact vt_system_io_by_day columns ---------- */
+        select
+            Site_ID
+          , LogDate
+          {% if logts %}
+          , LogMin
+          , LogHr
+          , LogTS
+          {% else %}
+          , LogHr
+          {% endif %}
+          , UTC_Offset
+          , Node_Type
+          , Node_Cnt
+          , vCPU_per_Node
+          , Avg(IO_COD) as IO_COD
+          , Max(ETcoreCPUs) as ETcoreCPUs
+          , Avg(IO_COD_Active_Pct) as IO_COD_Active_Pct
+          , Avg(IO_COD_EPOD_Active_Pct) as IO_COD_EPOD_Active_Pct
+          , Avg(IO_COD_Total_Active_Pct) as IO_COD_Total_Active_Pct
+
+          /* Read/Writes I/O */
+          , sum(IOs)(BIGINT)       as IOs
+          , sum(IOs_Read)(BIGINT)  as IOs_Read
+          , sum(IOs_Write)(BIGINT) as IOs_Write
+          , sum(IOKB)(BIGINT)      as IOKB
+          , sum(IOKB_Read)(BIGINT) as IOKB_Read
+          , sum(IOKB_Write)(BIGINT)as IOKB_Write
+
+          /* IOTA Metrics */
+          , sum(UsedIOTA_cntB)     as UsedIOTA_cntB
+          , sum(MaxIOTA_cntB)      as MaxIOTA_cntB
+          , avg(Avg_IOTA_Pct) as IOTA_Pct
+
+          /* ObservedMax{pctl}_IOBusy_pct — set from SPA Busy% for compatibility */
+          {% for pctl in percentiles %}
+          , avg(IOBusy_pct_spa) as ObservedMax{{ pctl }}_IOBusy_pct
+          , ObservedMax{{ pctl }}_IOBusy_pct - IOTA_Pct as OMP{{ pctl }}_Reconcile
+          {% endfor %}
+
+          /* Percentile Observations — placeholders (not used in SPA mode) */
+          {% for metric in ['IOs','IOs_Read','IOs_Write','IOKB','IOKB_Read','IOKB_Write'] %}
+            {% for pctl in percentiles %}
+          , cast(NULL as BIGINT) as {{ metric }}_{{ pctl }}pctl
+          , cast(NULL as decimal(38,4)) as {{ metric }}_OMP{{ pctl }}_busy_pct
+            {% endfor %}
+          {% endfor %}
+
+          /* Host IO */
+          , sum(HostRead_KB)  as HostRead_KB
+          , sum(HostWrite_KB) as HostWrite_KB
+
+        from SpaUsage
+        where LogDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+        group by Site_ID, LogDate
+        {{ ',LogTS, LogHr, LogMin' if logts else ',LogHr' }}
+        ,UTC_Offset, Node_Type, Node_Cnt, vCPU_per_Node
+      ) with data
+        primary index (LogDate)
+        on commit preserve rows
+
+{% else %}
 
 - name:  "Create vt_system_io_by_day"
   connect: source
@@ -93,6 +344,8 @@
       ) with data
         primary index (LogDate)
         on commit preserve rows
+
+{% endif %}
 
 - name:  "Collect Stats"
   connect: source

@@ -13,12 +13,14 @@ version: 1.2
 {% set enddate   = 'DATE-1'    if enddate   is not defined else enddate %}
 {% set export_detail = False   if export_detail is not defined else export_detail %}
 {% set override_maxperm_tb = 0 if override_maxperm_tb is not defined else override_maxperm_tb %}
+
 {% set   wlm_cod_cpu = 1.0000    if   wlm_cod_cpu is not defined else  wlm_cod_cpu  %}
 {% set    pm_cod_cpu = 1.0000    if    pm_cod_cpu is not defined else   pm_cod_cpu  %}
 {% set  epod_cod_cpu = 1.0000    if  epod_cod_cpu is not defined else epod_cod_cpu  %}
 {% set full_cod_cpu = (wlm_cod_cpu * pm_cod_cpu * epod_cod_cpu) | round(6) %}
 {% set workload_cod_cpu = (wlm_cod_cpu * epod_cod_cpu) | round(6) %}
 
+{% set    io_ceiling_mode = 'observed'   if    io_ceiling_mode is not defined else  io_ceiling_mode   %}
 {% set    wlm_cod_io = 1.0000    if    wlm_cod_io is not defined else  wlm_cod_io   %}
 {% set   epod_cod_io = 1.0000    if   epod_cod_io is not defined else epod_cod_io   %}
 {% set workload_cod_io = wlm_cod_io * epod_cod_io | round(6) %}
@@ -46,6 +48,7 @@ tasks:
 {% set customer_name = run.variables['customer_name'] %}
 {% set tdver = run.variables['tdver'] %}{% set td15 = run.variables['td15'] %}
 {% set td16 = run.variables['td16'] %}{% set td17 = run.variables['td17'] %}
+{% set td20 = run.variables['td20'] %}
 ### ============= STANDARD PRE-PROCESSING =============
 
 
