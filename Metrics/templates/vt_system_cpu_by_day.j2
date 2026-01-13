@@ -159,7 +159,7 @@
                 ,cast(SUM(AvgNtwWriteMBSecNode)*1024 as  BIGINT) as HostWrite_KB  --   GSSResUSage SQL is /1024 to (errantly) get to MB
 
                 from vt_gssresusage_core
-                where LogDate between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
+                where cast(LogDate as date format 'YYYY-MM-DD') between {{ startdate | d("DATE-92") }} and {{ enddate | d("DATE-1") }}
                 and PE_Only_Node_Flag=0
                 group by
                  LogDate {{ ",LogMin, LogHr, LogTS" if logts else "" }}
