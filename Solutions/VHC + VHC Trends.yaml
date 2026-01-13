@@ -540,35 +540,6 @@ tasks:
 {% include "vt_system_cpu_by_day.j2" %}
 {% include "vt_system_io_by_day.j2" %}
 
-# debug vt_system_io_by_day
-- name: "export vt_system_io_by_day data types"
-  connect: source
-  export:
-    file: oap--vt_system_io_by_day_types.csv
-    sql: |
-         select distinct type(logdate), type(ObservedMax990_IOBusy_pct) 
-         from vt_system_io_by_day;
-
-- name: "export vt_system_io_by_day"
-  connect: source
-  export:
-    file: oap--vt_system_io_by_day.csv
-    sql: |
-         select top 100 * from vt_system_io_by_day;  
-
-- name: "show vt_system_io_by_day"
-  connect: source
-  export:
-    file: oap--show_vt_system_io_by_day.csv
-    sql: |
-         show table vt_system_io_by_day;
-         
-- name: "help vt_system_io_by_day"
-  connect: source
-  export:
-    file: oap--help_vt_system_io_by_day.csv
-    sql: |
-         help table vt_system_io_by_day;
          
 # fetch COD limits from ResUsage
 - name: "Retrieve COD limit"
@@ -2475,7 +2446,7 @@ tasks:
       ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy%"
       ,cast(avg(IOTA_Pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IOTA Busy%"
       from vt_system_io_by_day
-      where logdate between {{ startdate }} and {{ enddate }}
+      where logdate between {{ startdate }} (date, format 'YYYY-MM-DD') and {{ enddate }} (date, format 'YYYY-MM-DD')
       group by 1,2
       order by 1,2
 
@@ -2490,7 +2461,7 @@ tasks:
       ,cast(avg(ObservedMax{{ io_percentile }}_IOBusy_pct) *100 / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IO Busy%"
       ,cast(avg(IOTA_Pct) *100  / max(IO_COD_Total_Active_Pct) as decimal(38,2)) as "IOTA Busy%"
       from vt_system_io_by_day
-      where logdate between {{ startdate }} and {{ enddate }}
+      where logdate between {{ startdate }} (date, format 'YYYY-MM-DD') and {{ enddate }} (date, format 'YYYY-MM-DD')
       group by 1,2
       order by 1,2
 
@@ -2681,35 +2652,6 @@ tasks:
 {% set td15 = true  if tdver[:2]=='15' else false %}
 {% include "vt_system_io_by_day_t.j2" %}
 
-# debug vt_system_io_by_day_t
-- name: "export vt_system_io_by_day_t data types"
-  connect: source
-  export:
-    file: oap--vt_system_io_by_day_t_types.csv
-    sql: |
-         select distinct type(logdate), type(ObservedMax990_IOBusy_pct) 
-         from vt_system_io_by_day_t;
-
-- name: "export vt_system_io_by_day_t"
-  connect: source
-  export:
-    file: oap--vt_system_io_by_day_t.csv
-    sql: |
-         select top 100 * from vt_system_io_by_day_t;  
-
-- name: "show vt_system_io_by_day_t"
-  connect: source
-  export:
-    file: oap--show_vt_system_io_by_day_t.csv
-    sql: |
-         show table vt_system_io_by_day_t;
-         
-- name: "help vt_system_io_by_day_t"
-  connect: source
-  export:
-    file: oap--help_vt_system_io_by_day_t.csv
-    sql: |
-         help table vt_system_io_by_day_t;
          
 - name: Export System Monthly IO for Heatmap
   connect: source
@@ -2935,7 +2877,7 @@ tasks:
     file: vhc--queries_by_runtime_bucket_sum.csv
     sql: |
       Select
-       LogDate as "Log Date"
+       cast(LogDate as date format 'YYYY-MM-DD') as "Log Date"
       ,sum("RT < 1 sec"   ) as "RT < 1 sec"
       ,sum("RT 1-5 sec"   ) as "RT 1-5 sec"
       ,sum("RT 5-10 sec"  ) as "RT 5-10 sec"
@@ -2966,7 +2908,7 @@ tasks:
     file: vhc--queries_by_runtime_bucket_avg.csv
     sql: |
       Select
-       LogDate as "Log Date"
+       cast(LogDate as date format 'YYYY-MM-DD') as "Log Date"
       ,avg("Avg RT < 1 sec"   ) AS "Avg RT < 1 sec"
       ,avg("Avg RT 1-5 sec"   ) AS "Avg RT 1-5 sec"
       ,avg("Avg RT 5-10 sec"  ) AS "Avg RT 5-10 sec"
