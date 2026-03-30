@@ -1,5 +1,5 @@
 description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
-version: 2.3
+version: 2.4
 
 ### VHC changes should be made to the full version first,
 ### then copy/pasted to the OAP version and below toggled:
@@ -144,6 +144,7 @@ tasks:
 {% set include_wdname = False %}
 {% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
+
 
 
 
@@ -387,8 +388,32 @@ tasks:
       ,cast(cast(avg(Concurrency_95Pctl) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency 95th Percentile"
       ,cast(cast(max(Concurrency_Peak) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "Concurrency Peak" --5
       from vt_concurrency ;
+      
 
+{% include "vt_mcp_usage.j2" %}
 
+- name: Export mcp_usage, for PPTx
+  connect: source
+  export:
+    file: oap--mcp_usage.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,cast(cast(sum(request_cnt) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as "request count" --2
+      from vt_mcp_usage ;
+
+- name: Export mcp_usage by toll, for PPTx
+  connect: source
+  export:
+    file: oap--mcp_usage_detail.csv
+    sql: |
+      select
+       '{{ siteid }}' as Site_ID
+      ,mcp.tool_name as "Tool Name"
+      ,mcp.username as "UserName"
+      ,mcp.request_cnt as "Request Count"
+      from vt_mcp_usage mcp ;
+      
 {% include "vt_dbc_object_count.j2" %}
 {% include "vt_decode_tdbinternal.j2" %}
 
@@ -3092,7 +3117,8 @@ tasks:
   export:
     file: VHC--feature_ClearScapeFeature_Count.csv
     sql: |
-      select Count(Distinct FeatureName) as ClearScape_Used
+      select '{{ siteid }}' as Site_ID
+      ,cast(cast(Count(Distinct FeatureName) as BigInt format'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32)) as ClearScape_Used
       from vt_Feature_Usage
       where Feature_Category = 'ClearScape'
 
@@ -3612,16 +3638,16 @@ tasks:
 
 
 # if full VHC (not on-a-page)
-- name: PPTx final build for VHC + VHC Trends (v2.2)
+- name: PPTx final build for VHC + VHC Trends (v2.3)
   ppt:
-    file: ppt/VHC + VHC Trends v2.2.pptx
+    file: ppt/VHC + VHC Trends v2.3.pptx
 
 {% else %}
 
 # if VHC-on-a-page
 - name: PPTx final build for Vantage Health Check On-a-Page (v4.2)
   ppt:
-    file: ppt/VHC + VHC Trends v2.2.pptx
+    file: ppt/VHC + VHC Trends v2.3.pptx
 
 {% endif %}
 
