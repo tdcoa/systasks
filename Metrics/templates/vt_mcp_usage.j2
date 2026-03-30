@@ -1,0 +1,36 @@
+{% set run = namespace(completed=[]) if run is not defined else run %}
+{% if not 'vt_mcp_usage' in run.completed %}
+
+- name: Create vt_mcp_usage
+  connect: source
+  execute:
+    sql: |
+      create volatile table vt_mcp_usage as
+      (
+          Select
+           getQueryBandValue(QueryBand, 0, 'TOOL_NAME') tool_name , 
+           username, 
+           count(1) request_cnt
+          {% if pdcr %}
+          from pdcrinfo.DBQLogTbl_Hst
+          where LogDate between {{ startdate | default('DATE-15') }} and {{ enddate | default('DATE-1') }}
+          and getQueryBandValue(QueryBand, 0, 'APPLICATION') like '%mcp%'
+          {% else %}
+          from dbc.qrylog
+          where getQueryBandValue(QueryBand, 0, 'APPLICATION') like '%mcp%'
+          {% endif %}
+          group by 1,2
+      ) with data primary index (tool_name, username) on commit preserve rows
+
+
+- name: Collect Stats on vt_mcp_usage
+  connect: source
+  execute:
+    sql: |
+      collect stats
+          column (tool_name, username)
+          ,column (tool_name)
+      on vt_mcp_usage
+
+{% endif %}
+{{ run.completed.append('vt_mcp_usage') or '' }}
