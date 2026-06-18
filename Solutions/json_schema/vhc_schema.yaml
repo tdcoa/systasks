@@ -1,0 +1,726 @@
+##############################################################################
+# Vantage Health Check (VHC) – Full JSON Schema Manifest  v4.5
+#
+# Extends the OAP schema to cover every CSV exported by the full VHC pipeline
+# and consumed by the Vantage Health Check v4.5 PowerPoint deck.
+#
+# Section → Slide mapping (approximate):
+#   system_info            Slides 1, 5
+#   user_analytics         Slides 5, 28–29
+#   query_analytics        Slides 5, 28–29, 34
+#   mcp_usage              Slides 6, 32
+#   cpu_utilization        Slides 8–11, 16–22
+#   io_utilization         Slides 12–14, 16, 23–25
+#   perm_cache             Slide 15
+#   disk_space             Slides 26, 55
+#   concurrency            Slides 5, 28, 33
+#   daily_activity         Slide 34
+#   query_delay            Slide 35
+#   top_users              Slides 5, 36
+#   application_analytics  Slides 29, 31
+#   dml_activity           Slide 30
+#   join_frequency         Slide 38
+#   allocated_utilization  Slides 39–40, 48
+#   runtime_buckets        (exported, used in slide deck builds)
+#   feature_usage          Slides 42–46, 50–54
+#   object_counts          Slides 5, 28
+#   constraint_analysis    Slides 56–57
+#   data_transfers         Slide 49
+#   reconciliation         (run metadata)
+#
+# Format types:
+#   key_value    – two-column CSV (key, value) → flat dict
+#   summary      – single-row CSV → flat dict of column:value
+#   timeseries   – multi-row, first column is date → array of objects
+#   categorical  – multi-row, first column is label → array of objects
+#   matrix       – wide-format grid CSV → compact 2D structure
+#   heatmap_pivot– long-format (day, hour, value) → pivoted 2D grids
+##############################################################################
+
+version: "4.5"
+description: "Vantage Health Check – Full (JSON Schema)"
+
+sections:
+
+  # -------------------------------------------------------------------------
+  # SYSTEM INFO
+  # Slides 1, 5 — title, site details, system config, COD limits
+  # -------------------------------------------------------------------------
+  system_info:
+    description: "System identification, version, configuration and COD limits"
+    sources:
+      - file: vhc--intro.csv
+        key: site_details
+        format: summary
+        description: "Site ID, customer name, DB version, start/end dates, analyst name/title"
+      - file: oap--dbcinfo.csv
+        key: dbc_info
+        format: key_value
+        description: "DBC system info — version, release, system name/type"
+      - file: oap--COD.csv
+        key: cod_limits
+        format: key_value
+        description: "Capacity-on-Demand limits — CPU limit %, IO limit %, node/AMP counts"
+      - file: oap--dbcinfo_fromSystem.csv
+        key: dbc_info_system
+        format: key_value
+        description: "Live DBC info from syslib (when syslib access is available)"
+        optional: true
+      - file: oap--COD_fromSystem.csv
+        key: cod_limits_system
+        format: key_value
+        description: "Live COD limits from TD_SYSFNLIB (when syslib access is available)"
+        optional: true
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # USER ANALYTICS
+  # Slides 5, 28–29 — total/active users with and without internal DBs
+  # -------------------------------------------------------------------------
+  user_analytics:
+    description: "User population and activity counts"
+    sources:
+      - file: vhc--user_counts.csv
+        key: user_counts
+        format: summary
+        description: "Total users, active users, counts excluding internal DBs"
+      - file: oap--user_counts.csv
+        key: user_counts_oap
+        format: summary
+        description: "OAP version of user counts (same shape, used on OAP slide)"
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # QUERY ANALYTICS
+  # Slides 5, 28–29, 34 — volume, throughput, runtime, sub-second analysis
+  # -------------------------------------------------------------------------
+  query_analytics:
+    description: "Query volume, throughput, runtime and sub-second analysis"
+    sources:
+      - file: vhc--query_counts.csv
+        key: query_counts
+        format: summary
+        description: "Day count, total/primary queries, QPS, per-day/month/year counts, sub-second %, avg/median runtime"
+      - file: oap--query_counts.csv
+        key: query_counts_oap
+        format: summary
+        description: "OAP version of query counts (same shape, used on OAP slide)"
+      - file: vhc--daily_query_throughput.csv
+        key: daily_query_throughput
+        format: timeseries
+        description: "Daily total statements, total queries, and sub-second statement counts"
+        visualization_hint: line_chart
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # MCP USAGE
+  # Slides 6, 32 — AI/MCP tool request counts and detail
+  # -------------------------------------------------------------------------
+  mcp_usage:
+    description: "MCP (AI tool) request volume and per-tool/user breakdown"
+    sources:
+      - file: oap--mcp_usage.csv
+        key: mcp_summary
+        format: summary
+        description: "Total MCP request count across all tools"
+      - file: oap--mcp_usage_detail.csv
+        key: mcp_detail
+        format: categorical
+        description: "Per-tool, per-user MCP request counts"
+        visualization_hint: table
+
+  # -------------------------------------------------------------------------
+  # CPU UTILIZATION
+  # Slides 8–11, 16–22 — stacked/line/heatmap CPU, COD-adjusted variants
+  # -------------------------------------------------------------------------
+  cpu_utilization:
+    description: "CPU consumption by outcome, by day, heatmaps, and COD-adjusted views"
+    sources:
+      - file: oap--OutcomeCPUConsumption.csv
+        key: cpu_by_outcome
+        format: timeseries
+        description: "Daily CPU % by statement outcome: Answers, Data Maintenance, Ingest & Prep, System & Procedural"
+        visualization_hint: stacked_bar
+      - file: oap--OutcomeCPUConsumption_COD.csv
+        key: cpu_by_outcome_cod
+        format: timeseries
+        description: "Same as above, COD-adjusted"
+        visualization_hint: stacked_bar
+      - file: vhc--system_cpu_by_day.csv
+        key: cpu_by_day
+        format: timeseries
+        description: "Daily CPU breakdown: Idle%, IOWait%, OS%, DBS%, Total%, Available% — raw capacity"
+        visualization_hint: stacked_bar
+      - file: vhc--system_cpu_by_day_wCOD.csv
+        key: cpu_by_day_cod
+        format: timeseries
+        description: "Daily CPU breakdown (IOWait%, OS%, DBS%) — COD-adjusted to active capacity"
+        visualization_hint: stacked_bar
+      - file: vhc--resusage_cpu_cod.csv
+        key: cpu_cod_detail
+        format: timeseries
+        description: "Daily COD breakdown: PM%, WLM%, EPOD%, Total Active% — shows how COD limit is composed"
+        visualization_hint: line_chart
+      - file: vhc--system_cpu_wCOD.csv
+        key: cpu_cod_summary
+        format: summary
+        description: "Avg and Peak CPU% (COD-adjusted) — single-row KPI values used on Key Highlights slide"
+      - file: oap--SPMADetailData.csv
+        key: cpu_heatmap
+        format: heatmap_pivot
+        description: "Avg and Median CPU% by day-of-week × hour — pivoted 7×24 grids"
+        visualization_hint: heatmap
+      - file: vhc--system_cpu_by_day_heatmap.csv
+        key: cpu_heatmap_by_day
+        format: timeseries
+        description: "CPU% by calendar date × hour (LogDate, Hour, CPU Use%) — feeds heatmap over full date range"
+        visualization_hint: heatmap
+      - file: vhc--system_peak_cpu_by_day_heatmap.csv
+        key: cpu_peak_heatmap_by_day
+        format: timeseries
+        description: "Peak (max) CPU% by calendar date × hour — feeds peak heatmap over full date range"
+        visualization_hint: heatmap
+      - file: vhc--system_cpu_by_dayofweek_heatmap.csv
+        key: cpu_heatmap_by_dow
+        format: timeseries
+        description: "CPU% by day-of-week × hour — 7-day condensed heatmap (raw capacity)"
+        visualization_hint: heatmap
+      - file: vhc--system_peak_cpu_by_dayofweek_heatmap.csv
+        key: cpu_peak_heatmap_by_dow
+        format: timeseries
+        description: "Peak CPU% by day-of-week × hour — 7-day condensed heatmap (raw capacity)"
+        visualization_hint: heatmap
+      - file: vhc--system_cpu_by_day_heatmap_wCOD.csv
+        key: cpu_heatmap_by_day_cod
+        format: timeseries
+        description: "COD-adjusted CPU% by calendar date × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_peak_cpu_by_day_heatmap_wCOD.csv
+        key: cpu_peak_heatmap_by_day_cod
+        format: timeseries
+        description: "COD-adjusted peak CPU% by calendar date × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_cpu_by_dayofweek_heatmap_wCOD.csv
+        key: cpu_heatmap_by_dow_cod
+        format: timeseries
+        description: "COD-adjusted CPU% by day-of-week × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_peak_cpu_by_dayofweek_heatmap_wCOD.csv
+        key: cpu_peak_heatmap_by_dow_cod
+        format: timeseries
+        description: "COD-adjusted peak CPU% by day-of-week × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_cpu_by_dayofweek.csv
+        key: cpu_by_dow
+        format: categorical
+        description: "Aggregate CPU seconds and write bytes by day of week — bar+line chart source"
+        visualization_hint: bar_line
+
+  # -------------------------------------------------------------------------
+  # IO UTILIZATION
+  # Slides 12–14, 16, 23–25 — IOBusy, IOTA, heatmaps, COD-adjusted
+  # -------------------------------------------------------------------------
+  io_utilization:
+    description: "IO utilization — IOBusy (observed max), IOTA, heatmaps, COD-adjusted variants"
+    sources:
+      - file: vhc--system_io_wCOD.csv
+        key: io_cod_summary
+        format: summary
+        description: "Average IO Busy% at selected percentile — single-row KPI used on Key Highlights slide"
+      - file: vhc--system_IO_percentile_setting.csv
+        key: io_percentile_setting
+        format: summary
+        description: "The IO observation percentile used for ObservedMax calculation (e.g. 99.0%)"
+      - file: vhc--system_IO_BusyPct_allPctl.csv
+        key: io_busy_all_pctls
+        format: timeseries
+        description: "Daily IO Busy% at 99.5/99.0/98.0 pctls, IOTA%, IO Available%, IO Max% — full capacity"
+        visualization_hint: line_chart
+      - file: vhc--system_IO_BusyPct_allPctl_wCOD.csv
+        key: io_busy_all_pctls_cod
+        format: timeseries
+        description: "Same as above, COD-adjusted"
+        visualization_hint: line_chart
+      - file: vhc--system_IO_BusyPct_justIOBusy.csv
+        key: io_busy_observed
+        format: timeseries
+        description: "Daily IO Busy% (three observed-max percentiles) — simplified line chart source, full capacity"
+        visualization_hint: line_chart
+      - file: vhc--system_IO_BusyPct_justIOBusy_wCOD.csv
+        key: io_busy_observed_cod
+        format: timeseries
+        description: "Same as above, COD-adjusted"
+        visualization_hint: line_chart
+      - file: vhc--system_IO_BusyPct_justIOTA.csv
+        key: io_iota
+        format: timeseries
+        description: "Daily IOTA Busy%, IO Available%, IO Max% — full capacity"
+        visualization_hint: line_chart
+      - file: vhc--system_IO_BusyPct_justIOTA_wCOD.csv
+        key: io_iota_cod
+        format: timeseries
+        description: "Same as above, COD-adjusted"
+        visualization_hint: line_chart
+      - file: vhc--system_IO_by_day_heatmap.csv
+        key: io_heatmap_by_day
+        format: timeseries
+        description: "IO Busy% and IOTA Busy% by calendar date × hour — heatmap grid source"
+        visualization_hint: heatmap
+      - file: vhc--system_IO_by_day_heatmap_wCOD.csv
+        key: io_heatmap_by_day_cod
+        format: timeseries
+        description: "COD-adjusted IO Busy% and IOTA% by calendar date × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_IO_by_dayofweek_heatmap.csv
+        key: io_heatmap_by_dow
+        format: timeseries
+        description: "IO Busy% and IOTA% by day-of-week × hour — 7-day condensed heatmap"
+        visualization_hint: heatmap
+      - file: vhc--system_IO_by_dayofweek_heatmap_wCOD.csv
+        key: io_heatmap_by_dow_cod
+        format: timeseries
+        description: "COD-adjusted IO Busy% and IOTA% by day-of-week × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_IO_peak_by_day_heatmap.csv
+        key: io_peak_heatmap_by_day
+        format: timeseries
+        description: "Peak IO Busy% by calendar date × hour"
+        visualization_hint: heatmap
+      - file: vhc--system_IO_peak_by_day_heatmap_wCOD.csv
+        key: io_peak_heatmap_by_day_cod
+        format: timeseries
+        description: "COD-adjusted peak IO Busy% by calendar date × hour"
+        visualization_hint: heatmap
+
+  # -------------------------------------------------------------------------
+  # PERM CACHE
+  # Slide 15 — perm cache effectiveness over time
+  # -------------------------------------------------------------------------
+  perm_cache:
+    description: "Perm cache effectiveness over the analysis period"
+    sources:
+      - file: vhc--perm_cache_usage_per_day.csv
+        key: perm_cache_by_day
+        format: timeseries
+        description: "Daily peak and average perm cache hit% with 100% reference line"
+        visualization_hint: line_chart
+
+  # -------------------------------------------------------------------------
+  # DISK SPACE
+  # Slides 26, 55 — storage utilization summary and top-25 databases
+  # -------------------------------------------------------------------------
+  disk_space:
+    description: "Storage utilization — system summary and top-25 database breakdown"
+    sources:
+      - file: vhc--diskspace.csv
+        key: disk_summary
+        format: summary
+        description: "Max available (GB/TB), avg used (GB/TB), filled percent"
+      - file: oap--diskspace.csv
+        key: disk_summary_oap
+        format: summary
+        description: "OAP version of disk summary (same shape, used on OAP slide)"
+      - file: vhc--diskspace_x_database.csv
+        key: disk_by_database
+        format: categorical
+        description: "Top-25 databases by used space — DatabaseName, Used GB, Max GB, Fill%, sort order"
+        visualization_hint: table
+      - file: vhc--diskspace_x_database_space.csv
+        key: disk_by_database_space
+        format: categorical
+        description: "Same top-25 list sorted for the 'Used Space' horizontal bar chart"
+        visualization_hint: bar_chart
+      - file: vhc--diskspace_x_database_fill.csv
+        key: disk_by_database_fill
+        format: categorical
+        description: "Same top-25 list sorted for the 'Fill%' horizontal bar chart"
+        visualization_hint: bar_chart
+
+  # -------------------------------------------------------------------------
+  # CONCURRENCY
+  # Slides 5, 28, 33 — concurrency statistics and daily trend
+  # -------------------------------------------------------------------------
+  concurrency:
+    description: "Query concurrency statistics and daily trend"
+    sources:
+      - file: vhc--concurrency.csv
+        key: concurrency_summary
+        format: summary
+        description: "Average, 80th pctl, 95th pctl, peak concurrency — summary KPIs"
+      - file: oap--concurrency.csv
+        key: concurrency_summary_oap
+        format: summary
+        description: "OAP version of concurrency summary"
+      - file: vhc--concurrency2.csv
+        key: concurrency_with_cpu
+        format: timeseries
+        description: "Daily concurrency percentiles (avg, 80th, 95th, peak) with CPU Use% overlay — detailed trend"
+        visualization_hint: line_dual_axis
+      - file: vhc--concurrency1.csv
+        key: concurrency_two_lines
+        format: timeseries
+        description: "Simplified daily concurrency: 95th percentile and absolute peak — cleaner line chart"
+        visualization_hint: line_chart
+
+  # -------------------------------------------------------------------------
+  # QUERY DELAY
+  # Slide 35 — run time vs delay time by day
+  # -------------------------------------------------------------------------
+  query_delay:
+    description: "Query delay time relative to run time"
+    sources:
+      - file: vhc--query_delaytime.csv
+        key: query_delay_by_day
+        format: timeseries
+        description: "Daily run time (sec), delay time (sec), and delay as % of run time — stacked bar source"
+        visualization_hint: stacked_bar
+
+  # -------------------------------------------------------------------------
+  # TOP USERS
+  # Slides 5, 36 — highest-volume users
+  # -------------------------------------------------------------------------
+  top_users:
+    description: "Highest-volume users by query count and CPU consumption"
+    sources:
+      - file: oap--top_users.csv
+        key: top_users_5
+        format: categorical
+        description: "Top 5 users by query count with CPU usage — used on OAP slide"
+        visualization_hint: bar_line
+      - file: oap--top_25_users.csv
+        key: top_users_25
+        format: categorical
+        description: "Top 25 users by query count with CPU usage — used on Top 25 Users slide"
+        visualization_hint: bar_line
+
+  # -------------------------------------------------------------------------
+  # APPLICATION ANALYTICS
+  # Slides 29, 31 — application/AppID counts and row-return analysis
+  # -------------------------------------------------------------------------
+  application_analytics:
+    description: "Application/AppID population, activity counts, and data extract analysis"
+    sources:
+      - file: vhc--appid_counts.csv
+        key: application_counts
+        format: summary
+        description: "Total apps, app buckets, recognized apps, avg requests per app per day"
+      - file: oap--appid_counts.csv
+        key: application_counts_oap
+        format: summary
+        description: "OAP version of application counts"
+      - file: vhc--appid_detail.csv
+        key: application_detail
+        format: categorical
+        description: "Per-application: day count, total queries, total fetched rows, rows per query — sorted by rows/query desc"
+        visualization_hint: table
+
+  # -------------------------------------------------------------------------
+  # DML ACTIVITY
+  # Slide 30 — tables with heavy insert/update/delete workloads
+  # -------------------------------------------------------------------------
+  dml_activity:
+    description: "Tables and databases with high DML (insert/update/delete) rates"
+    sources:
+      - file: vhc--tablecount_over_1500_dml_average.csv
+        key: dml_high_volume_avg
+        format: summary
+        description: "Average number of tables per day exceeding 1,500 DML statements"
+      - file: vhc--tablecount_over_1500_dml.csv
+        key: dml_high_volume_by_day
+        format: timeseries
+        description: "Daily count of tables exceeding 1,500 DML requests — line chart source"
+        visualization_hint: line_chart
+      - file: vhc--databases_most_dml_tables.csv
+        key: databases_most_dml
+        format: categorical
+        description: "Databases ranked by average DML request count per table per day — top candidates for ETL optimization"
+        visualization_hint: table
+
+  # -------------------------------------------------------------------------
+  # JOIN FREQUENCY
+  # Slide 38 — query complexity and CPU by number of joined tables
+  # -------------------------------------------------------------------------
+  join_frequency:
+    description: "Query complexity breakdown by number of tables joined, with CPU weight"
+    sources:
+      - file: vhc--join_frequency.csv
+        key: join_frequency
+        format: categorical
+        description: "Join bucket label, request count, CPU consumed % — bar+line chart source"
+        visualization_hint: bar_line
+      - file: vhc--join_frequency_horz.csv
+        key: join_frequency_summary
+        format: summary
+        description: "Horizontal summary — join counts and CPU% for 1–6+ table buckets, total counts, multi-join pct"
+
+  # -------------------------------------------------------------------------
+  # ALLOCATED UTILIZATION
+  # Slides 39–40, 48 — database-level CPU/IO allocation attribution
+  # -------------------------------------------------------------------------
+  allocated_utilization:
+    description: "Workload attribution to databases — CPU, IO count, IO GB, CDS GB"
+    sources:
+      - file: vhc--allocated_utilization_per_database.csv
+        key: allocation_per_database
+        format: timeseries
+        description: "Daily per-database allocation: avg allocation%, use count, request count, CPU, IOCnt, IOGB, CDS GB, perm GB"
+        visualization_hint: table
+      - file: vhc--allocated_utilization_top50_databases_Allocated_CPU.csv
+        key: top50_by_cpu
+        format: categorical
+        description: "Top 50 databases by allocated CPU — bar+line chart (CPU total, avg allocation%)"
+        visualization_hint: bar_line
+      - file: vhc--allocated_utilization_top50_databases_Allocated_IOCnt.csv
+        key: top50_by_iocnt
+        format: categorical
+        description: "Top 50 databases by allocated IO count"
+        visualization_hint: bar_line
+      - file: vhc--allocated_utilization_top50_databases_Allocated_IOGB.csv
+        key: top50_by_iogb
+        format: categorical
+        description: "Top 50 databases by allocated IO GB / throughput"
+        visualization_hint: bar_line
+      - file: vhc--allocated_utilization_top50_databases_Allocated_CDS_GB.csv
+        key: top50_by_cds_gb
+        format: categorical
+        description: "Top 50 databases by allocated CDS GB"
+        visualization_hint: bar_line
+      - file: vhc--allocated_utilization_per_table.csv
+        key: allocation_per_table
+        format: timeseries
+        description: "Detailed per-table allocation data (only present when export_detail=True)"
+        optional: true
+
+  # -------------------------------------------------------------------------
+  # RUNTIME BUCKETS
+  # (exported to charts and used in deck builds — no direct slide val refs)
+  # -------------------------------------------------------------------------
+  runtime_buckets:
+    description: "Query distribution by runtime bucket — from sub-second to over 1 hour"
+    sources:
+      - file: vhc--queries_by_runtime_bucket_sum.csv
+        key: runtime_bucket_sum_by_day
+        format: timeseries
+        description: "Daily SUM of queries per runtime bucket (10 buckets: <1s … >1hr)"
+        visualization_hint: line_chart
+      - file: vhc--queries_by_runtime_bucket_avg.csv
+        key: runtime_bucket_avg_by_day
+        format: timeseries
+        description: "Daily AVG queries per runtime bucket — smoothed trend"
+        visualization_hint: line_chart
+      - file: vhc--queries_by_runtime_bucket_unpivot.csv
+        key: runtime_bucket_totals
+        format: categorical
+        description: "Total query count per runtime bucket (all days summed) — bar chart source"
+        visualization_hint: bar_chart
+
+  # -------------------------------------------------------------------------
+  # FEATURE USAGE
+  # Slides 42–46, 50–54 — Teradata and ClearScape feature adoption
+  # -------------------------------------------------------------------------
+  feature_usage:
+    description: "Teradata feature adoption — all features, ClearScape, QueryGrid, inactive features"
+    sources:
+      - file: vhc--feature_usage_x_Feature.csv
+        key: all_features
+        format: categorical
+        description: "All features (active + inactive) with average daily use count and avg CPU seconds/query — sorted asc by use"
+        visualization_hint: bar_chart
+      - file: vhc--feature_usage_x_Feature_active.csv
+        key: active_features
+        format: categorical
+        description: "Active features only, sorted ascending by avg daily use count"
+        visualization_hint: bar_chart
+      - file: vhc--feature_usage_x_Feature2.csv
+        key: top_features_by_count
+        format: categorical
+        description: "Active features sorted by query count descending — used in Feature Usage Top 25 by Frequency table"
+        visualization_hint: table
+      - file: vhc--feature_usage_x_Feature3.csv
+        key: top_features_by_cpu
+        format: categorical
+        description: "Active features sorted by CPU descending — used in Feature Usage Top 25 by CPU table"
+        visualization_hint: table
+      - file: vhc--feature_usage_x_Feature_inactive.csv
+        key: inactive_features
+        format: categorical
+        description: "Features with zero use during the analysis period — unused feature list"
+        visualization_hint: table
+      - file: VHC--feature_usage_x_ClearScapeFeature.csv
+        key: clearscape_features
+        format: categorical
+        description: "Active ClearScape features with avg daily use count and avg CPU/query — horizontal bar chart source"
+        visualization_hint: bar_chart
+      - file: vhc--feature_ClearScapeFeature_Count.csv
+        key: clearscape_count
+        format: summary
+        description: "Count of distinct ClearScape features used — single KPI used on Key Highlights slide"
+      - file: VHC--feature_usage_x_ClearScape_SubCategory.csv
+        key: clearscape_by_subcategory
+        format: categorical
+        description: "ClearScape usage grouped by sub-category — bar+line chart source"
+        visualization_hint: bar_line
+      - file: VHC--feature_usage_x_Clearscape_Feature_inactive.csv
+        key: clearscape_inactive
+        format: categorical
+        description: "ClearScape features not used during analysis period"
+        visualization_hint: table
+      - file: VHC--feature_usage_x_Clearscape_Queries_By_Date.csv
+        key: clearscape_queries_by_date
+        format: timeseries
+        description: "Daily ClearScape statement count — line chart source"
+        visualization_hint: line_chart
+      - file: VHC--feature_usage_x_Clearscape_CPU_By_Date.csv
+        key: clearscape_cpu_by_date
+        format: timeseries
+        description: "Daily average ClearScape CPU seconds per query — line chart source"
+        visualization_hint: line_chart
+      - file: VHC--feature_usage_x_QueryGrid_SubCategory.csv
+        key: querygrid_by_subcategory
+        format: categorical
+        description: "QueryGrid usage grouped by sub-category — bar+line chart source"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Feature_Category.csv
+        key: features_by_category
+        format: categorical
+        description: "Feature usage aggregated by top-level category"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Feature_SubCategory.csv
+        key: features_by_subcategory
+        format: categorical
+        description: "Feature usage aggregated by sub-category — slide 50"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Product_Name.csv
+        key: features_by_product
+        format: categorical
+        description: "Feature usage aggregated by product name"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Product_Category.csv
+        key: features_by_product_category
+        format: categorical
+        description: "Feature usage aggregated by product category"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Solution_Type.csv
+        key: features_by_solution_type
+        format: categorical
+        description: "Feature usage aggregated by solution type — slide 51"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_User_Experience_Level_Name.csv
+        key: features_by_user_experience
+        format: categorical
+        description: "Feature usage aggregated by user experience level"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Initiator_Role_Category.csv
+        key: features_by_initiator_role
+        format: categorical
+        description: "Feature usage aggregated by initiator role category"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Objective_Name.csv
+        key: features_by_objective
+        format: categorical
+        description: "Feature usage aggregated by business objective — slide 52"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Department.csv
+        key: features_by_department
+        format: categorical
+        description: "Feature usage aggregated by department"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_UserType.csv
+        key: features_by_user_type
+        format: categorical
+        description: "Feature usage aggregated by user type"
+        visualization_hint: bar_line
+      - file: vhc--feature_usage_x_Organization.csv
+        key: features_by_organization
+        format: categorical
+        description: "Feature usage aggregated by organization"
+        visualization_hint: bar_line
+
+  # -------------------------------------------------------------------------
+  # OBJECT COUNTS
+  # Slides 5, 28 — database object inventory
+  # -------------------------------------------------------------------------
+  object_counts:
+    description: "Database object inventory — tables, views, programs, other objects"
+    sources:
+      - file: vhc--object_counts.csv
+        key: object_counts
+        format: summary
+        description: "Count of tables, views, programs, other objects (excluding Teradata internal DBs)"
+      - file: oap--object_counts.csv
+        key: object_counts_oap
+        format: summary
+        description: "OAP version of object counts"
+      - file: vhc--tablekind_by_database.csv
+        key: table_kind_summary
+        format: summary
+        description: "Table type breakdown: table count, join indexes, queue tables, SET tables, SET%, global temp tables"
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # CONSTRAINT ANALYSIS
+  # Slides 56–57 — data governance, indexes, column types
+  # -------------------------------------------------------------------------
+  constraint_analysis:
+    description: "Database constraint, index, column format, and special data type analysis"
+    sources:
+      - file: vhc--constraints.csv
+        key: constraints
+        format: summary
+        description: "Unique PI/PK constraints, primary key, column default, foreign key, column and table constraints"
+      - file: vhc--Index_summary.csv
+        key: index_summary
+        format: summary
+        description: "Count of primary indexes (UPI/NUPI), PPI (partitioned), and secondary indexes"
+      - file: vhc--column_format_state.csv
+        key: column_format_state
+        format: summary
+        description: "Formatted vs unformatted column counts"
+      - file: vhc--column_formats.csv
+        key: column_formats
+        format: summary
+        description: "Formatted column count, plus counts by special type: Interval, Period, Number, BLOB, CLOB, XML/JSON, Geospatial"
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # DATA TRANSFERS
+  # Slide 49 — inbound/outbound data transfer volumes
+  # -------------------------------------------------------------------------
+  data_transfers:
+    description: "Data transferred into and out of the Teradata platform"
+    sources:
+      - file: vhc--data_transfer.csv
+        key: data_transfer_by_day
+        format: timeseries
+        description: "Daily inbound and outbound bytes — line chart source"
+        visualization_hint: line_chart
+      - file: vhc--data_transfer_sum.csv
+        key: data_transfer_summary
+        format: summary
+        description: "Total inbound TB and total outbound TB over analysis period — KPI values"
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # SYSTEM AVAILABILITY
+  # (not on a dedicated slide but exported and useful for KPIs)
+  # -------------------------------------------------------------------------
+  system_availability:
+    description: "System uptime and SLA over the analysis period"
+    sources:
+      - file: oap--sys_availability.csv
+        key: availability
+        format: summary
+        description: "Clock time, available time, SLA percentage"
+    visualization_hint: kpi_cards
+
+  # -------------------------------------------------------------------------
+  # RECONCILIATION
+  # Run metadata — variables and logging rules used for this analysis
+  # -------------------------------------------------------------------------
+  reconciliation:
+    description: "Run metadata — variables and settings used to produce this analysis"
+    sources:
+      - file: vhc--reconcile_variables.csv
+        key: run_variables
+        format: summary
+        description: "Start/end dates, export settings, TCA flag, process chunk settings"

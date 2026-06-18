@@ -1,0 +1,145 @@
+##############################################################################
+# VHC On-A-Page JSON Schema Manifest
+# Maps OAP CSV exports -> structured JSON sections
+#
+# Each section defines:
+#   sources:        list of CSV files to consume
+#   format:         how to parse the CSV into JSON
+#     - key_value:      two-column CSV (key, value) -> flat dict
+#     - summary:        single-row CSV -> flat dict of column:value pairs
+#     - timeseries:     multi-row, first column is date -> array of objects
+#     - categorical:    multi-row, first column is label -> array of objects
+#     - matrix:         true wide-format grid CSV -> compact 2D structure
+#     - heatmap_pivot:  long-format (day, hour, avg, med) -> pivoted 2D grids
+#   visualization_hint:  how an agent/UI should render this data
+##############################################################################
+
+version: "4.5"
+description: "Vantage Health Check - On A Page (JSON Schema)"
+
+sections:
+
+  system_info:
+    description: "System identification, version, configuration and COD limits"
+    sources:
+      - file: vhc--intro.csv
+        key: site_details
+        format: summary
+        description: "Site ID, customer name, DB version, date range, analyst info"
+      - file: oap--dbcinfo.csv
+        key: dbc_info
+        format: key_value
+        description: "DBC system info — version, release, system name/type"
+      - file: oap--COD.csv
+        key: cod_limits
+        format: key_value
+        description: "Capacity-on-Demand limits — CPU limit %, IO limit %, node/AMP counts"
+      - file: oap--dbcinfo_fromSystem.csv
+        key: dbc_info_system
+        format: key_value
+        description: "Live DBC info from syslib (when syslib access is available)"
+        optional: true
+      - file: oap--COD_fromSystem.csv
+        key: cod_limits_system
+        format: key_value
+        description: "Live COD limits from TD_SYSFNLIB (when syslib access is available)"
+        optional: true
+
+  user_analytics:
+    description: "User population and activity counts"
+    sources:
+      - file: oap--user_counts.csv
+        key: user_counts
+        format: summary
+        description: "Total vs active users, with/without internal DBs"
+    visualization_hint: kpi_cards
+
+  query_analytics:
+    description: "Query volume, throughput, runtime and sub-second analysis"
+    sources:
+      - file: oap--query_counts.csv
+        key: query_counts
+        format: summary
+        description: "Day count, total queries, QPS, queries/day/month/year, sub-second %, avg/median runtime"
+    visualization_hint: kpi_cards
+
+  cpu_utilization:
+    description: "CPU consumption breakdown by statement outcome, with and without COD adjustment"
+    sources:
+      - file: oap--OutcomeCPUConsumption.csv
+        key: cpu_by_outcome
+        format: timeseries
+        description: "Daily CPU % by outcome: Answers, Data Maintenance, Ingest & Prep, System & Procedural"
+        visualization_hint: stacked_bar
+      - file: oap--OutcomeCPUConsumption_COD.csv
+        key: cpu_by_outcome_cod
+        format: timeseries
+        description: "Same as above, COD-adjusted"
+        visualization_hint: stacked_bar
+      - file: oap--SPMADetailData.csv
+        key: cpu_heatmap
+        format: heatmap_pivot
+        description: "Avg and Median CPU% by day-of-week and hour — pivoted from long format into 7x24 grids"
+        visualization_hint: heatmap
+
+  concurrency:
+    description: "Query concurrency statistics"
+    sources:
+      - file: oap--concurrency.csv
+        key: concurrency_summary
+        format: summary
+        description: "Average, 80th pctl, 95th pctl, and peak concurrency"
+    visualization_hint: kpi_cards
+
+  application_analytics:
+    description: "Application/AppID population and activity"
+    sources:
+      - file: oap--appid_counts.csv
+        key: application_counts
+        format: summary
+        description: "Total apps, recognized apps, avg requests per app per day"
+    visualization_hint: kpi_cards
+
+  top_users:
+    description: "Highest-volume users by query count and CPU"
+    sources:
+      - file: oap--top_users.csv
+        key: top_users
+        format: categorical
+        description: "Top 5 users ranked by query count, with CPU usage overlay"
+        visualization_hint: bar_line
+
+  object_counts:
+    description: "Database object inventory"
+    sources:
+      - file: oap--object_counts.csv
+        key: object_counts
+        format: summary
+        description: "Count of tables, views, programs, other objects (excluding internal)"
+    visualization_hint: kpi_cards
+
+  system_availability:
+    description: "System uptime / SLA over the analysis period"
+    sources:
+      - file: oap--sys_availability.csv
+        key: availability
+        format: summary
+        description: "Clock time, available time, SLA percentage"
+    visualization_hint: kpi_cards
+
+  storage:
+    description: "Disk space utilization"
+    sources:
+      - file: oap--diskspace.csv
+        key: disk_summary
+        format: summary
+        description: "Max available (GB/TB), used (GB/TB), filled percent"
+    visualization_hint: kpi_cards
+
+  reconciliation:
+    description: "Run metadata — variables and settings used for this analysis"
+    sources:
+      - file: vhc--reconcile_variables.csv
+        key: run_variables
+        format: summary
+        description: "Start/end dates, export settings, TCA flag, process chunk settings"

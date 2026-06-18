@@ -58,6 +58,8 @@
       ,Feature_IO_Weight          integer compress(null, 1)
       ,Feature_Time_Weight        integer compress(null, 1)
       ,Feature_Cnt_Weight         integer compress(null, 1)
+      ,AI_Feature_Flag            varchar(3)  compress(null, 'N')
+      ,AI_Class                   varchar(64)
       ) primary index(LogDate, UserName, FeatureName)
         on commit preserve rows
 
@@ -323,6 +325,8 @@
         ,coalesce(dim.Feature_IO_Weight,    1) as Feature_IO_Weight
         ,coalesce(dim.Feature_Time_Weight,  1) as Feature_Time_Weight
         ,coalesce(dim.Feature_Cnt_Weight,   1) as Feature_Cnt_Weight
+        ,coalesce(dim.AI_Feature_Flag,    'N') as AI_Feature_Flag
+        ,dim.AI_Class
         from vt_feature_usage_prework dat
         left outer join vt_decode_feature dim
         on dat.Feature_Name = dim.Feature_Name

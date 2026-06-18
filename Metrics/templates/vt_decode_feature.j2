@@ -41,6 +41,8 @@
        ,FEATURE_IO_WEIGHT            SMALLINT
        ,FEATURE_TIME_WEIGHT          SMALLINT
        ,FEATURE_CNT_WEIGHT           SMALLINT
+       ,AI_FEATURE_FLAG              VARCHAR(3)
+       ,AI_CLASS                     VARCHAR(64)
       ) unique primary index (Feature_Name)
         on commit preserve rows
 
@@ -81,6 +83,8 @@
        ,FEATURE_IO_WEIGHT            -- SMALLINT
        ,FEATURE_TIME_WEIGHT          -- SMALLINT
        ,FEATURE_CNT_WEIGHT           -- SMALLINT
+       ,AI_FEATURE_FLAG              -- VARCHAR(3)
+       ,AI_CLASS                     -- VARCHAR(64)
       from mdm_edw_sub.COA_DIM_Feature_VW
 
 {% else %}

@@ -3363,6 +3363,199 @@ tasks:
       - "width:11.25"
       - "barlogscale:False"
       - "legendy:1.1"
+      
+#######################################################
+### AI Usage Metric
+### Segments feature usage into:
+###   1. Pure AI features        (AI_Feature_Flag='Y', AI_Class='Pure AI')
+###   2. AI-Supporting features  (AI_Feature_Flag='Y', AI_Class='AI-Supporting')
+###   3. Total AI usage          (AI_Feature_Flag='Y', both classes combined)
+#######################################################
+
+# ---- Summary counts for pptx / scorecard ----
+- name: "Export AI Usage Summary (Pure AI, AI-Supporting, Total)"
+  connect: source
+  export:
+    file: vhc--ai_usage_summary.csv
+    sql: |
+      select '{{ siteid }}' as Site_ID
+
+      /* ---- Pure AI ---- */
+      ,cast(cast(
+          sum(case when AI_Class = 'Pure AI' then Request_Total_Cnt else 0 end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "Pure AI Request Count"
+      ,cast(cast(
+          count(distinct case when AI_Class = 'Pure AI' then FeatureName end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "Pure AI Distinct Features Used"
+      ,cast(cast(
+          count(distinct case when AI_Class = 'Pure AI' then UserName end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "Pure AI Distinct Users"
+      ,cast(cast(
+          sum(case when AI_Class = 'Pure AI'
+              then sum_parsercputime + sum_ampcputime else 0 end)
+          as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32))
+          as "Pure AI CPU Seconds"
+
+      /* ---- AI-Supporting ---- */
+      ,cast(cast(
+          sum(case when AI_Class = 'AI-Supporting' then Request_Total_Cnt else 0 end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "AI-Supporting Request Count"
+      ,cast(cast(
+          count(distinct case when AI_Class = 'AI-Supporting' then FeatureName end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "AI-Supporting Distinct Features Used"
+      ,cast(cast(
+          count(distinct case when AI_Class = 'AI-Supporting' then UserName end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "AI-Supporting Distinct Users"
+      ,cast(cast(
+          sum(case when AI_Class = 'AI-Supporting'
+              then sum_parsercputime + sum_ampcputime else 0 end)
+          as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32))
+          as "AI-Supporting CPU Seconds"
+
+      /* ---- Total AI (Pure AI + AI-Supporting) ---- */
+      ,cast(cast(
+          sum(case when AI_Feature_Flag = 'Y' then Request_Total_Cnt else 0 end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "Total AI Request Count"
+      ,cast(cast(
+          count(distinct case when AI_Feature_Flag = 'Y' then FeatureName end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "Total AI Distinct Features Used"
+      ,cast(cast(
+          count(distinct case when AI_Feature_Flag = 'Y' then UserName end)
+          as BigInt format 'ZZZ,ZZZ,ZZZ,ZZ9') as varchar(32))
+          as "Total AI Distinct Users"
+      ,cast(cast(
+          sum(case when AI_Feature_Flag = 'Y'
+              then sum_parsercputime + sum_ampcputime else 0 end)
+          as decimal(38,2) format 'ZZZ,ZZZ,ZZZ,ZZ9.99') as varchar(32))
+          as "Total AI CPU Seconds"
+
+      /* ---- AI CPU as % of all feature CPU ---- */
+      ,cast(cast(
+          zeroifnull(
+              cast(sum(case when AI_Feature_Flag = 'Y'
+                  then sum_parsercputime + sum_ampcputime else 0 end) as decimal(38,4))
+              / nullifzero(
+                  cast(sum(sum_parsercputime + sum_ampcputime) as decimal(38,4)))
+              * 100)
+          as decimal(9,2) format 'ZZ9.99') as varchar(16)) || '%'
+          as "Total AI CPU Pct of All Feature CPU"
+
+      from vt_Feature_Usage
+      where AI_Feature_Flag = 'Y'
+         or 1=1  -- include all rows so the denominator is correct for the Pct column
+
+
+# ---- AI usage by feature, both classes, for charting ----
+- name: "Export AI Feature Usage Detail (by feature name)"
+  connect: source
+  export:
+    file: vhc--ai_usage_x_feature.csv
+    sql: |
+      select
+       FeatureName
+      ,AI_Class
+      ,sum(   cast(Request_Total_Cnt  as decimal(38,2)) ) / count(distinct LogDate)
+                                                          as Average_Daily_Use_Count
+      ,sum(   cast(sum_parsercputime  as decimal(38,2))
+            + cast(sum_ampcputime     as decimal(38,2)) ) / sum(Request_Total_Cnt)
+                                                          as Average_CPU_Seconds_per_Query
+      ,count(distinct UserName)                           as Distinct_Users
+      from vt_Feature_Usage
+      where AI_Feature_Flag = 'Y'
+      group by 1, 2
+      order by AI_Class, Average_Daily_Use_Count desc
+
+
+# ---- AI usage by day, split by class, for trend chart ----
+- name: "Export AI Usage by Date (Pure AI vs AI-Supporting)"
+  connect: source
+  export:
+    file: vhc--ai_usage_by_date.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+      ,sum(case when AI_Class = 'Pure AI'
+              then cast(Request_Total_Cnt as decimal(38,2)) else 0 end)
+          as "Pure AI--#142CF6"
+      ,sum(case when AI_Class = 'AI-Supporting'
+              then cast(Request_Total_Cnt as decimal(38,2)) else 0 end)
+          as "AI-Supporting--#43A9BD"
+      ,sum(case when AI_Feature_Flag = 'Y'
+              then cast(Request_Total_Cnt as decimal(38,2)) else 0 end)
+          as "Total AI--#F01D1D"
+      from vt_Feature_Usage
+      group by LogDate
+      order by 1
+
+- name: "Chart AI Usage by Date"
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--ai_usage_by_date.csv"
+      - "title:AI Feature Usage by Date - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+# ---- AI CPU consumption by day, split by class ----
+- name: "Export AI CPU Consumption by Date (Pure AI vs AI-Supporting)"
+  connect: source
+  export:
+    file: vhc--ai_cpu_by_date.csv
+    sql: |
+      select
+       cast(cast(LogDate as date format 'yyyy-mm-dd') as char(10)) as LogDate
+      ,sum(case when AI_Class = 'Pure AI'
+              then cast(sum_parsercputime as decimal(38,2))
+                 + cast(sum_ampcputime    as decimal(38,2)) else 0 end)
+          as "Pure AI CPU Sec--#142CF6"
+      ,sum(case when AI_Class = 'AI-Supporting'
+              then cast(sum_parsercputime as decimal(38,2))
+                 + cast(sum_ampcputime    as decimal(38,2)) else 0 end)
+          as "AI-Supporting CPU Sec--#43A9BD"
+      ,sum(case when AI_Feature_Flag = 'Y'
+              then cast(sum_parsercputime as decimal(38,2))
+                 + cast(sum_ampcputime    as decimal(38,2)) else 0 end)
+          as "Total AI CPU Sec--#F01D1D"
+      from vt_Feature_Usage
+      group by LogDate
+      order by 1
+
+- name: "Chart AI CPU Consumption by Date"
+  chart:
+    command: chart/line_xDate_yElse.py
+    params:
+      - "file:vhc--ai_cpu_by_date.csv"
+      - "title:AI CPU Consumption by Date - {{ siteid }}"
+      - "width:12"
+      - "height:6"
+
+
+# ---- Horizontal bar: top AI features by average daily use count ----
+- name: "Chart AI Feature Usage - Horizontal Bar by Feature"
+  chart:
+    command: chart/barh_yLabel_xElseStack.py
+    params:
+      - "file:vhc--ai_usage_x_feature.csv"
+      - "pngfilepath:vhc--ai_usage_x_feature.png"
+      - "title:Average Daily AI Feature Usage - {{ siteid }}"
+      - "height:10"
+      - "width:6"
+      - "labelsize:8"
+      - "xcolumns:[2]"
+      - "ycolumns:[0]"
+      - "legendxy:(0,0)"
+      - "xlabel:"
+      - "ylabel:"
+
 
 ##Set Dates for trends
 {% set startdate_1 = startdate %}
@@ -3638,16 +3831,27 @@ tasks:
 
 
 # if full VHC (not on-a-page)
-- name: PPTx final build for VHC + VHC Trends (v2.3)
+- name: PPTx final build for VHC + VHC Trends (v2.4)
   ppt:
-    file: ppt/VHC + VHC Trends v2.3.pptx
+    file: ppt/VHC + VHC Trends v2.4.pptx
+    
+- name: JSON output for Vantage Health Check
+  script:
+    command: scripts/build_oap_json.py
+    params:
+      - "schema:json_schema/vhc_schema.yaml"
+      - "output:Vantage_Health_Check_Full.json"
+      - "siteid:{{ siteid }}"
+      - "startdate:{{ startdate }}"
+      - "enddate:{{ enddate }}"
+      - "version:4.6"
 
 {% else %}
 
 # if VHC-on-a-page
 - name: PPTx final build for Vantage Health Check On-a-Page (v4.2)
   ppt:
-    file: ppt/VHC + VHC Trends v2.3.pptx
+    file: ppt/VHC + VHC Trends v2.4.pptx
 
 {% endif %}
 
