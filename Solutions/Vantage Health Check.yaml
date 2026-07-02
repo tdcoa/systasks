@@ -3077,8 +3077,6 @@ tasks:
           as "Total AI CPU Pct of All Feature CPU"
 
       from vt_Feature_Usage
-      where AI_Feature_Flag = 'Y'
-         or 1=1  -- include all rows so the denominator is correct for the Pct column
 
 
 # ---- AI usage by feature, both classes, for charting ----
