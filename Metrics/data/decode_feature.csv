@@ -405,30 +405,30 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 50800,,TD_CrossValidation,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 51300,,UAF TD_ARIMAXESTIMATE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 51400,,UAF TD_AUTOARIMA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-51500,,UAF TD_BINARYMATRIXOP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+51500,,UAF TD_BINARYMATRIXOP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 52100,,UAF TD_COPYART,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 52500,,UAF TD_DFFTCONV,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 53000,,UAF TD_DWT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 53100,,UAF TD_DWT2D,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 53300,,UAF TD_FILTERFACTORY1D,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-53400,,UAF TD_FITMETRICS,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+53400,,UAF TD_FITMETRICS,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54100,,UAF TD_IDWT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54200,,UAF TD_IDWT2D,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54300,,UAF TD_IMAGE2MATRIX,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54400,,UAF TD_INPUTVALIDATOR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54400,,UAF TD_INPUTVALIDATOR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54500,,UAF TD_IQR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54600,,UAF TD_ISFINITE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54700,,UAF TD_ISINF,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 54800,,UAF TD_ISNAN,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 55100,,UAF TD_MAMEAN,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55200,,UAF TD_MATRIX_OP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55300,,UAF TD_MATRIX_SCALAR_MULTIPLY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55200,,UAF TD_MATRIX_OP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55300,,UAF TD_MATRIX_SCALAR_MULTIPLY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 55400,,UAF TD_MATRIX2IMAGE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55500,,UAF TD_MATRIXMULTIPLY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55600,,UAF TD_MINFO,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-56200,,UAF TD_POWERTRANSFORM,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55500,,UAF TD_MATRIXMULTIPLY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55600,,UAF TD_MINFO,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+56200,,UAF TD_POWERTRANSFORM,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 56400,,UAF TD_SAX,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-56600,,UAF TD_SELECTION_CRITERIA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+56600,,UAF TD_SELECTION_CRITERIA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 57600,,UAF TD_WINDOWDFFT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 57700,,Reserved 04,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 57800,,SQLMR TD_XGBOOSTPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
@@ -436,7 +436,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 58000,,SQLMR TD_UNPIVOTING,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 58100,,SQLMR TD_PIVOTING,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 58101,,OFS Literal Filtering,,180,Data Management,Physical,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-58102,,OFS Object Filtering Hash Join Fly,,181,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
+58102,,OFS Object Filtering Hash Join Fly,,181,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58103,,OFS Direct Merge,,182,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58104,,SQLMR TD_CrossValidation,,352,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58105,,SQLMR TD_PackFit,,353,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
@@ -456,7 +456,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 58119,,SQLMR TD_TargetEncodingFit,,368,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58120,,SQLMR TD_TargetEncodingTransform,,369,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58121,,SQLMR TD_HPT,,370,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58122,,BYOM MLeapPredict ,,371,BYOM,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58122,,BYOM MLeapPredict,,371,BYOM,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58123,,BYOM DataRobotPredict,,372,BYOM,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58124,,Skip Redundant Aggregate F1,,374,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58125,,SQLMR TD_TFIDF,,375,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
@@ -465,7 +465,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 58128,,SQLMR TD_NaiveBayesTextClassifierPredict,,380,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58129,,Skip Aggregate Field 1 enhancements,,381,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58130,,OFS Direct Object Copy,,382,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58131,,UAF TD_SMOOTHMA_FORECASTER ,,383,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58131,,UAF TD_SMOOTHMA_FORECASTER,,383,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58132,,UAF TD_KALMAN_FORECASTER,,384,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58133,,UAF TD_ARIMAXFORECAST,,385,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58134,,FUL_LLVM_CODE_GENERATION_STEP,,386,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
@@ -516,8 +516,8 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 58180,,OTF Glue Catalog,,,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58181,,OTF Java Iceberg Read,,,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58182,,OTF Open Table Format,,,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58183,,2PHASE PART AGGR,,,"Distribution, Index and Partitions",Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58184,,GLOBAL 2 PHASE PART AGGR,,,"Distribution, Index and Partitions",Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
+58183,,2PHASE PART AGGR,,,Distribution Index and Partitions,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
+58184,,GLOBAL 2 PHASE PART AGGR,,,Distribution Index and Partitions,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58185,,OTF DDL,,,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58186,,OTF Java Iceberg Write,,,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58187,,OTF REST Catalog,,,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
