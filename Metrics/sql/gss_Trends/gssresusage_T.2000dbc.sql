@@ -600,7 +600,7 @@ WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ star
 AND
 ( ( THEDATE = {{ enddate | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
 ( THEDATE < {{ enddate | default ('date-1')  }} ) )
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 
 ) spma_dt left join
 
