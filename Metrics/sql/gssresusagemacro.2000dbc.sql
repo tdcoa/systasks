@@ -1,12 +1,13 @@
-replace macro systemfe.gss_resusage_td200_dbc
+﻿replace macro systemfe.gss_resusage_td200_dbc
 ( BEGINDATE (DATE, DEFAULT DATE)
 , ENDDATE 	(DATE, DEFAULT DATE)
 , BEGINTIME (INT, DEFAULT 0)
 , ENDTIME	  (INT, DEFAULT 240000)
 )
 AS (
+/* gss_resusage_TD20v1.0 R0001 */
 sel
-'TD20v1.0' (named "Version")
+'TD20v1.0' (named "Version")      
 ,spma_dt.LogDate (named "LogDate")
 ,cast(spma_dt.LogDay as char(3)) (named "LogDOW")
 ,spma_dt.LogTime (named "LogTime")
@@ -14,7 +15,7 @@ sel
 ,extract(hour from "Timestamp") (named "Hour")
 ,extract(minute from "Timestamp") / 10 * 10 (named "Minute10")
 
-,SPMANominalSecs (named "RSSInterval")         /* overall logging interval for 1 row per interval per cluster  */
+,SPMANominalSecs (named "RSSInterval")         /* overall logging interval for 1 row per interval per cluster  */ 
 
 /* System data */
 
@@ -118,7 +119,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,sum(LogSpoolCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "LogSpoolCISecNode_SVPR")
 
 ,sum(PhySpoolDBRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhySpoolDBSecNode_SVPR")
-,sum(PhySpoolCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")
+,sum(PhySpoolCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")	
 ,sum(PhyPermDBRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhyPermDBSecNode_SVPR")
 ,sum(PhyPermCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhyPermCISecNode_SVPR")
 
@@ -279,7 +280,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,max(TotalAMPCPUBusy) / CPUs (format 'ZZ9.9') (named "MaxAMPCPUBusy")
 ,sum(TotalGTW_PECPUBusy) / NumNodes / CPUs (format 'ZZ9.9') (named "AvgGTW_PECPUBusy")
 ,max(TotalGTW_PECPUBusy) / CPUs (format 'ZZ9.9') (named "MaxGTW_PECPUBusy")
-
+ 
 /* SVPR VH Cache */
 
 ,sum(VHAgedOut) / NumNodes (format 'ZZ,ZZ9.9')(named "AvgVHAgedOut_SVPR")
@@ -313,19 +314,19 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,zeroifnull(PctCPUComp) / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) (named "TtlTCPUComp_Est1")
 ,zeroifnull(PctCPUUnComp) / 100 * NumNodes  * CPUs / 2 / (PMCOD / 100)   (named "TtlTCPUUnComp_Est1")
 
-,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2")
-,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2")
+,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2") 
+,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2") 
 
-,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3")
-,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3")
+,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3") 
+,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3") 
 
 ,zeroifnull(sum(CompCPUMS) / NumNodes / nullifzero(PreCompMBSecNode_SVPR))  (named "CPUMSMBComp")
 ,zeroifnull(sum(UnCompCPUMS) / NumNodes / nullifzero(PostUnCompMBSecNode_SVPR))  (named "CPUMSMBUnComp")
 
 /* SVPR NCS Node sizing */
 
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes")
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode")
+,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes") 
+,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode") 
 ,MaxGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "MaxTCPUForNCSNode")
 
 /* SPMA host ntw traffic */
@@ -402,6 +403,15 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 ,sum(SVPRFsgCacheWaitTime)    / NumNodes (format 'z,zz9.9')  (Named "AvgSVPRFsgCacheWaitTime")
 ,max(SVPRFsgCacheWaitTimeMax)                                (Named "MaxSVPRFsgCacheWaitTimeMax")
 
+,sum(RRDHCount)		 / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgRRDHCountSVPR")
+,max(RRDHCount)																(format 'z,zz9.9') (named "MaxRRDHCountSVPR")
+,sum(RRDHCascAll)  / NumNodes	/ RSSInterval		(format 'z,zz9.9') (named "AvgRRDHCascAllSVPR")
+,max(RRDHCascAll)															(format 'z,zz9.9') (named "MaxRRDHCascAllSVPR")
+,sum(RRDHCascMost) / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgRRDHCascMostSVPR")
+,max(RRDHCascMost)														(format 'z,zz9.9') (named "MaxRRDHCascMostSVPR")
+,sum(RRDHCascSome) / NumNodes	/ RSSInterval		(format 'z,zz9.9') (named "AvgRRDHCascSomeSVPR")
+,max(RRDHCascSome)														(format 'z,zz9.9') (named "MaxRRDHCascSomeSVPR")
+
 /* SPMA NodeMbs */
 
 ,avg(AvgNodeMBs)  (named "AvgNodeMBs")
@@ -409,6 +419,16 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 
 ,avg(AvgNodeMBs)/1.05     (named "Factored-Down AvgNodeMBs")
 ,max(MaxNodeMBs)/1.05     (named "Factored-Down MaxNodeMBs")
+
+,sum(NetHWBackoffs) / RSSInterval (format 'z,zz9.9') (named "AvgNetHWBackoffs")
+,max(NetHWBackoffs) (format 'z,zz9.9') (named "MaxNetHWBackoffs")
+
+,sum(SegCacheMB)		 / NumNodes	/ RSSInterval 		(format 'z,zz9.9') (named "AvgSegCacheMBSPMA")
+,max(SegCacheMB)																	(format 'z,zz9.9') (named "MaxSegCacheMBSPMA")
+,sum(SegInuseMB)		 / NumNodes	/ RSSInterval 		(format 'z,zz9.9') (named "AvgSegInuseMBSPMA")
+,max(SegInuseMB)																	(format 'z,zz9.9') (named "MaxSegInuseMBSPMA")
+,sum(SegMaxAvailMB)		 / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgSegMaxAvailMBSPMA")
+,max(SegMaxAvailMB)																(format 'z,zz9.9') (named "MaxSegMaxAvailMBSPMA")
 
 /* SPMA RunQ and Process Pending Blocks */
 
@@ -431,7 +451,7 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 
 from dbc.dbcinfo info,
 (
-sel
+sel 
  sum(CurrentPerm) (named "SumCurrPerm")
 ,sum(MaxPerm) (named "SumMaxPerm")
 ,sum(PeakSpool) (named "SumPeakSpool")
@@ -532,11 +552,17 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,avg(Nodembs)			(named "AvgNodeMBs")
 ,max(Nodembs)			(named "MaxNodeMBs")
 
+,sum(NetHWBackoffs)			(named "NetHWBackoffs")
+
+,sum(SegCacheMB)				(named "SegCacheMB")
+,sum(SegInuseMB)				(named "SegInuseMB")
+,sum(SegMaxAvailMB)			(named "SegMaxAvailMB")
+
 /* Process Pending Blocks */
 
 ,avg(ProcReady)                              (Named "SPMAProcReady")
 ,max(ProcReadyMax)                           (Named "SPMAProcReadyMax")
-,sum(ProcPendDBLock)          / SPMAInterval (Named "SPMAProcPendDBLock")
+,sum(ProcPendDBLock)          / SPMAInterval (Named "SPMAProcPendDBLock") 
 ,sum(ProcPendFsgLock)         / SPMAInterval (Named "SPMAProcPendFsgLock")
 ,sum(ProcPendFsgRead)         / SPMAInterval (Named "SPMAProcPendFsgRead")
 ,sum(ProcPendFsgWrite)        / SPMAInterval (Named "SPMAProcPendFsgWrite")
@@ -558,7 +584,7 @@ WHERE ( ( THEDATE = :BEGINDATE AND THETIME >= :BEGINTIME ) OR
 AND
 ( ( THEDATE = :ENDDATE AND THETIME <= :ENDTIME ) OR
 ( THEDATE < :ENDDATE ) )
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 
 ) spma_dt left join
 
@@ -703,6 +729,11 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,sum(FsgCacheWaitTime)    / SVPRInterval     (Named "SVPRFsgCacheWaitTime")
 ,max(FsgCacheWaitTimeMax)                    (Named "SVPRFsgCacheWaitTimeMax")
 
+,sum(RRDHCount)			(named "RRDHCount")
+,sum(RRDHCascAll)		(named "RRDHCascAll")
+,sum(RRDHCascMost)	(named "RRDHCascMost")
+,sum(RRDHCascSome)	(named "RRDHCascSome")
+
 
 from dbc.ResUsageSvpr
 WHERE ( ( THEDATE = :BEGINDATE AND THETIME >= :BEGINTIME ) OR
@@ -712,7 +743,7 @@ AND
 ( THEDATE < :ENDDATE ) )
 group by 1,2,3,4
 
-) svpr_dt
+) svpr_dt 
  on spma_dt.LogDate           = svpr_dt.LogDate
 and spma_dt.LogTime           = svpr_dt.LogTime
 and spma_dt.nodeid            = svpr_dt.nodeid
@@ -783,8 +814,8 @@ group by 1,2,3,4
 on spma_dt.LogDate = spdsk_dt.LogDate
 and spma_dt.LogTime = spdsk_dt.LogTime
 and spma_dt.nodeid = spdsk_dt.nodeid
-where  info.infokey (NOT CS) = 'VERSION' (NOT CS)
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+where  info.infokey (NOT CS) = 'VERSION' (NOT CS) 
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
 order by "Timestamp"
 ;
 );

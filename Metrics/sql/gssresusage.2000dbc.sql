@@ -11,15 +11,15 @@
   -- Date looks like a SQL subselect, no work needed
 {% elif "/" in startdate %}
   -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
-  {% set startmonth = startdate.split("/")[0] %}
-  {% set startday   = startdate.split("/")[1] %}
+  {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
+  {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
   {% set startyear  = startdate.split("/")[2] %}
   {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
 {% elif "-" in startdate %}
   -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
   {% set startyear  = startdate.replace("'","").split("-")[0] %}
-  {% set startmonth = startdate.replace("'","").split("-")[1] %}
-  {% set startday   = startdate.replace("'","").split("-")[2] %}
+  {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
+  {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
   {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
 {% endif %}
 -- startdate: {{ startdate }}
@@ -32,22 +32,23 @@
   -- Date looks like a SQL subselect, no work needed
 {% elif "/" in enddate %}
   -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
-  {% set endmonth = enddate.split("/")[0] %}
-  {% set endday   = enddate.split("/")[1] %}
+  {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
+  {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
   {% set endyear  = enddate.split("/")[2] %}
   {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
 {% elif "-" in startdate %}
   -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
   {% set endyear  = enddate.replace("'","").split("-")[0] %}
-  {% set endmonth = enddate.replace("'","").split("-")[1] %}
-  {% set endday   = enddate.replace("'","").split("-")[2] %}
+  {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
+  {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
   {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
 {% endif %}
 -- enddate: {{ enddate }}
 
 CREATE VOLATILE MULTISET TABLE vt_gssresusage_prework as (
+/* gss_resusage_TD20v1.0 R0001 */
 sel
-'TD20v1.0' (named "Version")
+'TD20v1.0' (named "Version")      
 ,spma_dt.LogDate (named "LogDate")
 ,cast(spma_dt.LogDay as char(3)) (named "LogDOW")
 ,spma_dt.LogTime (named "LogTime")
@@ -55,7 +56,7 @@ sel
 ,extract(hour from "Timestamp") (named "Hour")
 ,extract(minute from "Timestamp") / 10 * 10 (named "Minute10")
 
-,SPMANominalSecs (named "RSSInterval")         /* overall logging interval for 1 row per interval per cluster  */
+,SPMANominalSecs (named "RSSInterval")         /* overall logging interval for 1 row per interval per cluster  */ 
 
 /* System data */
 
@@ -159,7 +160,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,sum(LogSpoolCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "LogSpoolCISecNode_SVPR")
 
 ,sum(PhySpoolDBRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhySpoolDBSecNode_SVPR")
-,sum(PhySpoolCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")
+,sum(PhySpoolCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhySpoolCISecNode_SVPR")	
 ,sum(PhyPermDBRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhyPermDBSecNode_SVPR")
 ,sum(PhyPermCIRead) / NumNodes (format 'ZZ,ZZ9.9')(named "PhyPermCISecNode_SVPR")
 
@@ -320,7 +321,7 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,max(TotalAMPCPUBusy) / CPUs (format 'ZZ9.9') (named "MaxAMPCPUBusy")
 ,sum(TotalGTW_PECPUBusy) / NumNodes / CPUs (format 'ZZ9.9') (named "AvgGTW_PECPUBusy")
 ,max(TotalGTW_PECPUBusy) / CPUs (format 'ZZ9.9') (named "MaxGTW_PECPUBusy")
-
+ 
 /* SVPR VH Cache */
 
 ,sum(VHAgedOut) / NumNodes (format 'ZZ,ZZ9.9')(named "AvgVHAgedOut_SVPR")
@@ -354,19 +355,19 @@ END) (FORMAT 'ZZ9.9', named "TotalCacheEffKB")
 ,zeroifnull(PctCPUComp) / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) (named "TtlTCPUComp_Est1")
 ,zeroifnull(PctCPUUnComp) / 100 * NumNodes  * CPUs / 2 / (PMCOD / 100)   (named "TtlTCPUUnComp_Est1")
 
-,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2")
-,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2")
+,zeroifnull(PreCompMBSecNode_SVPR) * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est2") 
+,zeroifnull(PostUnCompMBSecNode_SVPR) * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est2") 
 
-,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3")
-,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3")
+,PhyPermWriteMBSecNode_SVPR * NumNodes * 0.025 / 2  (named "TtlTCPUComp_Est3") 
+,LogPermReadMBSecNode_SVPR * NumNodes * 0.0035 / 2  (named "TtlTCPUUnComp_Est3") 
 
 ,zeroifnull(sum(CompCPUMS) / NumNodes / nullifzero(PreCompMBSecNode_SVPR))  (named "CPUMSMBComp")
 ,zeroifnull(sum(UnCompCPUMS) / NumNodes / nullifzero(PostUnCompMBSecNode_SVPR))  (named "CPUMSMBUnComp")
 
 /* SVPR NCS Node sizing */
 
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes")
-,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode")
+,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "TotalTCPUForNCSNodes") 
+,AvgGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "AvgTCPUForNCSNode") 
 ,MaxGTW_PECPUBusy / 100 * NumNodes * CPUs / 2 / (PMCOD / 100) / 100 (named "MaxTCPUForNCSNode")
 
 /* SPMA host ntw traffic */
@@ -443,6 +444,15 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 ,sum(SVPRFsgCacheWaitTime)    / NumNodes (format 'z,zz9.9')  (Named "AvgSVPRFsgCacheWaitTime")
 ,max(SVPRFsgCacheWaitTimeMax)                                (Named "MaxSVPRFsgCacheWaitTimeMax")
 
+,sum(RRDHCount)		 / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgRRDHCountSVPR")
+,max(RRDHCount)																(format 'z,zz9.9') (named "MaxRRDHCountSVPR")
+,sum(RRDHCascAll)  / NumNodes	/ RSSInterval		(format 'z,zz9.9') (named "AvgRRDHCascAllSVPR")
+,max(RRDHCascAll)															(format 'z,zz9.9') (named "MaxRRDHCascAllSVPR")
+,sum(RRDHCascMost) / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgRRDHCascMostSVPR")
+,max(RRDHCascMost)														(format 'z,zz9.9') (named "MaxRRDHCascMostSVPR")
+,sum(RRDHCascSome) / NumNodes	/ RSSInterval		(format 'z,zz9.9') (named "AvgRRDHCascSomeSVPR")
+,max(RRDHCascSome)														(format 'z,zz9.9') (named "MaxRRDHCascSomeSVPR")
+
 /* SPMA NodeMbs */
 
 ,avg(AvgNodeMBs)  (named "AvgNodeMBs")
@@ -450,6 +460,16 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 
 ,avg(AvgNodeMBs)/1.05     (named "Factored-Down AvgNodeMBs")
 ,max(MaxNodeMBs)/1.05     (named "Factored-Down MaxNodeMBs")
+
+,sum(NetHWBackoffs) / RSSInterval (format 'z,zz9.9') (named "AvgNetHWBackoffs")
+,max(NetHWBackoffs) (format 'z,zz9.9') (named "MaxNetHWBackoffs")
+
+,sum(SegCacheMB)		 / NumNodes	/ RSSInterval 		(format 'z,zz9.9') (named "AvgSegCacheMBSPMA")
+,max(SegCacheMB)																	(format 'z,zz9.9') (named "MaxSegCacheMBSPMA")
+,sum(SegInuseMB)		 / NumNodes	/ RSSInterval 		(format 'z,zz9.9') (named "AvgSegInuseMBSPMA")
+,max(SegInuseMB)																	(format 'z,zz9.9') (named "MaxSegInuseMBSPMA")
+,sum(SegMaxAvailMB)		 / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgSegMaxAvailMBSPMA")
+,max(SegMaxAvailMB)																(format 'z,zz9.9') (named "MaxSegMaxAvailMBSPMA")
 
 /* SPMA RunQ and Process Pending Blocks */
 
@@ -472,7 +492,7 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 
 from dbc.dbcinfo info,
 (
-sel
+sel 
  sum(CurrentPerm) (named "SumCurrPerm")
 ,sum(MaxPerm) (named "SumMaxPerm")
 ,sum(PeakSpool) (named "SumPeakSpool")
@@ -573,11 +593,17 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,avg(Nodembs)			(named "AvgNodeMBs")
 ,max(Nodembs)			(named "MaxNodeMBs")
 
+,sum(NetHWBackoffs)			(named "NetHWBackoffs")
+
+,sum(SegCacheMB)				(named "SegCacheMB")
+,sum(SegInuseMB)				(named "SegInuseMB")
+,sum(SegMaxAvailMB)			(named "SegMaxAvailMB")
+
 /* Process Pending Blocks */
 
 ,avg(ProcReady)                              (Named "SPMAProcReady")
 ,max(ProcReadyMax)                           (Named "SPMAProcReadyMax")
-,sum(ProcPendDBLock)          / SPMAInterval (Named "SPMAProcPendDBLock")
+,sum(ProcPendDBLock)          / SPMAInterval (Named "SPMAProcPendDBLock") 
 ,sum(ProcPendFsgLock)         / SPMAInterval (Named "SPMAProcPendFsgLock")
 ,sum(ProcPendFsgRead)         / SPMAInterval (Named "SPMAProcPendFsgRead")
 ,sum(ProcPendFsgWrite)        / SPMAInterval (Named "SPMAProcPendFsgWrite")
@@ -599,7 +625,7 @@ WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ star
 AND
 ( ( THEDATE = {{ enddate | default ('date-1')  }} AND THETIME <= {{ endtime | default ('240000') }} ) OR
 ( THEDATE < {{ enddate | default ('date-1')  }} ) )
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 
 ) spma_dt left join
 
@@ -744,6 +770,11 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,sum(FsgCacheWaitTime)    / SVPRInterval     (Named "SVPRFsgCacheWaitTime")
 ,max(FsgCacheWaitTimeMax)                    (Named "SVPRFsgCacheWaitTimeMax")
 
+,sum(RRDHCount)			(named "RRDHCount")
+,sum(RRDHCascAll)		(named "RRDHCascAll")
+,sum(RRDHCascMost)	(named "RRDHCascMost")
+,sum(RRDHCascSome)	(named "RRDHCascSome")
+
 
 from dbc.ResUsageSvpr
 WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ starttime | default ('0') }} ) OR
@@ -753,7 +784,7 @@ AND
 ( THEDATE < {{ enddate | default ('date-1')  }} ) )
 group by 1,2,3,4
 
-) svpr_dt
+) svpr_dt 
  on spma_dt.LogDate           = svpr_dt.LogDate
 and spma_dt.LogTime           = svpr_dt.LogTime
 and spma_dt.nodeid            = svpr_dt.nodeid
@@ -824,8 +855,8 @@ group by 1,2,3,4
 on spma_dt.LogDate = spdsk_dt.LogDate
 and spma_dt.LogTime = spdsk_dt.LogTime
 and spma_dt.nodeid = spdsk_dt.nodeid
-where  info.infokey (NOT CS) = 'VERSION' (NOT CS)
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+where  info.infokey (NOT CS) = 'VERSION' (NOT CS) 
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
 --- order by "Timestamp"
 
 
