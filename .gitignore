@@ -13,5 +13,5 @@ Metrics/temp
 # PyCharm
 .idea/
 
-# Output folder
+# Project Specific
 output/*
