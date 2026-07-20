@@ -12,15 +12,15 @@
   -- Date looks like a SQL subselect, no work needed
 {% elif "/" in startdate %}
   -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
-  {% set startmonth = startdate.split("/")[0] %}
-  {% set startday   = startdate.split("/")[1] %}
+  {% set startmonth = ('00' ~ startdate.split("/")[0])[-2:] %}
+  {% set startday   = ('00' ~ startdate.split("/")[1])[-2:] %}
   {% set startyear  = startdate.split("/")[2] %}
   {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
 {% elif "-" in startdate %}
   -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
   {% set startyear  = startdate.replace("'","").split("-")[0] %}
-  {% set startmonth = startdate.replace("'","").split("-")[1] %}
-  {% set startday   = startdate.replace("'","").split("-")[2] %}
+  {% set startmonth = ('00' ~ startdate.replace("'","").split("-")[1])[-2:] %}
+  {% set startday   = ('00' ~ startdate.replace("'","").split("-")[2])[-2:] %}
   {% set startdate  = "'" ~ startyear ~ "-" ~ startmonth ~ "-" ~ startday ~ "'" %}
 {% endif %}
 -- startdate: {{ startdate }}
@@ -33,20 +33,21 @@
   -- Date looks like a SQL subselect, no work needed
 {% elif "/" in enddate %}
   -- Date looks like a MM/DD/YYYY format, translating to 'YYYY-MM-DD' format
-  {% set endmonth = enddate.split("/")[0] %}
-  {% set endday   = enddate.split("/")[1] %}
+  {% set endmonth = ('00' ~ enddate.split("/")[0])[-2:] %}
+  {% set endday   = ('00' ~ enddate.split("/")[1])[-2:] %}
   {% set endyear  = enddate.split("/")[2] %}
   {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
 {% elif "-" in startdate %}
   -- Date looks like a YYYY-MM-DD format, but reformatting just to be sure
   {% set endyear  = enddate.replace("'","").split("-")[0] %}
-  {% set endmonth = enddate.replace("'","").split("-")[1] %}
-  {% set endday   = enddate.replace("'","").split("-")[2] %}
+  {% set endmonth = ('00' ~ enddate.replace("'","").split("-")[1])[-2:] %}
+  {% set endday   = ('00' ~ enddate.replace("'","").split("-")[2])[-2:] %}
   {% set enddate  = "'" ~ endyear ~ "-" ~ endmonth ~ "-" ~ endday ~ "'" %}
 {% endif %}
 -- enddate: {{ enddate }}
 
 CREATE VOLATILE MULTISET TABLE vt_gssresusage_prework as (
+/* gss_resusage_TD20v1.0 R0001 */
 sel
 'TD20v1.0' (named "Version")
 ,spma_dt.LogDate (named "LogDate")
@@ -444,6 +445,15 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 ,sum(SVPRFsgCacheWaitTime)    / NumNodes (format 'z,zz9.9')  (Named "AvgSVPRFsgCacheWaitTime")
 ,max(SVPRFsgCacheWaitTimeMax)                                (Named "MaxSVPRFsgCacheWaitTimeMax")
 
+,sum(RRDHCount)		 / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgRRDHCountSVPR")
+,max(RRDHCount)																(format 'z,zz9.9') (named "MaxRRDHCountSVPR")
+,sum(RRDHCascAll)  / NumNodes	/ RSSInterval		(format 'z,zz9.9') (named "AvgRRDHCascAllSVPR")
+,max(RRDHCascAll)															(format 'z,zz9.9') (named "MaxRRDHCascAllSVPR")
+,sum(RRDHCascMost) / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgRRDHCascMostSVPR")
+,max(RRDHCascMost)														(format 'z,zz9.9') (named "MaxRRDHCascMostSVPR")
+,sum(RRDHCascSome) / NumNodes	/ RSSInterval		(format 'z,zz9.9') (named "AvgRRDHCascSomeSVPR")
+,max(RRDHCascSome)														(format 'z,zz9.9') (named "MaxRRDHCascSomeSVPR")
+
 /* SPMA NodeMbs */
 
 ,avg(AvgNodeMBs)  (named "AvgNodeMBs")
@@ -451,6 +461,16 @@ nullifzero(sum(NosPhysReadIOKB_cnt + NosPhysWriteIOKB_cnt)) * 100) (format 'ZZ9.
 
 ,avg(AvgNodeMBs)/1.05     (named "Factored-Down AvgNodeMBs")
 ,max(MaxNodeMBs)/1.05     (named "Factored-Down MaxNodeMBs")
+
+,sum(NetHWBackoffs) / RSSInterval (format 'z,zz9.9') (named "AvgNetHWBackoffs")
+,max(NetHWBackoffs) (format 'z,zz9.9') (named "MaxNetHWBackoffs")
+
+,sum(SegCacheMB)		 / NumNodes	/ RSSInterval 		(format 'z,zz9.9') (named "AvgSegCacheMBSPMA")
+,max(SegCacheMB)																	(format 'z,zz9.9') (named "MaxSegCacheMBSPMA")
+,sum(SegInuseMB)		 / NumNodes	/ RSSInterval 		(format 'z,zz9.9') (named "AvgSegInuseMBSPMA")
+,max(SegInuseMB)																	(format 'z,zz9.9') (named "MaxSegInuseMBSPMA")
+,sum(SegMaxAvailMB)		 / NumNodes	/ RSSInterval 	(format 'z,zz9.9') (named "AvgSegMaxAvailMBSPMA")
+,max(SegMaxAvailMB)																(format 'z,zz9.9') (named "MaxSegMaxAvailMBSPMA")
 
 /* SPMA RunQ and Process Pending Blocks */
 
@@ -573,6 +593,12 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 /* NodeMbs */
 ,avg(Nodembs)			(named "AvgNodeMBs")
 ,max(Nodembs)			(named "MaxNodeMBs")
+
+,sum(NetHWBackoffs)			(named "NetHWBackoffs")
+
+,sum(SegCacheMB)				(named "SegCacheMB")
+,sum(SegInuseMB)				(named "SegInuseMB")
+,sum(SegMaxAvailMB)			(named "SegMaxAvailMB")
 
 /* Process Pending Blocks */
 
@@ -745,6 +771,11 @@ thedate (format 'yyyy-mm-dd')(named "LogDate")
 ,sum(FsgCacheWaitTime)    / SVPRInterval     (Named "SVPRFsgCacheWaitTime")
 ,max(FsgCacheWaitTimeMax)                    (Named "SVPRFsgCacheWaitTimeMax")
 
+,sum(RRDHCount)			(named "RRDHCount")
+,sum(RRDHCascAll)		(named "RRDHCascAll")
+,sum(RRDHCascMost)	(named "RRDHCascMost")
+,sum(RRDHCascSome)	(named "RRDHCascSome")
+
 
 from dbc.ResUsageSvpr
 WHERE ( ( THEDATE = {{ startdate | default ('date-45') }} AND THETIME >= {{ starttime | default ('0') }} ) OR
@@ -826,7 +857,7 @@ on spma_dt.LogDate = spdsk_dt.LogDate
 and spma_dt.LogTime = spdsk_dt.LogTime
 and spma_dt.nodeid = spdsk_dt.nodeid
 where  info.infokey (NOT CS) = 'VERSION' (NOT CS)
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
 --- order by "Timestamp"
 
 
