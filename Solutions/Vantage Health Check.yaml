@@ -103,14 +103,14 @@ tasks:
 
 - name: "Generate systasks version banner"
   script:
-    command: scripts/generate_version.py
+    command: {{ dirs.systasks }}/Solutions/scripts/generate_version.py
     params:
-      - "output:Metrics/templates/generate_version_j2.j2"
+      - "output:Solutions/templates/generate_version_j2.j2"
 
 - name: "Emit systasks version banner"
   connect: source
   execute:
-    sqlfile: {{ dirs.systasks }}/Metrics/templates/generate_version_j2.j2
+    sqlfile: {{ dirs.systasks }}/Solutions/templates/generate_version_j2.j2
 
 - name: "Export Variables to a reconcile file"
   connect: source
