@@ -7,7 +7,7 @@ Reads versions.json and writes a SQL snippet with version values.
 Usage (matches your existing pipeline params format):
     python generate_version_j2.py \
         "input:Cache/versions.json" \
-        "output:Metrics/templates/generate_version_j2.j2"
+        "output:Solutions/templates/generate_version_j2.j2"
 
 Place this script in:
     \\tdcoa\\systasks\\Solutions\\scripts\\
@@ -29,8 +29,8 @@ def parse_args(argv):
     Matches the existing parse_args convention used in this solutions directory.
 
     Example:
-        ["input:Cache/versions.json", "output:Metrics/templates/version.j2"]
-        → {"input": "Cache/versions.json", "output": "Metrics/templates/version.j2"}
+        ["input:Cache/versions.json", "output:Solutions/templates/version.j2"]
+        → {"input": "Cache/versions.json", "output": "Solutions/templates/version.j2"}
     """
     result = {}
     for arg in argv:
@@ -64,14 +64,14 @@ def default_output_path():
             local_app_data,
             "tdcoa",
             "systasks",
-            "Metrics",
+            "Solutions",
             "templates",
         )
         if os.path.isdir(local_templates):
             return os.path.join(local_templates, "generate_version_j2.j2")
 
     # Fallback for non-tdcoa runtime contexts.
-    return "Metrics/templates/generate_version_j2.j2"
+    return "Solutions/templates/generate_version_j2.j2"
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ def main():
     # Default target is LOCALAPPDATA\tdcoa\Cache\versions.json
     input_rel  = args.get("input", "Cache/versions.json")
 
-    # Param: "output:Metrics/templates/generate_version_j2.j2"
+    # Param: "output:Solutions/templates/generate_version_j2.j2"
     # Default prefers LOCALAPPDATA tdcoa runtime templates when available.
     output_rel = args.get("output", default_output_path())
 
