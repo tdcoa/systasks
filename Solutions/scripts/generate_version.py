@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
-generate_version_j2.py
+generate_version.py
 
-Reads versions.json and writes a SQL snippet with version values.
+LEGACY RUNTIME HELPER.
 
-Usage (matches your existing pipeline params format):
-    python generate_version_j2.py \
+This script reads versions.json and writes a SQL snippet with version values.
+
+It is retained for older/manual runtime flows, but it is no longer the
+preferred source of truth for the released Vantage Health Check Assist Mode
+version banner. That path is now release-stamped in
+`Solutions/templates/generate_version_j2.j2` by `.github/workflows/zip.yaml`.
+
+Usage (matches the existing pipeline params format):
+    python generate_version.py \
         "input:Cache/versions.json" \
         "output:Solutions/templates/generate_version_j2.j2"
 
@@ -16,7 +23,6 @@ Place this script in:
 import os
 import sys
 import json
-from datetime import datetime
 
 # ---------------------------------------------------------------------------
 # parse_args — mirrors the existing pattern in your codebase
@@ -155,7 +161,8 @@ def main():
             os.path.join(SYSTASKS_DIR, output_rel)
         )
 
-    os.makedirs(os.path.dirname(resolved_output), exist_ok=True)
+    output_dir = os.path.dirname(str(resolved_output))
+    os.makedirs(output_dir, exist_ok=True)
 
     # -----------------------------------------------------------------------
     # Write SQL snippet for tasklist include.
