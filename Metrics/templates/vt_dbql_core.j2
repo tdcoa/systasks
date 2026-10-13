@@ -7,6 +7,8 @@
 {% set reconcile      = false if reconcile       is not defined else reconcile %}
 {% set save_prework   = false if save_prework    is not defined else save_prework %}
 {% set process_chunks = 1     if process_chunks  is not defined else process_chunks %}
+{% set peak_hour_from = 8  if peak_hour_from is not defined else peak_hour_from %}
+{% set peak_hour_thru = 16 if peak_hour_thru is not defined else peak_hour_thru %}
 {% set run.buckets    = false %}  # set to True in the "build dimension" below, if appropriate
 
 
@@ -127,6 +129,12 @@
         ,Statement_Utility_Cnt         {{ bigint }} compress (null, 0)
         ,  Request_QueryGrid_Cnt       {{ bigint }} compress (null, 0)
         ,Statement_QueryGrid_Cnt       {{ bigint }} compress (null, 0)
+        ,  Request_Delayed_Cnt         {{ bigint }} compress (null, 0)
+        ,Statement_Delayed_Cnt         {{ bigint }} compress (null, 0)
+        ,  Request_Peak_Cnt            {{ bigint }} compress (null, 0)
+        ,Statement_Peak_Cnt            {{ bigint }} compress (null, 0)
+        ,RunTime_Peak_Sec              {{ bigdec }} compress (null, 0)
+        ,CPU_Peak_Sec                  {{ bigdec }} compress (null, 0)
 
         /* ====== Metrics: RunTimes ====== */
         ,DelayTime_Sec                 {{ bigdec }} compress (null, 0)
@@ -204,6 +212,7 @@
             ,case when TotalServerByteCount=0 then 0 else 1 end as QueryGrid_Flag
             ,case when TotalExec_Sec <= 1.00000 then 1 else 0 end as SubSecond_Flag
             ,case when d.StatementType = 'Select' and d.NumOfActiveAMPs < (Total_AMPs * 0.10) and SubSecond_Flag = 1 then 1 else 0 end  as Tactical_Flag
+            ,cast(case when extract(hour from StartTime) between {{ peak_hour_from }} and {{ peak_hour_thru }} then 1 else 0 end as byteint) as Peak_Flag
             ,cast(case when d.NumOfActiveAMPs = 1                                 then 1 else 0 end as byteint) as AMP_Use01_Flag
             ,cast(case when d.NumOfActiveAMPs = 2                                 then 1 else 0 end as byteint) as AMP_Use02_Flag
             ,cast(case when d.NumOfActiveAMPs <= cast(Total_AMPs /10 as smallint) then 1 else 0 end as byteint) as AMP_LT10pct_Flag
@@ -369,6 +378,12 @@
         ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Utility_Cnt
         ,zeroifnull(sum(cast( QueryGrid_Flag                                                                as {{ bigint }}))) as    Request_QueryGrid_Cnt
         ,zeroifnull(sum(cast( case when QueryGrid_Flag = 1                  then Statements      else 0 end as {{ bigint }}))) as  Statement_QueryGrid_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Delaytime_Sec > 0  then 1                  else 0 end as {{ bigint }}))) as   Request_Delayed_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Delaytime_Sec > 0  then dbql.Statements    else 0 end as {{ bigint }}))) as Statement_Delayed_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then 1                  else 0 end as {{ bigint }}))) as   Request_Peak_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then dbql.Statements    else 0 end as {{ bigint }}))) as Statement_Peak_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then dbql.TotalExec_Sec else 0 end as {{ bigdec }}))) as RunTime_Peak_Sec
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then dbql.CPU_Total_Sec else 0 end as {{ bigdec }}))) as CPU_Peak_Sec
 
         /* ====== Metrics: RunTimes ====== */
         ,sum(cast(DelayTime_Sec           as {{ bigdec }})) as DelayTime_Sec
@@ -477,6 +492,7 @@
             ,0 as QueryGrid_Flag
             ,zeroifnull(case when (cast(TotalExec_Sec as float) / nullifzero(cast(QueryCount as float))) <= 1.00000 then 1 else 0 end) as SubSecond_Flag
             ,SubSecond_Flag as Tactical_Flag
+            ,cast(case when extract(hour from CollectTimeStamp) between {{ peak_hour_from }} and {{ peak_hour_thru }} then 1 else 0 end as byteint) as Peak_Flag
 
             /* ====== Metrics: CPU & IO ====== */
             ,zeroifnull((cast(ParserCPUTime as {{ bigdec }}))) as CPU_Parse_Sec
@@ -617,6 +633,12 @@
         ,zeroifnull(sum(cast(case when (LSN is not null or LSN >0)          then dbql.Statements else 0 end as {{ bigint }}))) as Statement_Utility_Cnt
         ,zeroifnull(sum(cast( QueryGrid_Flag                                                                as {{ bigint }}))) as    Request_QueryGrid_Cnt
         ,zeroifnull(sum(cast( case when QueryGrid_Flag = 1                  then Statements      else 0 end as {{ bigint }}))) as  Statement_QueryGrid_Cnt
+        ,0 as Request_Delayed_Cnt
+        ,0 as Statement_Delayed_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then 1                  else 0 end as {{ bigint }}))) as   Request_Peak_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then dbql.Statements    else 0 end as {{ bigint }}))) as Statement_Peak_Cnt
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then dbql.TotalExec_Sec else 0 end as {{ bigdec }}))) as RunTime_Peak_Sec
+        ,zeroifnull(sum(cast(case when dbql.Peak_Flag = 1      then dbql.CPU_Total_Sec else 0 end as {{ bigdec }}))) as CPU_Peak_Sec
 
         /* ====== Metrics: RunTimes ====== */
         ,sum(cast(DelayTime_Sec             as {{ bigdec }})) as DelayTime_Sec

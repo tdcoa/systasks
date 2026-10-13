@@ -29,7 +29,7 @@
           where LogDate between DATE-365 and DATE-1
           and currentperm > 0
           {% else %}
-          from dbc.TableSize
+          from dbc.TableSizeV
           where currentperm > 0
           {% endif %}
           group by 1,2,3
@@ -67,7 +67,7 @@
           from pdcrinfo.DatabaseSpace_hst
           where LogDate between DATE-365 and DATE-1
           {% else %}
-          from dbc.DiskSpace
+          from dbc.DiskSpaceV
           {% endif %}
           group by 1,2
       ) with data primary index (LogDate, DatabaseName)  on commit preserve rows

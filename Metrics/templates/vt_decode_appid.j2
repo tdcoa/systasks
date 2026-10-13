@@ -56,8 +56,8 @@
       with
       dbql as (
               select REGEXP_REPLACE(appid, '[^a-zA-Z0-9\s.;:_]', '', 1, 0, 'i') as AppID
-              ,count(*)(bigInt) as Requests
-              ,sum(Statements)(bigint) as Statements
+              ,sum(cast(1 as bigint)) as Requests
+              ,sum(cast(Statements as bigint)) as Statements
               ,cast(sum(AmpCPUTime+ParserCPUTime) as decimal(36,4)) as CPU_Sec
               from {{ dbc.log }}
               where {{ dbc.logdt }} (DATE, format 'YYYY-MM-DD') between {{ startdate | default('DATE-91') }} and {{ enddate | default('DATE-1') }}

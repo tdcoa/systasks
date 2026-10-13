@@ -105,7 +105,7 @@
                 ,Avg(WMCOD)                              as WMCOD
                 ,Max(ETcoreCPUs)                         as ETcoreCPUs
                 -- Match the correct number of CPU seconds based on aggregation level
-                ,cast((count(*)*600) * Node_Cnt * vCPU_per_Node as BIGINT)as CPU_Total
+                ,cast(cast(count(*) as bigint)*600 * Node_Cnt * vCPU_per_Node as BIGINT)as CPU_Total
 
                 -- Reverse-engineer GSSResUsage Query results into component pieces
                 -- Average CPU (additive // can include Idle)

@@ -16,7 +16,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 11400,Data Stream Extension,Data Stream Extension for Veritas NetBackup,DEFAULT,0,Backup and Restore,Applications,Backup and Restore (BAR),Back up my data,Business Continuity,Disk-based  high-speed backup and recovery,,TBD,TBD,N,TBD,0,0,0,,TBD,TBD,0,10,1000,1,1,1,1,N,
 11500,Dell EMC Data Domain,Dell EMC Data Domain,DEFAULT,0,Backup and Restore,Applications,Backup and Restore (BAR),Back up my data,Business Continuity,Disk-based  high-speed backup and recovery,,TBD,TBD,N,TBD,0,0,0,,TBD,TBD,0,10,1000,1,1,1,1,N,
 11600,Quantum Scalar Tape Library,Quantum Tape Library,DEFAULT,0,Backup and Restore,Applications,Backup and Restore (BAR),Back up my data,Business Continuity,Tape-based  high-speed backup and recovery,,TBD,TBD,N,TBD,0,0,0,,TBD,TBD,0,10,1000,1,1,1,1,N,
-11700,Assets,AnalyticsOps,DEFAULT,0,Other,ClearScape,Consulting,Get help through services,Accelerator,Reduced time to insights  leverages Teradata expertise & best practices,,TBD,TBD,N,TBD,1,1,10,AnalyticOps is a framework that oversees development of automation and consumption of analytics across the enterprise.,https://www.teradata.com/Blogs/Why-AnalyticOps-Empowers-Automation-and-AI,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+11700,Assets,AnalyticsOps,DEFAULT,0,Other,ClearScape,Consulting,Tool,Accelerator,Reduced time to insights  leverages Teradata expertise & best practices,,TBD,TBD,N,TBD,1,1,10,AnalyticOps is a framework that oversees development of automation and consumption of analytics across the enterprise.,https://www.teradata.com/Blogs/Why-AnalyticOps-Empowers-Automation-and-AI,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
 11800,Assets,Hadoop Migration Accelerator,DEFAULT,0,Migration,Applications,Consulting,Get help through services,Accelerator,Reduced time to insights  leverages Teradata expertise & best practices,,TBD,TBD,N,TBD,1,1,5,GDC-developed Hive Migration Accelerator(HMA) automatically interrogates the Hive Metastore and generate Teradata DDL and loading scripts to automate the export of structured data from Cloudera and MapR environments to Teradata.,https://teradata.sharepoint.com/teams/SalesTechEMEA/SitePages/Hadoop-Migration-Tool.aspx,TBD,0,10,1000,1,1,1,1,N,
 11900,Service Catalysts,Advocated Stack,DEFAULT,0,Data,Applications,Consulting,Get help through services,Accelerator,Reduced time to insights  leverages Teradata expertise & best practices,,TBD,TBD,N,TBD,0,1,0,,TBD,TBD,0,10,1000,1,1,1,1,N,
 12000,Service Catalysts,Consumption Analytics,DEFAULT,0,Data,Applications,Consulting,Get help through services,Accelerator,Reduced time to insights  leverages Teradata expertise & best practices,,TBD,TBD,N,TBD,0,1,0,,TBD,TBD,0,10,1000,1,1,1,1,N,
@@ -46,32 +46,32 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 14400,Viewpoint,Viewpoint,DEFAULT,0,Administration,Applications,IntelliSphere,Manage my environment,Administration,Simplified Management,,TBD,TBD,N,TBD,1,1,5,Web based application for systems management and monitoring of all Teradata products across an enterprise.,https://www.teradata.com/Products/Ecosystem-Management/IntelliSphere/Viewpoint,TBD,0,10,1000,1,1,1,1,N,
 14500,Service Catalysts,Consulting Accelerator,DEFAULT,0,Data,Applications,Vantage,Get help through services,Accelerator,Consulting excellence that leverages experiece and proven patterns,,TBD,TBD,N,TBD,1,1,10,Consulting Accelerators are the following collection of features and capabilities that drive consulting: AnalyticOps  Hadoop Migration Accelerator  Advocated Stack  Consumption Analytics  DataDNA  DataOps  Ecosystem Encoded,https://teradata.sharepoint.com/:u:/r/teams/GTM/SitePages/Consulting-Services.aspx?csf=1&e=0i5S2p,TBD,0,10,1000,1,1,1,1,N,
 14600,Vantage Analyst,Analyst UI,DEFAULT,0,Data,Applications,Vantage,,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,10,Self service application for running machine learning algorithms and modeling data on Vantage with no coding.,https://www.teradata.com/Products/Software/Vantage/Analyst,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-14700,Vantage Analyst,Cluster,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Create groups of objects based on multi-dimensional data similarity (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+14700,Vantage Analyst,Cluster,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,Modeling,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Create groups of objects based on multi-dimensional data similarity (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 14800,Vantage Analyst,Model,DEFAULT,0,Data,Applications,Vantage,,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Build  train  and evaluate predictive models to maximize business value (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-14900,Vantage Analyst,Path,DEFAULT,0,Path,ClearScape,Vantage,,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Discover actionable insights in a series of behaviors or events (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+14900,Vantage Analyst,Path,DEFAULT,0,Path,ClearScape,Vantage,Data exploration,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Discover actionable insights in a series of behaviors or events (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 15000,Vantage Analyst,Text,DEFAULT,0,Data,Applications,Vantage,,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Analyze text to uncover sentiment and key terms (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 15100,Vantage Analyst,Workflow,DEFAULT,0,Data,Applications,Vantage,,Self-Service,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Quickly automate analytic workflow to create repeatable and operationalized process (feature of Vantage Analyst).,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/TRCeRNfoM3Vrw8VinM7tMQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-15200,Vantage Analytics,Analytics Library for Python (teradataml),DEFAULT,0,R/Python,ClearScape,Vantage,Run Python,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,10,An open source package of analytic functions written in Python for execution on Vantage  as well as the cability for developers to write new python programs and execute them in Vantage. The Teradata Python package uses SQLAlchemy and has an interface similar to the Pandas Python library.,https://docs.teradata.com/reader/eteIDCTX4O4IMvazRMypxQ/uDjppX7PJInABCckgu~KFg,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
-15300,Vantage Analytics,Python Advanced SQL Engine Functions,DEFAULT,0,R/Python,ClearScape,Vantage,Run Python,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The teradataml in-database analytic functions that execute using the Advanced SQL Engine . Available in Vantage 1.1 or later.,https://docs.teradata.com/reader/GsM0pYRZl5Plqjdf9ixmdA/A~x78NA1NEokKh0XWkEX8A,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
-15400,Vantage Analytics,Python Data Interfaces,DEFAULT,0,R/Python,ClearScape,Vantage,Run Python,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The Teradata Python Package (teradataml) uses a DataFrame interface to allow programs written in python to interact directly with objects in Vantage/Teradata Database.,https://docs.teradata.com/reader/eteIDCTX4O4IMvazRMypxQ/uDjppX7PJInABCckgu~KFg,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
-15500,Vantage Analytics,Python ML Engine Analytic Functions,DEFAULT,0,R/Python,ClearScape,Vantage,Run Python,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The teradataml library provides an API to access or manipulate a teradataml DataFrame. These functions generate an SQL request to be executed in the Advanced SQL Engine or ML Engine through a Python DB-API connection.,https://docs.teradata.com/reader/GsM0pYRZl5Plqjdf9ixmdA/3AFCiSLPfnEKY7IKcppGNw,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
-15600,Vantage Analytics,Python Time Series API,DEFAULT,0,R/Python,ClearScape,Vantage,Run Python,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,Perform aggregate operations on time series data using APIs to group or resample time series data and other Time Series Aggregate functions.,https://docs.teradata.com/reader/GsM0pYRZl5Plqjdf9ixmdA/H2dPhiKqWQJxsj6cgJvApw,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
-15700,Vantage Analytics,Analytics Library for R (tdplyr),DEFAULT,0,R/Python,ClearScape,Vantage,,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,10,Teradata provides an ODBC driver and an analytic library for R that can be loaded into the client R environment. The R library package tdplyr conforms and works with the verbs and functions of the dplyr and dbplyr libraries.,https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/Z9vdUyWBU0roEcrzvk7rLA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-15800,Vantage Analytics,R Advanced SQL Engine Functions,DEFAULT,0,R/Python,ClearScape,Vantage,,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The tdplyr in-database analytic functions that execute using the Advanced SQL Engine . Available in Vantage 1.1 or later.,https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/fJ43aquvjvQhCerqG_HlVw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-15900,Vantage Analytics,R Data Interfaces,DEFAULT,0,R/Python,ClearScape,Vantage,,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,"The Context Manager in Teradata R Package allows programs written in R to interact directly with objects in the Teradata Database through programatically defined ""context"".",https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/wPDPUi6B2PyicxsjEgcQ6g,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16000,Vantage Analytics,R ML Engine Analytic Functions,DEFAULT,0,R/Python,ClearScape,Vantage,,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,Teradata provides an ODBC driver and an analytic library for R that can be loaded into the client R environment. The R library package tdplyr conforms and works with the verbs and functions of the dplyr and dbplyr libraries.,https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/pxE1xDdtCMfmVvhZuaqmEw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16100,Vantage Analytics,Association Analysis,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A collection of functions that use a rule based machine learning method for discovering relationships between variables in large databases. Part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16200,Vantage Analytics,Attribution Analysis,DEFAULT,0,Other,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A function for identifying a set of touchpoints as steps towards a specific end point  and then assigning each of those touchpoints a weighted value. Other functions used for similar purposes are time series and path analysis. Part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16300,Vantage Analytics,Cluster Analysis,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Grouping data points or objects so that each is more similar to the other objects in its group than it is to those in other groups. Each group is a reffered to as a cluster  so this practice is also called clustering. This can be accomplished with a collection of functions as part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16400,Vantage Analytics,Data Transformations,DEFAULT,0,Feature Preparation,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A collection of functions that use a mathematical formula to modify every point in a data set. This might be done to make one data set comprable to another  to change units  etc. Part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,N,
-16500,Vantage Analytics,Ensemble Methods,DEFAULT,0,Modeling,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A supervised learning technique that combines multiple learning algorithms to get better predictive performance than could be obtained with a single algorithm. These functions are part of the MLE Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,N,
-16600,Vantage Analytics,Graph Analysis,DEFAULT,0,Modeling,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Studying relationships between objects through mathematical models that represent things like communication  organization  networks  etc. A collection of these functions is part of the MLE Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16700,Vantage Analytics,Naive Bayes Functions,DEFAULT,0,Modeling,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A method of determining how likely an object is to fall into a category or classification. Commonly used in text categorization. Part of the MLE Analytic Functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16800,Vantage Analytics,Neural Networks,DEFAULT,0,Modeling,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,NeuralNet is a feature that has been depricated in Vantage as of October 2019  Vantage Machine Learning Engine release number 1.0  8.00. It mostly applies to small and simple use cases.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/H7HdC~1Qu9OTrMYmcyHYsQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-16900,Vantage Analytics,Path Analysis,DEFAULT,0,Path,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A statistical techniqe to evaluate causal relationships or dependencies among variables. These functions are part of the MLE Analytic functions.,https://docs.teradata.com/reader/Tk6W9zbo2NHGakhfyvWmmw/_Cdu8HIH_0a5F8f49mvWuw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-17000,Vantage Analytics,Statistical Analysis,DEFAULT,0,Discovery,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,The practice of identifying patterns and trends in data including percentile  correlation  histogram and distribution. A collection of these functions is part of the MLE Analytic functions.,https://docs.teradata.com/reader/Tk6W9zbo2NHGakhfyvWmmw/Bjcu~rVg5jvMWoShgcl12Q,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-17100,Vantage Analytics,Text Analysis,DEFAULT,0,Modeling,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Discovery of patterns  key terms  and sentiment from text-based data. For example  you can create a word cloud to extract the most common terms used in product reviews. These functions are part of the MLE Analytic functions.,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/Rmq7mO_uqDLY48MNfzj1ng,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-17200,Vantage Analytics,Time Series Analysis,DEFAULT,0,Modeling,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Analysis of an ordered sequence of measurements of a variable that are arranged according to the time of occurrence. Time series are typically measured at some constant frequency and the data points are generally  but not necessarily  spaced at uniform time intervals.,https://docs.teradata.com/reader/b8dd8xEYJnxfsq4uFRrHQQ/tiGSr1gHS7i7_044KPSkNw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+15200,Vantage Analytics,Analytics Library for Python (teradataml),DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,10,An open source package of analytic functions written in Python for execution on Vantage  as well as the cability for developers to write new python programs and execute them in Vantage. The Teradata Python package uses SQLAlchemy and has an interface similar to the Pandas Python library.,https://docs.teradata.com/reader/eteIDCTX4O4IMvazRMypxQ/uDjppX7PJInABCckgu~KFg,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+15300,Vantage Analytics,Python Advanced SQL Engine Functions,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The teradataml in-database analytic functions that execute using the Advanced SQL Engine . Available in Vantage 1.1 or later.,https://docs.teradata.com/reader/GsM0pYRZl5Plqjdf9ixmdA/A~x78NA1NEokKh0XWkEX8A,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+15400,Vantage Analytics,Python Data Interfaces,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The Teradata Python Package (teradataml) uses a DataFrame interface to allow programs written in python to interact directly with objects in Vantage/Teradata Database.,https://docs.teradata.com/reader/eteIDCTX4O4IMvazRMypxQ/uDjppX7PJInABCckgu~KFg,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+15500,Vantage Analytics,Python ML Engine Analytic Functions,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The teradataml library provides an API to access or manipulate a teradataml DataFrame. These functions generate an SQL request to be executed in the Advanced SQL Engine or ML Engine through a Python DB-API connection.,https://docs.teradata.com/reader/GsM0pYRZl5Plqjdf9ixmdA/3AFCiSLPfnEKY7IKcppGNw,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+15600,Vantage Analytics,Python Time Series API,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,Perform aggregate operations on time series data using APIs to group or resample time series data and other Time Series Aggregate functions.,https://docs.teradata.com/reader/GsM0pYRZl5Plqjdf9ixmdA/H2dPhiKqWQJxsj6cgJvApw,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+15700,Vantage Analytics,Analytics Library for R (tdplyr),DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,10,Teradata provides an ODBC driver and an analytic library for R that can be loaded into the client R environment. The R library package tdplyr conforms and works with the verbs and functions of the dplyr and dbplyr libraries.,https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/Z9vdUyWBU0roEcrzvk7rLA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+15800,Vantage Analytics,R Advanced SQL Engine Functions,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,The tdplyr in-database analytic functions that execute using the Advanced SQL Engine . Available in Vantage 1.1 or later.,https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/fJ43aquvjvQhCerqG_HlVw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+15900,Vantage Analytics,R Data Interfaces,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,"The Context Manager in Teradata R Package allows programs written in R to interact directly with objects in the Teradata Database through programatically defined ""context"".",https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/wPDPUi6B2PyicxsjEgcQ6g,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16000,Vantage Analytics,R ML Engine Analytic Functions,DEFAULT,0,R/Python,ClearScape,Vantage,Tool,Connectivity,Self-service Data Science,,TBD,TBD,N,TBD,1,1,5,Teradata provides an ODBC driver and an analytic library for R that can be loaded into the client R environment. The R library package tdplyr conforms and works with the verbs and functions of the dplyr and dbplyr libraries.,https://docs.teradata.com/reader/2PawNCsNx4~wW3LHnC4kPw/pxE1xDdtCMfmVvhZuaqmEw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16100,Vantage Analytics,Association Analysis,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A collection of functions that use a rule based machine learning method for discovering relationships between variables in large databases. Part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16200,Vantage Analytics,Attribution Analysis,DEFAULT,0,Other,ClearScape,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A function for identifying a set of touchpoints as steps towards a specific end point  and then assigning each of those touchpoints a weighted value. Other functions used for similar purposes are time series and path analysis. Part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16300,Vantage Analytics,Cluster Analysis,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Grouping data points or objects so that each is more similar to the other objects in its group than it is to those in other groups. Each group is a reffered to as a cluster  so this practice is also called clustering. This can be accomplished with a collection of functions as part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16400,Vantage Analytics,Data Transformations,DEFAULT,0,Feature Preparation,End User,Vantage,Data preparation,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A collection of functions that use a mathematical formula to modify every point in a data set. This might be done to make one data set comprable to another  to change units  etc. Part of the Machine Learning Engine Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,N,
+16500,Vantage Analytics,Ensemble Methods,DEFAULT,0,Modeling,End User,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A supervised learning technique that combines multiple learning algorithms to get better predictive performance than could be obtained with a single algorithm. These functions are part of the MLE Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,N,
+16600,Vantage Analytics,Graph Analysis,DEFAULT,0,Modeling,End User,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Studying relationships between objects through mathematical models that represent things like communication  organization  networks  etc. A collection of these functions is part of the MLE Analytic functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16700,Vantage Analytics,Naive Bayes Functions,DEFAULT,0,Modeling,ClearScape,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A method of determining how likely an object is to fall into a category or classification. Commonly used in text categorization. Part of the MLE Analytic Functions.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/pkjUv7QjhUfRekXgyFTFJg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16800,Vantage Analytics,Neural Networks,DEFAULT,0,Modeling,End User,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,NeuralNet is a feature that has been depricated in Vantage as of October 2019  Vantage Machine Learning Engine release number 1.0  8.00. It mostly applies to small and simple use cases.,https://docs.teradata.com/reader/AI5zLpFtwEQWIVvpnZgB8g/H7HdC~1Qu9OTrMYmcyHYsQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+16900,Vantage Analytics,Path Analysis,DEFAULT,0,Path,ClearScape,Vantage,Data exploration,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,A statistical techniqe to evaluate causal relationships or dependencies among variables. These functions are part of the MLE Analytic functions.,https://docs.teradata.com/reader/Tk6W9zbo2NHGakhfyvWmmw/_Cdu8HIH_0a5F8f49mvWuw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+17000,Vantage Analytics,Statistical Analysis,DEFAULT,0,Discovery,End User,Vantage,Data exploration,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,The practice of identifying patterns and trends in data including percentile  correlation  histogram and distribution. A collection of these functions is part of the MLE Analytic functions.,https://docs.teradata.com/reader/Tk6W9zbo2NHGakhfyvWmmw/Bjcu~rVg5jvMWoShgcl12Q,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+17100,Vantage Analytics,Text Analysis,DEFAULT,0,Modeling,End User,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Discovery of patterns  key terms  and sentiment from text-based data. For example  you can create a word cloud to extract the most common terms used in product reviews. These functions are part of the MLE Analytic functions.,https://docs.teradata.com/reader/M~Qi71jXm7V19uyIBGMCvA/Rmq7mO_uqDLY48MNfzj1ng,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+17200,Vantage Analytics,Time Series Analysis,DEFAULT,0,Modeling,End User,Vantage,Modeling,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,N,TBD,1,1,5,Analysis of an ordered sequence of measurements of a variable that are arranged according to the time of occurrence. Time series are typically measured at some constant frequency and the data points are generally  but not necessarily  spaced at uniform time intervals.,https://docs.teradata.com/reader/b8dd8xEYJnxfsq4uFRrHQQ/tiGSr1gHS7i7_044KPSkNw,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 17300,Vantage Analytics,JupyterLab,DEFAULT,0,Data,Applications,Vantage,,User Interface,Self-service Data Science,Getting Started,TBD,TBD,N,TBD,1,0,5,An analytic tool that provides access to Vantage. Jupyter is an open-source web application that allows you to create and share documents that contain live code  equations  visualizations  and narrative text using notebooks. Teradata provides SQL extensions for Jupyter,https://docs.teradata.com/reader/dLArVI09J62c8byzVbHMtw/wkUkrBazpKbulpMlPw_jlg,TBD,0,0,0,1,1,1,1,N,
 17400,Vantage Analytics,Rstudio,DEFAULT,0,Data,Applications,Vantage,,User Interface,Self-service Data Science,,TBD,TBD,N,TBD,1,0,5,An analytic tool that provides access to Vantage. RStudio is an IDE for R. In addition to a console and editor  RStudio includes tools for plotting  history  debugging  and workspace management.,https://docs.teradata.com/reader/6iblHP9bOR0WTXZBaB0SOQ/~JmLoery_GdDRFaiI70Iqg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 17500,Vantage Database,Algorithmic Compression,DEFAULT,0,Compression,Physical,Vantage,Optimize Performance,Performance,Storage optimization with enhanced performance,,TBD,TBD,N,TBD,1,1,2,Allows you to define your own compression and decompression algorithms and apply them to data at the column level.,https://docs.teradata.com/reader/Ri8d7iL59tIPr1FZNKPLMw/lQ_OYa_W2qZ2VL1noaN8CQ,TBD,0,10,1000,1,1,1,1,N,
@@ -99,16 +99,16 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 19800,Vantage Database,User Defined Type,DEFAULT,41,Advanced Data Types,Physical,Vantage,Load Data,In-database Analytics,Exploit new Data Types,,TBD,TBD,Y,TBD,1,1,2,The UDT data type represents a custom data type for modeling the structure and behavior of real-world entities used by applications.,https://docs.teradata.com/reader/Ri8d7iL59tIPr1FZNKPLMw/nxlSreBH16CtufOAvjT1aA,TBD,0,78,457,1,1,1,1,N,
 19900,Vantage Database,XML Data Type,DEFAULT,42,Advanced Data Types,Physical,Vantage,Load Data,In-database Analytics,Exploit new Data Types,,TBD,TBD,Y,TBD,1,1,5,XML data type that allows you to store XML content in a compact binary form that preserves the information set of the XML document,https://docs.teradata.com/reader/84SDv32~S~ecvKnqwPhJtg/WRvLKkyVb5ETwJz4dI2yGA,TBD,0,114,456,1,1,1,1,N,
 20000,Vantage Database,LEAD LAG Analytics,DEFAULT,121,Feature Preparation,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,1,10,During nPath analysis  one can create symbol predicates that compare a row to a previous or subsequent row  using a LAG or LEAD operator.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/MVq_7PyBPT5BHLCl0pTcHw,TBD,0,0,0,1,1,1,1,N,
-20100,Vantage Database,Teradata Pivot,DEFAULT,74,Feature Preparation,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,1,10,PIVOT is a relational operator for transforming rows into columns. The function is useful for reporting purposes  as it allows you to aggregate and rotate data to create easy-to-read tables.,https://docs.teradata.com/reader/nBGHhgDQeL0nr8iz78FuXg/oMqUPl4TG5TUQRKCpnQm8w,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-20200,Vantage Database,Teradata Unpivot,DEFAULT,75,Feature Preparation,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,1,10,UNPIVOT is the reverse of the PIVOT operation. It provides a mechanism for transforming columns into rows. The UNPIVOT functionality was introduced previously via the TD_UNPIVOT table operator. Note: UNPIVOT invokes the TD_UNPIVOT table operator internally. You can still use TD_UNPIVOT independent of UNPIVOT.,https://docs.teradata.com/reader/oAZe~os6~YExjTTl0i5ZPg/AXZb5DIVvsDsesi3XZ9JeQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+20100,Vantage Database,Teradata Pivot,DEFAULT,74,Feature Preparation,End User,Vantage,Data preparation,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,1,10,PIVOT is a relational operator for transforming rows into columns. The function is useful for reporting purposes  as it allows you to aggregate and rotate data to create easy-to-read tables.,https://docs.teradata.com/reader/nBGHhgDQeL0nr8iz78FuXg/oMqUPl4TG5TUQRKCpnQm8w,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+20200,Vantage Database,Teradata Unpivot,DEFAULT,75,Feature Preparation,End User,Vantage,Data preparation,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,1,10,UNPIVOT is the reverse of the PIVOT operation. It provides a mechanism for transforming columns into rows. The UNPIVOT functionality was introduced previously via the TD_UNPIVOT table operator. Note: UNPIVOT invokes the TD_UNPIVOT table operator internally. You can still use TD_UNPIVOT independent of UNPIVOT.,https://docs.teradata.com/reader/oAZe~os6~YExjTTl0i5ZPg/AXZb5DIVvsDsesi3XZ9JeQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 20300,Vantage Database,Multisource,DEFAULT,137,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,1,5,A combination of several same-type JOIN  SUM  or RET query steps from multiple sources that have been combined as a single-step optimization.,https://docs.teradata.com/reader/_qvsWBglCuyrsxF_ALmPLw/NYC5QRhuPcSDQ4pp~UYcnA,TBD,0,0,0,1,1,1,1,N,
 20400,Vantage Database,ODBC Scalar Functions,DEFAULT,136,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,0,0,0,,TBD,TBD,0,0,0,1,1,1,1,N,
 20500,Vantage Database,Scalar Sub Query,DEFAULT,39,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,Y,TBD,1,0,2,Scalar sub-queries (SSQ) are sub-query expressions that result in a single value.,https://docs.teradata.com/reader/yxJhWt7vS29cXqr2xub_VA/9j9bY3kgOOeOtFwOUCUTqA,TBD,0,0,0,1,1,1,1,N,
-20600,Vantage Database,Attribution,DEFAULT,0,Other,ClearScape,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,Calculates attributions with a wide range of distribution models. Often used in web-page analysis  where it lets companies assign weights to pages before certain events  such as buying a product.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/85FJ26KKyK3byq22m5K9dQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+20600,Vantage Database,Attribution,DEFAULT,0,Other,ClearScape,Vantage,Modeling,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,Calculates attributions with a wide range of distribution models. Often used in web-page analysis  where it lets companies assign weights to pages before certain events  such as buying a product.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/85FJ26KKyK3byq22m5K9dQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 20700,Vantage Database,MovingAverage,DEFAULT,0,Feature Preparation,End User,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,5,Computes average values in a series.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/D6Waebveph5mbdTTTy67QQ,TBD,0,0,0,1,1,1,1,N,
-20800,Vantage Database,NGramSplitter,DEFAULT,0,Other,ClearScape,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,Tokenizes (splits) an input stream and emits n multigrams  based on specified delimiter and reset parameters. Useful for sentiment analysis  topic identification  and document classification.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/0uzj9gM6ureUUJTXhxvmSQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-20900,Vantage Database,nPath,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,A function that scans a set of rows  looking for specified patterns. For each set of input rows that matches the pattern  nPath produces a single output row.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/MOSRYZ0og7DX6xFvY5X5KA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-21000,Vantage Database,Sessionize,DEFAULT,0,Other,ClearScape,Vantage,,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,Maps each click in a clickstream to a unique session identifier. A session is a sequence of clicks by one user that are separated by at most n seconds.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/K9dJok_Zf_uYjmEavqvOQw,TBD,0,0,0,1,1,1,1,N,
+20800,Vantage Database,NGramSplitter,DEFAULT,0,Other,ClearScape,Vantage,Data preparation,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,Tokenizes (splits) an input stream and emits n multigrams  based on specified delimiter and reset parameters. Useful for sentiment analysis  topic identification  and document classification.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/0uzj9gM6ureUUJTXhxvmSQ,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+20900,Vantage Database,nPath,DEFAULT,0,InDB SQLMR,ClearScape,Vantage,Data exploration,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,A function that scans a set of rows  looking for specified patterns. For each set of input rows that matches the pattern  nPath produces a single output row.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/MOSRYZ0og7DX6xFvY5X5KA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+21000,Vantage Database,Sessionize,DEFAULT,0,Other,ClearScape,Vantage,Data preparation,In-database Analytics,Scalable Predictive Analytics,,TBD,TBD,N,TBD,1,1,10,Maps each click in a clickstream to a unique session identifier. A session is a sequence of clicks by one user that are separated by at most n seconds.,https://docs.teradata.com/reader/aKnWloeEx3pmus0aivWOaw/K9dJok_Zf_uYjmEavqvOQw,TBD,0,0,0,1,1,1,1,N,
 21100,Vantage Database,Archive/Restore,DEFAULT,95,Backup and Restore,Applications,Vantage,Back up my data,Business Continuity,Data recovery via restore from backup,,TBD,TBD,Y,TBD,0,0,0,,TBD,TBD,0,122,896,1,1,1,1,N,
 21200,Vantage Database,Column Partitioning and Row Partitioning,DEFAULT,30,Distribution Index and Partitions,Physical,Vantage,Optimize Performance,In-database Analytics,Enhanced performance,,TBD,TBD,Y,TBD,1,1,2,Partitioning stores related groups of data in physical proximity to improve the performance of queries that are likely to require that data. Row partitioning allows sets of rows to be stored in separate partitions  and column partitioning allows sets of columns (including just a single column) to be stored in separate partitions.,https://docs.teradata.com/reader/6Om32fxkCGM2_NXNgCnwWg/1sVOdepz21YhXSKG_cuuWw,TBD,0,25,114,1,1,1,1,N,
 21300,Vantage Database,Column-Partitioned and a NoPI,DEFAULT,31,Distribution Index and Partitions,Physical,Vantage,Optimize Performance,In-database Analytics,Enhanced performance,,TBD,TBD,Y,TBD,1,1,2,Column-partitioned tables and column-partitioned join indexes can be defined without a primary index,https://docs.teradata.com/reader/FwnwiG89tIqf3VGoGCabrw/Jzi_jinPVtHzUKfrSL0n8g,TBD,0,6,85,1,1,1,1,N,
@@ -128,7 +128,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 22600,Vantage Database,SET Table,DEFAULT,18,Data Management,Physical,Vantage,,In-database Analytics,Simplified data management,,TBD,TBD,Y,TBD,1,1,2,A table where duplicate rows are not permitted.,https://docs.teradata.com/reader/QIHTsp5vmMkpZwXQzD~dbg/V50YGgPtbJcb_QYvymCHKg,TBD,0,0,0,1,1,1,1,N,
 22700,Vantage Database,Soft RetLimit for number of rows AMP step returns,DEFAULT,130,Data Management,System Features,Vantage,,In-database Analytics,Enhanced performance,,TBD,TBD,Y,TBD,0,0,0,,TBD,TBD,0,0,0,1,1,1,1,N,
 22800,Vantage Database,3D Geospatial,DEFAULT,47,Geospatial,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,Support to Teradata Database for three dimensional geospatial coordinate data. The feature includes a geospatial data type  minimum bounding box (MBB) that adds z-coordinate support to existing geospatial methods  and adds new methods specific to three dimensional data.,https://docs.teradata.com/reader/UKCB0FK5iwoV8mhwANl_WQ/VTCi_XHJPfJfKqk4yedfzA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-22900,Vantage Database,Geospatial,DEFAULT,46,Geospatial,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,10,Tools and database objects (including data types  functions  and methods) that provide an interface between Teradata Database and applications that manage  analyze  and display geographic information.,https://docs.teradata.com/reader/UKCB0FK5iwoV8mhwANl_WQ/n3YM0gUiz0O9~2QO9PYv6w,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+22900,Vantage Database,Geospatial,DEFAULT,46,Geospatial,ClearScape,Vantage,Data exploration,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,10,Tools and database objects (including data types  functions  and methods) that provide an interface between Teradata Database and applications that manage  analyze  and display geographic information.,https://docs.teradata.com/reader/UKCB0FK5iwoV8mhwANl_WQ/n3YM0gUiz0O9~2QO9PYv6w,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 23000,Vantage Database,Geospatial Index Distance Join Predicate,DEFAULT,125,Geospatial,Physical,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,2,Teradata Database supports creation of nonunique secondary indexes (NUSIs) on predicates using the geospatial method for distance  which returns the distance between two ST_Geometry values.,https://docs.teradata.com/reader/UKCB0FK5iwoV8mhwANl_WQ/wjZ2zsGxIKBPZ~Sh1UC_JA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 23100,Vantage Database,Geospatial Index Join Predicate,DEFAULT,124,Geospatial,Physical,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,2,Teradata Database supports creation of nonunique secondary indexes (NUSIs) on geospatial data columns.,https://docs.teradata.com/reader/UKCB0FK5iwoV8mhwANl_WQ/wjZ2zsGxIKBPZ~Sh1UC_JA,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 23200,Vantage Database,Geospatial Index Single Table Distance Predicate,DEFAULT,123,Geospatial,Physical,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,2,Predicates that use the ST_Distance and ST_3DDistance methods and cause the optimizer to evaluate a geospatial index  if one exists  as a potential access path to the geospatial data. In these circumstances  the index can greatly speed access to the data and execution of the query.,https://docs.teradata.com/reader/UKCB0FK5iwoV8mhwANl_WQ/w0BeC3wMNIPZXgjvsd_zSg,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
@@ -139,7 +139,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 23700,Vantage Database,Redrive,DEFAULT,76,Set up single-system continuity,System Features,Vantage,,Business Continuity,High Availability - Always ON,,TBD,TBD,Y,TBD,0,1,0,,TBD,TBD,0,0,0,1,1,1,1,N,
 23800,Vantage Database,Replication,DEFAULT,80,Set up single-system continuity,System Features,Vantage,,Business Continuity,High Availability - Always ON,,TBD,TBD,Y,TBD,-9,-9,0,,TBD,TBD,0,0,0,1,1,1,1,N,
 23900,Vantage Database,Teradata Unity,DEFAULT,71,Architecture,Applications,Vantage,,Business Continuity,High Availability - Always ON,,TBD,TBD,Y,TBD,1,1,5,Enables multiple active Teradata systems to work as one  managing database changes and query routing to automatically coordinate and maintain order and consistency across the environment.,https://assets.teradata.com/resourceCenter/downloads/Datasheets/EB7192.pdf,TBD,0,0,0,1,1,1,1,N,
-24000,Vantage Database,Analytics Extensions,DEFAULT,100,Feature Preparation,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,-9,-9,0,,TBD,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+24000,Vantage Database,Analytics Extensions,DEFAULT,100,Feature Preparation,End User,Vantage,Data preparation,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,-9,-9,0,,TBD,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
 24100,Vantage Database,Bit Manipulation Function,DEFAULT,99,Data Manipulation,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,0,5,Vantage provides a set of embedded services system functions that support byte/bit manipulation.,https://docs.teradata.com/reader/nBGHhgDQeL0nr8iz78FuXg/PMWGCRh53D9TcQOGODJpmA,TBD,0,0,0,1,1,1,1,N,
 24200,Vantage Database,Fast Path Function,DEFAULT,97,Data Manipulation,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,0,0,0,,TBD,TBD,0,0,0,1,1,1,1,N,
 24300,Vantage Database,Teradata Remote Query,DEFAULT,57,QueryGrid,End User,Vantage,,In-database Analytics,Data Virtualization/Self-service,,TBD,TBD,Y,TBD,1,1,5,Provides a way to use remote data source  rather than the Teradata Database  to process queries involving remote tables.,https://docs.teradata.com/reader/NC0jOtZwcMAeYkU69mLwyA/XyRf2Wjnsaya431r_bp5tg,TBD,0,0,0,1,1,1,1,N,
@@ -180,8 +180,8 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 27800,Vantage Database,Partition Analysis,DEFAULT,79,Physical,Applications,Vantage,Manage my environment,Administration,Enhanced performance,,TBD,TBD,Y,TBD,-9,-9,0,,TBD,TBD,0,48,217,1,1,1,1,N,
 27900,Vantage Database,External Stored Procedure,DEFAULT,53,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,External stored procedures are written in the C  C++  or Java programming language  installed on the database  and then executed like stored procedures.,https://docs.teradata.com/reader/e0Nj4qlzlW0J~mOXdLx3mA/QkHFO_QCrM0CihXQDNt_Sw,TBD,0,0,0,1,1,1,1,N,
 28000,Vantage Database,Foreign Function,DEFAULT,56,QueryGrid,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,The ability to run functions on a foreign server. The output of the HELP FOREIGN FUNCTION command shows detailed information about the ML Engine function specified.,https://docs.teradata.com/reader/3AkrVQlhjJMha4KRVJmm1w/uWeo8jibprjdOGmMMnEtXg,TBD,0,0,0,1,1,1,1,N,
-28100,Vantage Database,R Table Operator,DEFAULT,98,R/Python,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,In-database support for R program execution. Data stored in Teradata databases can be directly accessed by the R execution engine for analysis. R scripts are executed in parallel inside the database using the system table operator ExecR.,https://docs.teradata.com/reader/oAZe~os6~YExjTTl0i5ZPg/qHVSxKqbpuSKTnaHYaH09w,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
-28200,Vantage Database,Script Table Operator,DEFAULT,106,R/Python,ClearScape,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,10,Table operators accept a table or table expression as input and generate a table as output. The SCRIPT table operator executes a user-installed script or any LINUX command inside the database.,https://docs.teradata.com/reader/oAZe~os6~YExjTTl0i5ZPg/86nReDCdvx5GNEcuIeorfQ,TBD,0,0,0,1,1,1,1,N,
+28100,Vantage Database,R Table Operator,DEFAULT,98,R/Python,ClearScape,Vantage,Tool,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,In-database support for R program execution. Data stored in Teradata databases can be directly accessed by the R execution engine for analysis. R scripts are executed in parallel inside the database using the system table operator ExecR.,https://docs.teradata.com/reader/oAZe~os6~YExjTTl0i5ZPg/qHVSxKqbpuSKTnaHYaH09w,TBD,0,0,0,1,1,1,1,Y,AI-Supporting
+28200,Vantage Database,Script Table Operator,DEFAULT,106,R/Python,ClearScape,Vantage,Tool,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,10,Table operators accept a table or table expression as input and generate a table as output. The SCRIPT table operator executes a user-installed script or any LINUX command inside the database.,https://docs.teradata.com/reader/oAZe~os6~YExjTTl0i5ZPg/86nReDCdvx5GNEcuIeorfQ,TBD,0,0,0,1,1,1,1,N,
 28300,Vantage Database,Table Function,DEFAULT,54,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,A table function is invoked in the FROM clause of an SQL SELECT statement and returns a table  a row at a time in a loop to the SELECT statement. The function can produce the rows of a table from the input arguments passed to it or by reading an external file or message queue.,https://docs.teradata.com/reader/e0Nj4qlzlW0J~mOXdLx3mA/WiE436sTe4ERGBxZFAWfSQ,TBD,0,0,0,1,1,1,1,N,
 28400,Vantage Database,Table Operator,DEFAULT,55,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,You can create user-defined table operators  which accept one or more tables or table expressions as input and generate a table as output. A table operator is a form of UDF that can only be specified in the FROM clause of a SELECT statement.,https://docs.teradata.com/reader/e0Nj4qlzlW0J~mOXdLx3mA/xyXPsZZVTm8IT_RgsEHmrA,TBD,0,0,0,1,1,1,1,N,
 28500,Vantage Database,Teradata Stored Procedure,DEFAULT,51,Advanced SQL Function,End User,Vantage,,In-database Analytics,Scalable Advanced Analytics,,TBD,TBD,Y,TBD,1,1,5,Called Persistent Stored Modules in the ANSI/ISO SQL:2008 standard. They are written in SQL and consist of a set of control and condition handling statements that make SQL a computationally complete programming language. These features provide a server-based procedural interface to the database for application programmers. Teradata stored procedure facilities are a subset of and conform to the ANSI/ISO SQL:2008 standards for semantics.,https://docs.teradata.com/reader/37meaKdwvl0jrhzrc6FoEw/x~1rJYG3emVNkmgOIm5w5w,TBD,0,0,0,1,1,1,1,N,
@@ -233,7 +233,7 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 33100,,Native Object Store Error Tables,DEFAULT,161,NOS,Physical,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,5,11,1,1,1,1,N,
 33200,,Insert Select Direct Merge,DEFAULT,162,Internal,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
 33300,,Multiple Filter Ops,DEFAULT,163,Internal,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
-33400,,SQL-MR Infrastructure,DEFAULT,164,InDB SQLMR,ClearScape,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+33400,,SQL-MR Infrastructure,DEFAULT,164,InDB SQLMR,ClearScape,,Tool,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
 33500,,Bloom filter,DEFAULT,165,Internal,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
 33600,,Light Weight Hash Function Optimizations,,,Optimize Performance,System Features,,,,,,,,U,,,,0,,,,,1478,3425,1,1,1,1,N,
 33700,,Columnar Bulk Aggregation,DEFAULT,167,Optimize Performance,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
@@ -246,48 +246,48 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 34400,,Direct Merge Optimization From NOS,DEFAULT,174,Optimize Performance,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
 34500,,Nested Join for Semi Join,DEFAULT,175,Optimize Performance,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
 34600,,ANYNCPMERGEOPT,DEFAULT,176,Internal,System Features,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,N,
-34700,,APPLY Table Operator,DEFAULT,177,Advanced SQL Function,End User,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
+34700,,APPLY Table Operator,DEFAULT,177,Advanced SQL Function,End User,,Tool,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1000,1,1,1,1,Y,AI-Supporting
 34800,,NOS AutoSchema API,DEFAULT,178,NOS,Physical,,,,TBD,,TBD,TBD,U,TBD,-1,-1,0,TBD,TBD,TBD,0,10,1,1,1,1,1,N,
-34900,,UAF TD_PLOT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,0,0,1,1,1,1,Y,AI-Supporting
-35000,,UAF TD_DURBIN_WATSON,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6301,14482,1,1,1,1,Y,AI-Supporting
-35100,,UAF TD_SEASONAL_NORMALIZE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,7340,14472,1,1,1,1,Y,AI-Supporting
-35200,,UAF TD_DFFT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,31320,62658,1,1,1,1,Y,AI-Supporting
-35300,,UAF TD_UNNORMALIZE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,7302,14472,1,1,1,1,Y,AI-Supporting
-35400,,UAF TD_SINFO,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6239,14677,1,1,1,1,Y,AI-Supporting
-35500,,UAF TD_UNDIFF,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,14694,28944,1,1,1,1,Y,AI-Supporting
-35600,,UAF TD_SIMPLEEXP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6264,14571,1,1,1,1,N,
-35700,,UAF TD_WHITES_GENERAL,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6300,14480,1,1,1,1,Y,AI-Supporting
-35800,,UAF TD_LINEAR_REGR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,7220,14472,1,1,1,1,Y,AI-Supporting
-35900,,UAF TD_LINESPEC,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,50111,117277,1,1,1,1,Y,AI-Supporting
-36000,,UAF TD_MULTIVAR_REGR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,7148,14472,1,1,1,1,Y,AI-Supporting
-36100,,UAF TD_BREUSCH_PAGAN_GODFREY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6300,14477,1,1,1,1,Y,AI-Supporting
-36200,,UAF TD_ARIMAESTIMATE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,91234,208797,1,1,1,1,Y,AI-Supporting
-36300,,UAF TD_SIGNIF_PERIODICITIES,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6268,14543,1,1,1,1,Y,AI-Supporting
-36400,,UAF TD_PACF,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,7350,14472,1,1,1,1,Y,AI-Supporting
-36500,,UAF TD_SMOOTHMA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6302,14480,1,1,1,1,Y,AI-Supporting
-36600,,UAF TD_ACF,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,7350,14472,1,1,1,1,Y,AI-Supporting
-36700,,UAF TD_GOLDFELD_QUANDT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,25202,57908,1,1,1,1,Y,AI-Supporting
-36800,,UAF TD_ARIMAVALIDATE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,24820,55424,1,1,1,1,Y,AI-Supporting
-36900,,UAF TD_PORTMAN,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,31494,72493,1,1,1,1,Y,AI-Supporting
-37000,,UAF TD_IDFFT2,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6264,14673,1,1,1,1,Y,AI-Supporting
-37100,,UAF TD_BINARYSERIESOP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,13047,29149,1,1,1,1,Y,AI-Supporting
-37200,,UAF TD_EXTRACT_RESULTS,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,179123,406733,1,1,1,1,Y,AI-Supporting
-37300,,UAF TD_HOLT_WINTERS_FORECASTER,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6264,14602,1,1,1,1,Y,AI-Supporting
-37400,,UAF TD_DFFT2,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,31320,73337,1,1,1,1,Y,AI-Supporting
-37500,,UAF TD_GENSERIES4FORMULA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,19184,43754,1,1,1,1,Y,AI-Supporting
-37600,,UAF TD_SIGNIF_RESIDMEAN,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6294,14508,1,1,1,1,Y,AI-Supporting
-37700,,UAF TD_CONVOLVE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,5669,11687,1,1,1,1,Y,AI-Supporting
-37800,,UAF TD_CONVOLVE2,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,12527,29348,1,1,1,1,Y,AI-Supporting
-37900,,UAF TD_DFFT2CONV,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,12528,29337,1,1,1,1,Y,AI-Supporting
-38000,,Unbounded Array Framework,,,Other,ClearScape,,,,,,,,U,,,,0,,,,,1355873,2342732,1,1,1,1,Y,AI-Supporting
-38100,,UAF TD_DICKEY_FULLER,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6280,14528,1,1,1,1,Y,AI-Supporting
-38200,,UAF TD_BREUSCH_GODFREY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6301,14477,1,1,1,1,Y,AI-Supporting
-38300,,UAF TD_POWERSPEC,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,50116,117432,1,1,1,1,Y,AI-Supporting
-38400,,UAF TD_DIFF,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,21606,43416,1,1,1,1,Y,AI-Supporting
-38500,,UAF TD_ARIMAFORECAST,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,48440,98360,1,1,1,1,Y,AI-Supporting
-38600,,UAF TD_GENSERIES4SINUSOIDS,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6263,14677,1,1,1,1,Y,AI-Supporting
-38700,,UAF TD_CUMUL_PERIODOGRAM,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6264,14551,1,1,1,1,Y,AI-Supporting
-38800,,UAF TD_IDFFT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,6264,14627,1,1,1,1,Y,AI-Supporting
+34900,,UAF TD_PLOT,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,0,0,1,1,1,1,Y,AI-Supporting
+35000,,UAF TD_DURBIN_WATSON,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,6301,14482,1,1,1,1,Y,AI-Supporting
+35100,,UAF TD_SEASONAL_NORMALIZE,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,7340,14472,1,1,1,1,Y,AI-Supporting
+35200,,UAF TD_DFFT,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,31320,62658,1,1,1,1,Y,AI-Supporting
+35300,,UAF TD_UNNORMALIZE,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,7302,14472,1,1,1,1,Y,AI-Supporting
+35400,,UAF TD_SINFO,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,6239,14677,1,1,1,1,Y,AI-Supporting
+35500,,UAF TD_UNDIFF,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,14694,28944,1,1,1,1,Y,AI-Supporting
+35600,,UAF TD_SIMPLEEXP,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,6264,14571,1,1,1,1,N,
+35700,,UAF TD_WHITES_GENERAL,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,6300,14480,1,1,1,1,Y,AI-Supporting
+35800,,UAF TD_LINEAR_REGR,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,7220,14472,1,1,1,1,Y,AI-Supporting
+35900,,UAF TD_LINESPEC,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,50111,117277,1,1,1,1,Y,AI-Supporting
+36000,,UAF TD_MULTIVAR_REGR,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,7148,14472,1,1,1,1,Y,AI-Supporting
+36100,,UAF TD_BREUSCH_PAGAN_GODFREY,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,6300,14477,1,1,1,1,Y,AI-Supporting
+36200,,UAF TD_ARIMAESTIMATE,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,91234,208797,1,1,1,1,Y,AI-Supporting
+36300,,UAF TD_SIGNIF_PERIODICITIES,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,6268,14543,1,1,1,1,Y,AI-Supporting
+36400,,UAF TD_PACF,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,7350,14472,1,1,1,1,Y,AI-Supporting
+36500,,UAF TD_SMOOTHMA,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,6302,14480,1,1,1,1,Y,AI-Supporting
+36600,,UAF TD_ACF,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,7350,14472,1,1,1,1,Y,AI-Supporting
+36700,,UAF TD_GOLDFELD_QUANDT,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,25202,57908,1,1,1,1,Y,AI-Supporting
+36800,,UAF TD_ARIMAVALIDATE,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,24820,55424,1,1,1,1,Y,AI-Supporting
+36900,,UAF TD_PORTMAN,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,31494,72493,1,1,1,1,Y,AI-Supporting
+37000,,UAF TD_IDFFT2,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,6264,14673,1,1,1,1,Y,AI-Supporting
+37100,,UAF TD_BINARYSERIESOP,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,13047,29149,1,1,1,1,Y,AI-Supporting
+37200,,UAF TD_EXTRACT_RESULTS,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,179123,406733,1,1,1,1,Y,AI-Supporting
+37300,,UAF TD_HOLT_WINTERS_FORECASTER,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,6264,14602,1,1,1,1,Y,AI-Supporting
+37400,,UAF TD_DFFT2,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,31320,73337,1,1,1,1,Y,AI-Supporting
+37500,,UAF TD_GENSERIES4FORMULA,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,19184,43754,1,1,1,1,Y,AI-Supporting
+37600,,UAF TD_SIGNIF_RESIDMEAN,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,6294,14508,1,1,1,1,Y,AI-Supporting
+37700,,UAF TD_CONVOLVE,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,5669,11687,1,1,1,1,Y,AI-Supporting
+37800,,UAF TD_CONVOLVE2,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,12527,29348,1,1,1,1,Y,AI-Supporting
+37900,,UAF TD_DFFT2CONV,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,12528,29337,1,1,1,1,Y,AI-Supporting
+38000,,Unbounded Array Framework,,,Other,ClearScape,,Modeling,,,,,,U,,,,0,,,,,1355873,2342732,1,1,1,1,Y,AI-Supporting
+38100,,UAF TD_DICKEY_FULLER,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,6280,14528,1,1,1,1,Y,AI-Supporting
+38200,,UAF TD_BREUSCH_GODFREY,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,6301,14477,1,1,1,1,Y,AI-Supporting
+38300,,UAF TD_POWERSPEC,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,50116,117432,1,1,1,1,Y,AI-Supporting
+38400,,UAF TD_DIFF,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,21606,43416,1,1,1,1,Y,AI-Supporting
+38500,,UAF TD_ARIMAFORECAST,,,InDB UAF,ClearScape,,Deployment,,,,,,U,,,,0,,,,,48440,98360,1,1,1,1,Y,AI-Supporting
+38600,,UAF TD_GENSERIES4SINUSOIDS,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,6263,14677,1,1,1,1,Y,AI-Supporting
+38700,,UAF TD_CUMUL_PERIODOGRAM,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,6264,14551,1,1,1,1,Y,AI-Supporting
+38800,,UAF TD_IDFFT,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,6264,14627,1,1,1,1,Y,AI-Supporting
 38900,,Aggregate Scaling Optimization,,,Optimize Performance,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 39000,,DR194881_1,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 39100,,DR194881_2,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
@@ -297,87 +297,87 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 39500,,HYBRID PIPELINE,,,Optimize Performance,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 39600,,Reserved 02,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 39700,,Semi-Hash-Join Rewrite,,,Optimize Performance,System Features,,,,,,,,U,,,,0,,,,,1,3,1,1,1,1,N,
-39800,,SQLMR ANTISELECT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-39900,,SQLMR DECISIONFORESTPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40000,,SQLMR DecisionTreePredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40100,,SQLMR GLMPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40200,,SQLMR MovingAverage,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40300,,SQLMR NAIVEBAYESPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40400,,SQLMR NaiveBayesTextClassifierPredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40500,,SQLMR NGRAMSPLITTER,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40600,,SQLMR Pack,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40700,,SQLMR SQLMR TD_COLUMNSUMMARY,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40800,,SQLMR STRINGSIMILARITY,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-40900,,SQLMR SVMSparsePredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41000,,SQLMR TD_ANOVA,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41100,,SQLMR TD_BINCODEFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41200,,SQLMR TD_BINCODETRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41300,,SQLMR TD_CATEGORICALSUMMARY,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41400,,SQLMR TD_CHISQ,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41500,,SQLMR TD_CLASSIFICATIONEVALUATOR,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41600,,SQLMR TD_COLUMNTRANSFORMER,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41700,,SQLMR TD_CONVERTTO,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-41800,,SQLMR TD_DECISIONFOREST,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,7,1,1,1,1,Y,AI-Supporting
-41900,,SQLMR TD_FILLROWID,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42000,,SQLMR TD_FTEST,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42100,,SQLMR TD_FUNCTIONFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42200,,SQLMR TD_FUNCTIONTRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42300,,SQLMR TD_GETFUTILECOLUMNS,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42400,,SQLMR TD_GETROWSWITHMISSINGVALUES,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42500,,SQLMR TD_GETROWSWITHOUTMISSINGVALUES,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42600,,SQLMR TD_GLM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42700,,SQLMR TD_GLMPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42800,,SQLMR TD_HISTOGRAM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-42900,,SQLMR TD_KMEANS,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,1,4,1,1,1,1,Y,AI-Supporting
-43000,,SQLMR TD_KMEANSPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43100,,SQLMR TD_NBTCTRAINER,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43200,,SQLMR TD_NONLINEARCOMBINEFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43300,,SQLMR TD_NONLINEARCOMBINETRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43400,,SQLMR TD_NUMAPPLY,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43500,,SQLMR TD_ONEHOTENCODINGFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43600,,SQLMR TD_ONEHOTENCODINGTRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-43700,,SQLMR TD_ORDINALENCODINGFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43800,,SQLMR TD_ORDINALENCODINGTRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-43900,,SQLMR TD_OUTLIERFILTERFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44000,,SQLMR TD_OUTLIERFILTERTRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44100,,SQLMR TD_POLYNOMIALFEATURESFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44200,,SQLMR TD_POLYNOMIALFEATURESTRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44300,,SQLMR TD_QQNORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44400,,SQLMR TD_RANDOMPROJECTIONFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44500,,SQLMR TD_RANDOMPROJECTIONMINCOMPONENTS,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44600,,SQLMR TD_RANDOMPROJECTIONTRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44700,,SQLMR TD_REGRESSIONEVALUATOR,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44800,,SQLMR TD_ROC,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-44900,,SQLMR TD_ROUNDCOLUMNS,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45000,,SQLMR TD_ROWNORMALIZEFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45100,,SQLMR TD_ROWNORMALIZETRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45200,,SQLMR TD_SCALEFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45300,,SQLMR TD_SCALETRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45400,,SQLMR TD_SENTIMENTEXTRACTOR,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45500,,SQLMR TD_SILHOUETTE,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45600,,SQLMR TD_SIMPLEIMPUTEFIT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45700,,SQLMR TD_SIMPLEIMPUTETRANSFORM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45800,,SQLMR TD_STRAPPLY,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-45900,,SQLMR TD_TEXTPARSER,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-46000,,SQLMR TD_UNIVARIATESTATISTICS,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-46100,,SQLMR TD_VECTORDISTANCE,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,Pure AI
-46200,,SQLMR TD_WHICHMAX,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-46300,,SQLMR TD_WHICHMIN,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-46400,,SQLMR TD_ZTEST,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-46500,,SQLMR UNPACK,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+39800,,SQLMR ANTISELECT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+39900,,SQLMR DECISIONFORESTPREDICT,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40000,,SQLMR DecisionTreePredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40100,,SQLMR GLMPREDICT,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40200,,SQLMR MovingAverage,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40300,,SQLMR NAIVEBAYESPREDICT,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40400,,SQLMR NaiveBayesTextClassifierPredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40500,,SQLMR NGRAMSPLITTER,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40600,,SQLMR Pack,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40700,,SQLMR SQLMR TD_COLUMNSUMMARY,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40800,,SQLMR STRINGSIMILARITY,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+40900,,SQLMR SVMSparsePredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41000,,SQLMR TD_ANOVA,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41100,,SQLMR TD_BINCODEFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41200,,SQLMR TD_BINCODETRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41300,,SQLMR TD_CATEGORICALSUMMARY,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41400,,SQLMR TD_CHISQ,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41500,,SQLMR TD_CLASSIFICATIONEVALUATOR,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41600,,SQLMR TD_COLUMNTRANSFORMER,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41700,,SQLMR TD_CONVERTTO,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+41800,,SQLMR TD_DECISIONFOREST,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,7,1,1,1,1,Y,AI-Supporting
+41900,,SQLMR TD_FILLROWID,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42000,,SQLMR TD_FTEST,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42100,,SQLMR TD_FUNCTIONFIT,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42200,,SQLMR TD_FUNCTIONTRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42300,,SQLMR TD_GETFUTILECOLUMNS,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42400,,SQLMR TD_GETROWSWITHMISSINGVALUES,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42500,,SQLMR TD_GETROWSWITHOUTMISSINGVALUES,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42600,,SQLMR TD_GLM,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42700,,SQLMR TD_GLMPREDICT,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42800,,SQLMR TD_HISTOGRAM,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+42900,,SQLMR TD_KMEANS,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,1,4,1,1,1,1,Y,AI-Supporting
+43000,,SQLMR TD_KMEANSPREDICT,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43100,,SQLMR TD_NBTCTRAINER,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43200,,SQLMR TD_NONLINEARCOMBINEFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43300,,SQLMR TD_NONLINEARCOMBINETRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43400,,SQLMR TD_NUMAPPLY,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43500,,SQLMR TD_ONEHOTENCODINGFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43600,,SQLMR TD_ONEHOTENCODINGTRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
+43700,,SQLMR TD_ORDINALENCODINGFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43800,,SQLMR TD_ORDINALENCODINGTRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+43900,,SQLMR TD_OUTLIERFILTERFIT,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44000,,SQLMR TD_OUTLIERFILTERTRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44100,,SQLMR TD_POLYNOMIALFEATURESFIT,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44200,,SQLMR TD_POLYNOMIALFEATURESTRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44300,,SQLMR TD_QQNORM,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44400,,SQLMR TD_RANDOMPROJECTIONFIT,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44500,,SQLMR TD_RANDOMPROJECTIONMINCOMPONENTS,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44600,,SQLMR TD_RANDOMPROJECTIONTRANSFORM,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44700,,SQLMR TD_REGRESSIONEVALUATOR,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44800,,SQLMR TD_ROC,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+44900,,SQLMR TD_ROUNDCOLUMNS,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45000,,SQLMR TD_ROWNORMALIZEFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45100,,SQLMR TD_ROWNORMALIZETRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45200,,SQLMR TD_SCALEFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45300,,SQLMR TD_SCALETRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45400,,SQLMR TD_SENTIMENTEXTRACTOR,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45500,,SQLMR TD_SILHOUETTE,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45600,,SQLMR TD_SIMPLEIMPUTEFIT,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45700,,SQLMR TD_SIMPLEIMPUTETRANSFORM,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45800,,SQLMR TD_STRAPPLY,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+45900,,SQLMR TD_TEXTPARSER,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46000,,SQLMR TD_UNIVARIATESTATISTICS,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46100,,SQLMR TD_VECTORDISTANCE,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,Pure AI
+46200,,SQLMR TD_WHICHMAX,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46300,,SQLMR TD_WHICHMIN,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46400,,SQLMR TD_ZTEST,,,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46500,,SQLMR UNPACK,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 46600,,TD_JSONSHRED,,,Distribution Index and Partitions,Physical,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 46700,,NOS BinpackAlgo4Parquet,,,NOS,Physical,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-46800,,BYOM PMMLPredict,,,BYOM,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-46900,,BYOM ONNXPredict,,,BYOM,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46800,,BYOM PMMLPredict,,,BYOM,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+46900,,BYOM ONNXPredict,,,BYOM,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 47000,,RESERVED8,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-47100,,UAF TD_DTW,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-47200,,BYOM H2OPredict,,,BYOM,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-47300,,UAF TD_RESAMPLE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-47400,,UAF TD_TRACKINGOP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+47100,,UAF TD_DTW,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+47200,,BYOM H2OPredict,,,BYOM,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+47300,,UAF TD_RESAMPLE,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+47400,,UAF TD_TRACKINGOP,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 47500,,Aggregate Scaling,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 47600,,Bloom filter save and reuse hash,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 47700,,Bulk Aggregation For No Group By,,,Optimize Performance,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-47800,,BYOM DataikuPredict,,,BYOM,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+47800,,BYOM DataikuPredict,,,BYOM,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 47900,,COG Rewrite using COG DDL,,,Lake,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 48000,,Compute Worker,,,Lake,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 48100,,Light-Weight Hash functions,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
@@ -389,93 +389,93 @@ FEATURE_ID,PRODUCT_NAME,FEATURE_NAME,DBS_VERSION,FEATURE_BITPOS,FEATURE_SUBCATEG
 48700,,NOSFS Object Filtering Join,,,NOS,Physical,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 48800,,OFS Spool,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 48900,,Psteps To COG,,,Lake,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-49200,,SQLMR TD_DecisionForestPredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-49300,,SQLMR TD_GlmPerSegment,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-49400,,SQLMR TD_GlmPerSegmentPredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-49500,,SQLMR TD_KNN,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-49600,,SQLMR TD_OneClassSVM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-49700,,SQLMR TD_OneClassSVMPredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-49800,,SQLMR TD_PCA,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50200,,SQLMR TD_Shap,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50300,,SQLMR TD_SVM,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50400,,SQLMR TD_SVMPredict,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50500,,SQLMR TD_TrainTestSplit,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50600,,SQLMR TD_WordEmbeddings,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50700,,SQLMR TD_XGBOOST,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-50800,,TD_CrossValidation,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-51300,,UAF TD_ARIMAXESTIMATE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-51400,,UAF TD_AUTOARIMA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-51500,,UAF TD_BINARYMATRIXOP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-52100,,UAF TD_COPYART,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-52500,,UAF TD_DFFTCONV,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-53000,,UAF TD_DWT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-53100,,UAF TD_DWT2D,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-53300,,UAF TD_FILTERFACTORY1D,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-53400,,UAF TD_FITMETRICS,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54100,,UAF TD_IDWT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54200,,UAF TD_IDWT2D,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54300,,UAF TD_IMAGE2MATRIX,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54400,,UAF TD_INPUTVALIDATOR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54500,,UAF TD_IQR,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54600,,UAF TD_ISFINITE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54700,,UAF TD_ISINF,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-54800,,UAF TD_ISNAN,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55100,,UAF TD_MAMEAN,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55200,,UAF TD_MATRIX_OP,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55300,,UAF TD_MATRIX_SCALAR_MULTIPLY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55400,,UAF TD_MATRIX2IMAGE,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55500,,UAF TD_MATRIXMULTIPLY,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-55600,,UAF TD_MINFO,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-56200,,UAF TD_POWERTRANSFORM,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-56400,,UAF TD_SAX,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-56600,,UAF TD_SELECTION_CRITERIA,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-57600,,UAF TD_WINDOWDFFT,,,InDB UAF,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49200,,SQLMR TD_DecisionForestPredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49300,,SQLMR TD_GlmPerSegment,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49400,,SQLMR TD_GlmPerSegmentPredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49500,,SQLMR TD_KNN,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49600,,SQLMR TD_OneClassSVM,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49700,,SQLMR TD_OneClassSVMPredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+49800,,SQLMR TD_PCA,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50200,,SQLMR TD_Shap,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50300,,SQLMR TD_SVM,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50400,,SQLMR TD_SVMPredict,,,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50500,,SQLMR TD_TrainTestSplit,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50600,,SQLMR TD_WordEmbeddings,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50700,,SQLMR TD_XGBOOST,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+50800,,TD_CrossValidation,,,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+51300,,UAF TD_ARIMAXESTIMATE,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+51400,,UAF TD_AUTOARIMA,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+51500,,UAF TD_BINARYMATRIXOP,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+52100,,UAF TD_COPYART,,,InDB UAF,ClearScape,,Deployment,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+52500,,UAF TD_DFFTCONV,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+53000,,UAF TD_DWT,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+53100,,UAF TD_DWT2D,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+53300,,UAF TD_FILTERFACTORY1D,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+53400,,UAF TD_FITMETRICS,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54100,,UAF TD_IDWT,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54200,,UAF TD_IDWT2D,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54300,,UAF TD_IMAGE2MATRIX,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54400,,UAF TD_INPUTVALIDATOR,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54500,,UAF TD_IQR,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54600,,UAF TD_ISFINITE,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54700,,UAF TD_ISINF,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+54800,,UAF TD_ISNAN,,,InDB UAF,ClearScape,,Data exploration,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55100,,UAF TD_MAMEAN,,,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55200,,UAF TD_MATRIX_OP,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55300,,UAF TD_MATRIX_SCALAR_MULTIPLY,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55400,,UAF TD_MATRIX2IMAGE,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55500,,UAF TD_MATRIXMULTIPLY,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+55600,,UAF TD_MINFO,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+56200,,UAF TD_POWERTRANSFORM,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+56400,,UAF TD_SAX,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+56600,,UAF TD_SELECTION_CRITERIA,,,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+57600,,UAF TD_WINDOWDFFT,,,InDB UAF,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 57700,,Reserved 04,,,Internal,System Features,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-57800,,SQLMR TD_XGBOOSTPREDICT,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+57800,,SQLMR TD_XGBOOSTPREDICT,,,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 57900,,NOS PATH FILTER PREDICATE PUSH,,,NOS,Physical,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
-58000,,SQLMR TD_UNPIVOTING,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
-58100,,SQLMR TD_PIVOTING,,,InDB SQLMR,ClearScape,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+58000,,SQLMR TD_UNPIVOTING,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
+58100,,SQLMR TD_PIVOTING,,,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,Y,AI-Supporting
 58101,,OFS Literal Filtering,,180,Data Management,Physical,,,,,,,,U,,,,0,,,,,10,1000,1,1,1,1,N,
 58102,,OFS Object Filtering Hash Join Fly,,181,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58103,,OFS Direct Merge,,182,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58104,,SQLMR TD_CrossValidation,,352,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58105,,SQLMR TD_PackFit,,353,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58106,,SQLMR TD_PackTransform,,354,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58107,,SQLMR TD_UnpackFit,,355,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58108,,SQLMR TD_UnpackTransform,,356,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58109,,SQLMR TD_NumApplyFit,,357,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58110,,SQLMR TD_NumApplyTransform,,358,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58111,,SQLMR TD_StrApplyFit,,359,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58112,,SQLMR TD_StrApplyTransform,,360,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58113,,SQLMR TD_ConvertToFit,,361,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58114,,SQLMR TD_ConvertToTransform,,362,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58115,,SQLMR TD_RoundColumnsFit,,363,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58116,,SQLMR TD_RoundColumnsTransform,,364,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58117,,SQLMR TD_HierarchicalCluster,,366,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58104,,SQLMR TD_CrossValidation,,352,InDB SQLMR,ClearScape,,Evaluation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58105,,SQLMR TD_PackFit,,353,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58106,,SQLMR TD_PackTransform,,354,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58107,,SQLMR TD_UnpackFit,,355,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58108,,SQLMR TD_UnpackTransform,,356,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58109,,SQLMR TD_NumApplyFit,,357,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58110,,SQLMR TD_NumApplyTransform,,358,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58111,,SQLMR TD_StrApplyFit,,359,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58112,,SQLMR TD_StrApplyTransform,,360,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58113,,SQLMR TD_ConvertToFit,,361,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58114,,SQLMR TD_ConvertToTransform,,362,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58115,,SQLMR TD_RoundColumnsFit,,363,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58116,,SQLMR TD_RoundColumnsTransform,,364,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58117,,SQLMR TD_HierarchicalCluster,,366,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58118,,OFS Object Filtering In-Memory Hash Join Fly,,367,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58119,,SQLMR TD_TargetEncodingFit,,368,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58120,,SQLMR TD_TargetEncodingTransform,,369,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58121,,SQLMR TD_HPT,,370,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58122,,BYOM MLeapPredict,,371,BYOM,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58123,,BYOM DataRobotPredict,,372,BYOM,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58119,,SQLMR TD_TargetEncodingFit,,368,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58120,,SQLMR TD_TargetEncodingTransform,,369,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58121,,SQLMR TD_HPT,,370,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58122,,BYOM MLeapPredict,,371,BYOM,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58123,,BYOM DataRobotPredict,,372,BYOM,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58124,,Skip Redundant Aggregate F1,,374,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58125,,SQLMR TD_TFIDF,,375,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58126,,UAF TD_KPSS,,376,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58125,,SQLMR TD_TFIDF,,375,InDB SQLMR,ClearScape,,Modeling,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58126,,UAF TD_KPSS,,376,InDB UAF,ClearScape,,Evaluation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58127,,Shared OFS Spool,,379,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58128,,SQLMR TD_NaiveBayesTextClassifierPredict,,380,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58128,,SQLMR TD_NaiveBayesTextClassifierPredict,,380,InDB SQLMR,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58129,,Skip Aggregate Field 1 enhancements,,381,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58130,,OFS Direct Object Copy,,382,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58131,,UAF TD_SMOOTHMA_FORECASTER,,383,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58132,,UAF TD_KALMAN_FORECASTER,,384,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58133,,UAF TD_ARIMAXFORECAST,,385,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58131,,UAF TD_SMOOTHMA_FORECASTER,,383,InDB UAF,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58132,,UAF TD_KALMAN_FORECASTER,,384,InDB UAF,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58133,,UAF TD_ARIMAXFORECAST,,385,InDB UAF,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58134,,FUL_LLVM_CODE_GENERATION_STEP,,386,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58135,,OFS UJI/MJI Plans,,387,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58136,,Open Table Format,,388,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58137,,Iceberg Read,,389,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
-58138,,TD_NaiveBayes,,390,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58139,,TD_NaiveBayesPredict,,391,InDB UAF,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58140,,SQLMR TD_SMOTE,,392,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
-58141,,SQLMR TD_RandomSample,,393,InDB SQLMR,ClearScape,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58138,,TD_NaiveBayes,,390,InDB UAF,ClearScape,,Modeling,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58139,,TD_NaiveBayesPredict,,391,InDB UAF,ClearScape,,Deployment,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58140,,SQLMR TD_SMOTE,,392,InDB SQLMR,ClearScape,,Data preparation,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
+58141,,SQLMR TD_RandomSample,,393,InDB SQLMR,ClearScape,,Data exploration,,,,,,U,,,,,,,,,0,0,1,1,1,1,Y,AI-Supporting
 58142,,OFS PI Hash Bucket Range,,394,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58143,,OFS PI Fanout Partitioned Hash Bucket Range,,395,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,
 58144,,OFS PI Dynamic Partitioned Hash Bucket Range,,396,Data Management,Physical,,,,,,,,U,,,,,,,,,0,0,1,1,1,1,N,

@@ -55,10 +55,26 @@ def combine_bar_line_chart(**kwargs):
        msg = 'Error occurred while validating parameters, please check your parameters, documentation, and try again. \nParameters: %s' % str(kwargs)
        coaprint(msg)
        return msg
-   # Read and process data
-   df = pd.read_csv(csvfile)
-   x = df[x_column]
+   # Read and process data -- if the file is missing, empty, or lacks the
+   # expected columns, draw a "No data" placeholder instead of failing the run
    if title == '': title = csvfile.split('.')[0].split('--')[-1].replace('_', ' ').upper()
+   try:
+       df = pd.read_csv(csvfile)
+   except (FileNotFoundError, pd.errors.EmptyDataError):
+       df = None
+   needed = [x_column] + [c for c in bar_columns + line_columns if c]
+   if df is None or df.empty or any(c not in df.columns for c in needed):
+       fig, ax = plt.subplots(figsize=(width, height))
+       ax.axis('off')
+       ax.text(0.5, 0.5, 'No data available', ha='center', va='center',
+               fontsize=18, color='#666666', transform=ax.transAxes)
+       plt.title(title, pad=20)
+       if save:
+           plt.savefig(csvfile.replace('.csv', '.png'), bbox_inches='tight')
+       else:
+           plt.show()
+       return 'no data'
+   x = df[x_column]
    coaprint('x axis column: ', title)
    # Build the graph figure, assign settings
    fig, ax1 = plt.subplots(figsize=(width, height))
