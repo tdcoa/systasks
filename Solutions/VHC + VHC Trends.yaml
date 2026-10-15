@@ -1,5 +1,5 @@
 description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
-version: 2.4
+version: 2.5
 
 ### VHC changes should be made to the full version first,
 ### then copy/pasted to the OAP version and below toggled:
@@ -141,7 +141,6 @@ tasks:
 
 {% set save_prework   = False %}
 {% set include_hour   = False %}
-{% set include_wdname = False %}
 {% set include_user   = True %}
 {% include "vt_dbql_core.j2" %}
 
@@ -864,6 +863,45 @@ tasks:
       - "xrotate:90"
       - "xcolumns:[0]"
       - "ycolumns:[2,1]"
+
+
+{% if 'Workload_Definition' in run.included %}
+- name: "Export workload (WDName) level usage summary"
+  connect: source
+  export:
+    file: vhc--workload_usage.csv
+    sql: |
+      select
+       LogDate
+      ,cast(cast(LogDate as format 'E3') as char(3))              as LogDOW
+      ,UserType
+      ,UserName
+      ,coalesce(Workload_Definition,'Unknown')                    as Workload_Definition
+
+      /* ====== Request and Statement Counts ====== */
+      ,sum(Request_Total_Cnt)                                     as Request_Total_Cnt
+      ,sum(Statement_Total_Cnt)                                   as Statement_Total_Cnt
+      ,sum(Query_Total_Cnt)                                       as Query_Total_Cnt
+      ,sum(Request_Delayed_Cnt)                                   as Request_Delayed_Cnt
+      ,sum(Statement_Delayed_Cnt)                                 as Statement_Delayed_Cnt
+      ,sum(Request_Peak_Cnt)                                      as Request_Peak_Cnt
+      ,sum(Statement_Peak_Cnt)                                    as Statement_Peak_Cnt
+
+      /* ====== Metrics: RunTimes ====== */
+      ,cast(sum(RunTime_Total_Sec)   as decimal(38,4))            as RunTime_Total_Sec
+      ,cast(sum(RunTime_Parse_Sec)   as decimal(38,4))            as RunTime_Parse_Sec
+      ,cast(sum(RunTime_Peak_Sec)    as decimal(38,4))            as RunTime_Peak_Sec
+      ,cast(zeroifnull(sum(DelayTime_Sec)) as decimal(38,4))      as DelayTime_Sec
+
+      /* ====== Metrics: CPU & IO ====== */
+      ,cast(sum(CPU_Total_Sec)       as decimal(38,4))            as CPU_Total_Sec
+      ,cast(sum(CPU_Peak_Sec)        as decimal(38,4))            as CPU_Peak_Sec
+      ,cast(sum(IO_Total_CntM)       as decimal(38,4))            as IO_Total_CntM
+      from vt_dbql_core
+      group by 1,2,3,4,5
+      order by 1,5,4
+{% endif %}
+
 
 
 ### Release Spool:
@@ -3828,10 +3866,24 @@ tasks:
     sql: drop table vt_System_CPU_by_Day_T
 
 
+- name: "Workload usage trends and shifts, for PPTx (populated only when include_wdname = True)"
+  script:
+    command: scripts/vhc_workload_risk.py
+    params:
+      - "step_pct:30"
+      - "trend_pct:15"
+      - "faded_pct:50"
+      - "spike_ratio:3"
+      - "min_share_pct:1"
+      - "silent_days:7"
+      - "concentration_pct:30"
+      - "delay_pct:25"
+      - "top_n:5"
+
 # if full VHC (not on-a-page)
-- name: PPTx final build for VHC + VHC Trends (v2.4)
+- name: PPTx final build for VHC + VHC Trends (v2.5)
   ppt:
-    file: ppt/VHC + VHC Trends v2.4.pptx
+    file: ppt/VHC + VHC Trends v2.5.pptx
     
 - name: JSON output for Vantage Health Check
   script:
@@ -3849,7 +3901,7 @@ tasks:
 # if VHC-on-a-page
 - name: PPTx final build for Vantage Health Check On-a-Page (v4.2)
   ppt:
-    file: ppt/VHC + VHC Trends v2.4.pptx
+    file: ppt/VHC + VHC Trends v2.5.pptx
 
 {% endif %}
 

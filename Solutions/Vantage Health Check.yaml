@@ -1,5 +1,5 @@
 description: Runs the core consumption analytic components of VANTAGE HEALTH CHECK.
-version: 4.3
+version: 4.7
 
 ### VHC changes should be made to the full version first,
 ### then copy/pasted to the OAP version and below toggled:
@@ -3268,7 +3268,7 @@ tasks:
       - "siteid:{{ siteid }}"
       - "startdate:{{ startdate }}"
       - "enddate:{{ enddate }}"
-      - "version:4.4"
+      - "version:4.6"
 
 {% endif %}
 
